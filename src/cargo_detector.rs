@@ -11,6 +11,8 @@ pub struct BinaryInfo {
     pub name: String,
     /// Workspace root
     pub workspace_root: PathBuf,
+    /// Path to the package's Cargo.toml
+    pub manifest_path: PathBuf,
 }
 
 /// Information about an example
@@ -59,6 +61,7 @@ impl CargoDetector {
                     apps.push(BinaryInfo {
                         name: target.name.clone(),
                         workspace_root: self.metadata.workspace_root.clone().into(),
+                        manifest_path: package.manifest_path.clone().into(),
                     });
                 }
             }
@@ -97,28 +100,7 @@ impl CargoDetector {
     }
     
     fn package_depends_on_bevy(&self, package: &Package) -> bool {
-        // Check direct dependencies
-        for dep in &package.dependencies {
-            if dep.name == "bevy" {
-                return true;
-            }
-        }
-        
-        // For workspace members, if the workspace has bevy, assume the package might use it
-        // This is more permissive but necessary since cargo_metadata doesn't resolve workspace deps
-        if self.metadata.workspace_members.contains(&package.id) && self.workspace_has_bevy() {
-            return true;
-        }
-        
-        false
-    }
-    
-    fn workspace_has_bevy(&self) -> bool {
-        // Check if any workspace member depends on bevy
-        self.metadata
-            .packages
-            .iter()
-            .filter(|pkg| self.metadata.workspace_members.contains(&pkg.id))
-            .any(|pkg| pkg.dependencies.iter().any(|dep| dep.name == "bevy"))
+        // Check direct dependencies (including workspace dependencies)
+        package.dependencies.iter().any(|dep| dep.name == "bevy")
     }
 }

@@ -1,194 +1,173 @@
-//! Launch tool implementation
-
 use std::path::PathBuf;
-use std::process::Command;
-use std::io::{BufRead, BufReader};
+use std::process::{Command, Stdio};
+use std::fs::File;
+use std::io::Write;
 
-use rmcp::Error as McpError;
 use rmcp::model::{CallToolResult, Content};
+use rmcp::Error as McpError;
 
-use crate::app::{AppInfo, AppManager};
-use crate::cargo;
-use crate::constants::DEFAULT_BRP_PORT;
+use crate::cargo_detector::{BinaryInfo, CargoDetector};
+use crate::constants::PROFILE_RELEASE;
 
-/// Launch a Bevy app by name with optional profile
-/// If build_if_missing is true, it will build the app if the binary doesn't exist
-pub async fn launch(
-    app_name: String,
-    profile: Option<String>,
-    roots: Vec<PathBuf>,
-    build_if_missing: Option<bool>,
-) -> Result<CallToolResult, McpError> {
-    // First check if already running
-    match AppManager::resolve(&app_name).await {
-        Ok(AppInfo::Running { port }) => {
-            return Ok(CallToolResult::success(vec![Content::text(format!(
-                "App '{}' is already running on port {}",
-                app_name, port
-            ))]));
-        }
-        Ok(AppInfo::NotRunning) | Err(_) => {
-            // Continue to launch
-        }
-    }
-
-    // Validate and get the profile
-    let profile_str = profile
-        .as_deref()
-        .unwrap_or(crate::constants::DEFAULT_BUILD_PROFILE);
-
-    // Validate profile name to prevent command injection
-    if let Err(e) = cargo::validate_profile_name(profile_str) {
-        return Err(McpError::invalid_params(
-            format!("Invalid profile name: {}", e),
-            None,
-        ));
-    }
-
-    // Find the binary
-    let binary_path = match AppManager::find_binary(&app_name, Some(profile_str), &roots) {
-        Ok(path) => path,
-        Err(e) => {
-            let error_msg = e.to_string();
-
-            // Check specific error patterns
-            if error_msg.contains("found but not built") {
-                // Scenario 2: App found but binary not built
-                if build_if_missing == Some(true) {
-                    // Build the app
-                    let project_path = extract_project_path(&error_msg);
-                    build_app(&app_name, profile_str, project_path.as_deref())?;
-                    
-                    // Try to find the binary again after building
-                    match AppManager::find_binary(&app_name, Some(profile_str), &roots) {
-                        Ok(path) => path,
-                        Err(e) => {
-                            return Err(McpError::internal_error(
-                                format!("Build succeeded but binary still not found: {}", e),
-                                None,
-                            ));
-                        }
-                    }
-                } else {
-                    // Return error that prompts the client to ask about building
-                    return Err(McpError::invalid_params(
-                        format!("Binary '{}' not built for profile '{}'. Build and run?", app_name, profile_str),
-                        None,
-                    ));
+/// Find a specific Bevy app by name
+pub fn find_app(app_name: &str, search_paths: &[PathBuf]) -> Option<BinaryInfo> {
+    for root in search_paths {
+        // Check the root itself
+        if root.join("Cargo.toml").exists() {
+            if let Ok(detector) = CargoDetector::from_path(root) {
+                let apps = detector.find_bevy_apps();
+                if let Some(app) = apps.into_iter().find(|a| a.name == app_name) {
+                    return Some(app);
                 }
-            } else if error_msg.contains("does not depend on Bevy") {
-                // App exists but is not a Bevy app
-                return Err(McpError::invalid_params(
-                    format!("App '{}' found but does not depend on Bevy", app_name),
-                    None,
-                ));
-            } else if error_msg.contains("not found in any of the provided roots") || 
-                     (error_msg.contains("not found") && !error_msg.contains("found in project") && !error_msg.contains("found but")) {
-                // Scenario 1: App not found in workspace
-                return Err(McpError::invalid_params(
-                    format!("App '{}' not found in workspace", app_name),
-                    None,
-                ));
-            } else {
-                // Other errors (including generic "not found")
-                return Err(McpError::invalid_params(
-                    format!("Failed to find app '{}': {}", app_name, e),
-                    None,
-                ));
             }
         }
-    };
-
-    // Scenario 3: Binary exists → report and launch
-    eprintln!(
-        "Launching '{}' with profile '{}'...",
-        app_name, profile_str
-    );
-
-    // Launch the app
-    AppManager::launch_app(&app_name, &binary_path)
-        .await
-        .map_err(|e| McpError::internal_error(format!("Failed to launch app: {}", e), None))?;
-
-    Ok(CallToolResult::success(vec![Content::text(format!(
-        "Launched '{}' ({} build) on port {}",
-        app_name, profile_str, DEFAULT_BRP_PORT
-    ))]))
-}
-
-/// Extract project path from error message
-fn extract_project_path(error_msg: &str) -> Option<String> {
-    error_msg.find("project at ").and_then(|start| {
-        let path_start = start + "project at ".len();
-        error_msg[path_start..]
-            .find(" but")
-            .map(|end| error_msg[path_start..path_start + end].to_string())
-    })
-}
-
-/// Build the app using cargo
-fn build_app(app_name: &str, profile: &str, project_path: Option<&str>) -> Result<(), McpError> {
-    eprintln!("Building '{}' with profile '{}'...", app_name, profile);
-    
-    // Prepare the build command
-    let mut cmd = Command::new("cargo");
-    cmd.arg("build")
-        .arg("--profile")
-        .arg(profile)
-        .arg("--bin")
-        .arg(app_name);
-
-    // If we have a project path, run the command there
-    if let Some(path) = project_path {
-        cmd.current_dir(path);
-        eprintln!("Building in directory: {}", path);
-    }
-
-    eprintln!("Running: cargo build --profile {} --bin {}", profile, app_name);
-
-    // Execute the build and capture output
-    let mut child = cmd
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .map_err(|e| {
-            McpError::internal_error(
-                format!("Failed to execute cargo build: {}", e),
-                None,
-            )
-        })?;
-
-    // Read output as it comes
-    if let Some(stdout) = child.stdout.take() {
-        let reader = BufReader::new(stdout);
-        for line in reader.lines().map_while(Result::ok) {
-            eprintln!("  {}", line);
-        }
-    }
-
-    // Wait for the process to complete
-    let status = child.wait().map_err(|e| {
-        McpError::internal_error(
-            format!("Failed to wait for cargo build: {}", e),
-            None,
-        )
-    })?;
-
-    if !status.success() {
-        // Get stderr if available
-        if let Some(mut stderr) = child.stderr.take() {
-            let mut stderr_buf = Vec::new();
-            use std::io::Read;
-            let _ = stderr.read_to_end(&mut stderr_buf);
-            eprintln!("Build failed:\n{}", String::from_utf8_lossy(&stderr_buf));
-        }
         
-        return Err(McpError::internal_error(
-            format!("Build failed for '{}' with profile '{}'", app_name, profile),
-            None,
+        // Check immediate subdirectories
+        if let Ok(entries) = std::fs::read_dir(root) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() && path.join("Cargo.toml").exists() {
+                    // Skip hidden directories and target
+                    if let Some(name) = path.file_name() {
+                        let name_str = name.to_string_lossy();
+                        if name_str.starts_with('.') || name_str == "target" {
+                            continue;
+                        }
+                    }
+                    
+                    if let Ok(detector) = CargoDetector::from_path(&path) {
+                        let apps = detector.find_bevy_apps();
+                        if let Some(app) = apps.into_iter().find(|a| a.name == app_name) {
+                            return Some(app);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+pub async fn launch_bevy_app(
+    app_name: &str,
+    profile: &str,
+    search_paths: &[PathBuf],
+) -> Result<CallToolResult, McpError> {
+    // Find the app
+    let app = find_app(app_name, search_paths)
+        .ok_or_else(|| McpError::invalid_params(
+            format!("Bevy app '{}' not found in any search path", app_name),
+            None
+        ))?;
+    
+    // Build the binary path
+    let binary_path = app.workspace_root.join("target").join(profile).join(&app.name);
+    
+    // Check if the binary exists
+    if !binary_path.exists() {
+        return Err(McpError::invalid_params(
+            format!(
+                "Binary not found at {}. Please build the app with 'cargo build{}' first.",
+                binary_path.display(),
+                if profile == PROFILE_RELEASE { " --release" } else { "" }
+            ),
+            None
         ));
     }
-
-    eprintln!("Build successful!");
-    Ok(())
+    
+    // Get the manifest directory (parent of Cargo.toml)
+    let manifest_dir = app.manifest_path.parent()
+        .ok_or_else(|| McpError::invalid_params(
+            "Invalid manifest path",
+            None
+        ))?;
+    
+    eprintln!("Launching {} from {}", app_name, manifest_dir.display());
+    eprintln!("Binary path: {}", binary_path.display());
+    eprintln!("Working directory: {}", manifest_dir.display());
+    eprintln!("CARGO_MANIFEST_DIR: {}", manifest_dir.display());
+    
+    // Generate unique log file name in temp directory
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| McpError::internal_error(
+            format!("Failed to get timestamp: {}", e),
+            None
+        ))?
+        .as_millis();
+    let log_file_path = std::env::temp_dir().join(format!("bevy_brp_mcp_{}_{}.log", app_name, timestamp));
+    
+    // Create log file
+    let mut log_file = File::create(&log_file_path)
+        .map_err(|e| McpError::internal_error(
+            format!("Failed to create log file: {}", e),
+            None
+        ))?;
+    
+    writeln!(log_file, "=== Bevy BRP MCP Launch Log ===")
+        .map_err(|e| McpError::internal_error(format!("Failed to write to log file: {}", e), None))?;
+    writeln!(log_file, "Started at: {:?}", std::time::SystemTime::now())
+        .map_err(|e| McpError::internal_error(format!("Failed to write to log file: {}", e), None))?;
+    writeln!(log_file, "App: {}", app_name)
+        .map_err(|e| McpError::internal_error(format!("Failed to write to log file: {}", e), None))?;
+    writeln!(log_file, "Profile: {}", profile)
+        .map_err(|e| McpError::internal_error(format!("Failed to write to log file: {}", e), None))?;
+    writeln!(log_file, "Binary: {}", binary_path.display())
+        .map_err(|e| McpError::internal_error(format!("Failed to write to log file: {}", e), None))?;
+    writeln!(log_file, "Working directory: {}", manifest_dir.display())
+        .map_err(|e| McpError::internal_error(format!("Failed to write to log file: {}", e), None))?;
+    writeln!(log_file, "============================================\n")
+        .map_err(|e| McpError::internal_error(format!("Failed to write to log file: {}", e), None))?;
+    log_file.sync_all()
+        .map_err(|e| McpError::internal_error(format!("Failed to sync log file: {}", e), None))?;
+    
+    // Open log file for stdout/stderr redirection
+    let log_file_for_redirect = File::options()
+        .append(true)
+        .open(&log_file_path)
+        .map_err(|e| McpError::internal_error(
+            format!("Failed to open log file for redirect: {}", e),
+            None
+        ))?;
+    
+    // Launch the binary with proper working directory and environment
+    let mut cmd = Command::new(&binary_path);
+    cmd.current_dir(manifest_dir)
+        .env("CARGO_MANIFEST_DIR", manifest_dir)
+        .stdin(Stdio::null())  // Important: detach stdin so the child doesn't inherit it
+        .stdout(Stdio::from(log_file_for_redirect.try_clone().map_err(|e| 
+            McpError::internal_error(format!("Failed to clone log file handle: {}", e), None)
+        )?))
+        .stderr(Stdio::from(log_file_for_redirect));
+    
+    match cmd.spawn() {
+        Ok(child) => {
+            // Get the process ID
+            let pid = child.id();
+            
+            // Don't wait for the process - let it run in the background
+            let output = format!(
+                "Successfully launched '{}' (PID: {})\n\
+                Working directory: {}\n\
+                Binary: {}\n\
+                Profile: {}\n\
+                Log file: {}\n\n\
+                The application is now running in the background.",
+                app_name,
+                pid,
+                manifest_dir.display(),
+                binary_path.display(),
+                profile,
+                log_file_path.display()
+            );
+            
+            Ok(CallToolResult::success(vec![Content::text(output)]))
+        }
+        Err(e) => {
+            Err(McpError::invalid_params(
+                format!("Failed to launch '{}': {}", app_name, e),
+                None
+            ))
+        }
+    }
 }
