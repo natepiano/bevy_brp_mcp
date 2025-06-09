@@ -1,13 +1,8 @@
-//! Shared constants across the application
+pub const PROFILE_DEBUG: &str = "debug";
+pub const PROFILE_RELEASE: &str = "release";
+pub const DEFAULT_PROFILE: &str = PROFILE_DEBUG;
 
-/// Default port for Bevy Remote Protocol
-pub const DEFAULT_BRP_PORT: u16 = 15702;
-
-/// Default build profile when not specified
-pub const DEFAULT_BUILD_PROFILE: &str = "debug";
-
-/// Default timeout for BRP client requests
-pub const BRP_CLIENT_TIMEOUT_SECS: u64 = 2;
-
-/// Delay after launching app before checking status
-pub const APP_LAUNCH_DELAY_SECS: u64 = 2;
+// Tool descriptions
+pub const LIST_BEVY_APPS_DESC: &str = include_str!("../help_text_files/tools/list_bevy_apps.txt");
+pub const LIST_BEVY_EXAMPLES_DESC: &str = include_str!("../help_text_files/tools/list_bevy_examples.txt");
+pub const LAUNCH_BEVY_APP_DESC: &str = include_str!("../help_text_files/tools/launch_bevy_app.txt");
