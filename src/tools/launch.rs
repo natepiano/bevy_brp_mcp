@@ -3,11 +3,72 @@ use std::process::{Command, Stdio};
 use std::fs::File;
 use std::io::Write;
 
-use rmcp::model::{CallToolResult, Content};
-use rmcp::Error as McpError;
+use rmcp::model::{CallToolResult, Content, Tool};
+use rmcp::service::RequestContext;
+use rmcp::{Error as McpError, RoleServer};
 
+use crate::BrpMcpService;
 use crate::cargo_detector::{BinaryInfo, CargoDetector};
-use crate::constants::PROFILE_RELEASE;
+use crate::constants::{PROFILE_DEBUG, PROFILE_RELEASE, DEFAULT_PROFILE, LAUNCH_BEVY_APP_DESC};
+
+pub fn register_tool() -> Tool {
+    let mut schema = serde_json::Map::new();
+    schema.insert("type".to_string(), "object".into());
+    
+    let mut properties = serde_json::Map::new();
+    
+    let mut app_name_schema = serde_json::Map::new();
+    app_name_schema.insert("type".to_string(), "string".into());
+    app_name_schema.insert("description".to_string(), "Name of the Bevy app to launch".into());
+    properties.insert("app_name".to_string(), app_name_schema.into());
+    
+    let mut profile_schema = serde_json::Map::new();
+    profile_schema.insert("type".to_string(), "string".into());
+    profile_schema.insert("enum".to_string(), vec![PROFILE_DEBUG, PROFILE_RELEASE].into());
+    profile_schema.insert("default".to_string(), DEFAULT_PROFILE.into());
+    profile_schema.insert("description".to_string(), "Build profile to use (debug or release)".into());
+    properties.insert("profile".to_string(), profile_schema.into());
+    
+    schema.insert("properties".to_string(), properties.into());
+    schema.insert("required".to_string(), vec!["app_name"].into());
+
+    Tool {
+        name: "launch_bevy_app".into(),
+        description: LAUNCH_BEVY_APP_DESC.into(),
+        input_schema: std::sync::Arc::new(schema),
+    }
+}
+
+pub async fn handle(
+    service: &BrpMcpService,
+    request: rmcp::model::CallToolRequestParam,
+    context: RequestContext<RoleServer>,
+) -> Result<CallToolResult, McpError> {
+    // Get parameters
+    let app_name = request
+        .arguments
+        .as_ref()
+        .and_then(|args| args.get("app_name"))
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| McpError::invalid_params("Missing required parameter: app_name", None))?;
+    
+    let profile = request
+        .arguments
+        .as_ref()
+        .and_then(|args| args.get("profile"))
+        .and_then(|v| v.as_str())
+        .unwrap_or(DEFAULT_PROFILE);
+    
+    // Fetch current roots
+    eprintln!("Fetching current roots from client...");
+    if let Err(e) = service.fetch_roots_from_client(context.peer.clone()).await {
+        eprintln!("Failed to fetch roots: {}", e);
+    }
+    let search_paths = service.roots.lock().unwrap().clone();
+    
+    // Launch the app
+    launch_bevy_app(app_name, profile, &search_paths).await
+}
 
 /// Find a specific Bevy app by name
 pub fn find_app(app_name: &str, search_paths: &[PathBuf]) -> Option<BinaryInfo> {
