@@ -1,0 +1,8 @@
+Launches a Bevy example project in detached mode with cargo run --example. Automatically handles building, asset loading, and logging. Features:
+- Runs examples with cargo run --example command
+- Builds the example if needed before running
+- Detached execution (won't block other operations)
+- Automatic log file creation in temp directory
+- Proper CARGO_MANIFEST_DIR setup for asset loading
+- Choice of debug (default) or release profile
+Use list_bevy_examples first to see available examples. The example will be built automatically if not already built. Logs are saved to help debug any issues.

@@ -1,6 +1,7 @@
-use rmcp::model::{CallToolResult, Content, Tool};
+use rmcp::model::{CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
+use serde_json::json;
 
 use crate::BrpMcpService;
 use crate::constants::LIST_BEVY_EXAMPLES_DESC;
@@ -8,14 +9,10 @@ use crate::constants::LIST_BEVY_EXAMPLES_DESC;
 use super::support;
 
 pub fn register_tool() -> Tool {
-    let mut schema = serde_json::Map::new();
-    schema.insert("type".to_string(), "object".into());
-    schema.insert("properties".to_string(), serde_json::Map::new().into());
-
     Tool {
         name: "list_bevy_examples".into(),
         description: LIST_BEVY_EXAMPLES_DESC.into(),
-        input_schema: std::sync::Arc::new(schema),
+        input_schema: support::schema::empty_object_schema(),
     }
 }
 
@@ -23,14 +20,34 @@ pub async fn handle(
     service: &BrpMcpService,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    // Fetch current roots from client
-    eprintln!("Fetching current roots from client...");
-    if let Err(e) = service.fetch_roots_from_client(context.peer.clone()).await {
-        eprintln!("Failed to fetch roots: {}", e);
+    support::service::handle_with_paths(service, context, |search_paths| async move {
+        let examples = collect_all_examples(&search_paths);
+        
+        Ok(support::response::success_json_response(
+            format!("Found {} Bevy examples", examples.len()),
+            json!({
+                "examples": examples
+            })
+        ))
+    }).await
+}
+
+fn collect_all_examples(search_paths: &[std::path::PathBuf]) -> Vec<serde_json::Value> {
+    let mut all_examples = Vec::new();
+    
+    // Use the iterator to find all cargo projects
+    for path in support::scanning::iter_cargo_project_paths(search_paths) {
+        if let Ok(detector) = crate::cargo_detector::CargoDetector::from_path(&path) {
+            let examples = detector.find_bevy_examples();
+            for example in examples {
+                all_examples.push(json!({
+                    "name": example.name,
+                    "package_name": example.package_name,
+                    "manifest_path": example.manifest_path.display().to_string()
+                }));
+            }
+        }
     }
     
-    let search_paths = service.roots.lock().unwrap().clone();
-    let output = support::list_examples_for_paths(&search_paths);
-    
-    Ok(CallToolResult::success(vec![Content::text(output)]))
+    all_examples
 }

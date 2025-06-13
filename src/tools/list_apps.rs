@@ -1,21 +1,18 @@
-use rmcp::model::{CallToolResult, Content, Tool};
+use rmcp::model::{CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
+use serde_json::json;
 
 use crate::BrpMcpService;
-use crate::constants::LIST_BEVY_APPS_DESC;
+use crate::constants::{LIST_BEVY_APPS_DESC, PROFILE_DEBUG, PROFILE_RELEASE};
 
 use super::support;
 
 pub fn register_tool() -> Tool {
-    let mut schema = serde_json::Map::new();
-    schema.insert("type".to_string(), "object".into());
-    schema.insert("properties".to_string(), serde_json::Map::new().into());
-
     Tool {
         name: "list_bevy_apps".into(),
         description: LIST_BEVY_APPS_DESC.into(),
-        input_schema: std::sync::Arc::new(schema),
+        input_schema: support::schema::empty_object_schema(),
     }
 }
 
@@ -23,14 +20,45 @@ pub async fn handle(
     service: &BrpMcpService,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    // Fetch current roots from client
-    eprintln!("Fetching current roots from client...");
-    if let Err(e) = service.fetch_roots_from_client(context.peer.clone()).await {
-        eprintln!("Failed to fetch roots: {}", e);
+    support::service::handle_with_paths(service, context, |search_paths| async move {
+        let apps = collect_all_apps(&search_paths);
+        
+        Ok(support::response::success_json_response(
+            format!("Found {} Bevy apps", apps.len()),
+            json!({
+                "apps": apps
+            })
+        ))
+    }).await
+}
+
+fn collect_all_apps(search_paths: &[std::path::PathBuf]) -> Vec<serde_json::Value> {
+    let mut all_apps = Vec::new();
+    let profiles = vec![PROFILE_DEBUG, PROFILE_RELEASE];
+    
+    // Use the iterator to find all cargo projects
+    for path in support::scanning::iter_cargo_project_paths(search_paths) {
+        if let Ok(detector) = crate::cargo_detector::CargoDetector::from_path(&path) {
+            let apps = detector.find_bevy_apps();
+            for app in apps {
+                let mut builds = json!({});
+                for profile in &profiles {
+                    let binary_path = app.get_binary_path(profile);
+                    builds[profile] = json!({
+                        "path": binary_path.display().to_string(),
+                        "built": binary_path.exists()
+                    });
+                }
+                
+                all_apps.push(json!({
+                    "name": app.name,
+                    "workspace_root": app.workspace_root.display().to_string(),
+                    "manifest_path": app.manifest_path.display().to_string(),
+                    "builds": builds
+                }));
+            }
+        }
     }
     
-    let search_paths = service.roots.lock().unwrap().clone();
-    let output = support::list_apps_for_paths(&search_paths);
-    
-    Ok(CallToolResult::success(vec![Content::text(output)]))
+    all_apps
 }

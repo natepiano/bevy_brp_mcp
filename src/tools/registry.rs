@@ -1,12 +1,14 @@
 use rmcp::model::ListToolsResult;
 
-use super::{list_apps, list_examples, launch};
+use super::{check_brp, launch_app, launch_example, list_apps, list_examples};
 
 pub async fn register_tools() -> ListToolsResult {
     let tools = vec![
+        check_brp::register_tool(),
         list_apps::register_tool(),
         list_examples::register_tool(),
-        launch::register_tool(),
+        launch_app::register_tool(),
+        launch_example::register_tool(),
     ];
 
     ListToolsResult {

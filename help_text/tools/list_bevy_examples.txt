@@ -2,4 +2,4 @@ Discovers and lists all Bevy example projects in your workspace. Searches throug
 - Example names organized by package
 - Package paths to help locate the source code
 - Useful for exploring Bevy learning resources and demos
-Examples are typically found in Bevy repositories and tutorial projects. Unlike apps, examples are listed without build status.
+Examples are typically found in Bevy repositories and tutorial projects. Unlike the response from list_bevy_apps, examples are listed without build status.

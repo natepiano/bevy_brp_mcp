@@ -15,6 +15,13 @@ pub struct BinaryInfo {
     pub manifest_path: PathBuf,
 }
 
+impl BinaryInfo {
+    /// Get the path to the binary for a given profile
+    pub fn get_binary_path(&self, profile: &str) -> PathBuf {
+        self.workspace_root.join("target").join(profile).join(&self.name)
+    }
+}
+
 /// Information about an example
 #[derive(Debug, Clone)]
 pub struct ExampleInfo {
@@ -22,6 +29,8 @@ pub struct ExampleInfo {
     pub name: String,
     /// Package name
     pub package_name: String,
+    /// Path to the package's Cargo.toml
+    pub manifest_path: PathBuf,
 }
 
 /// Detects binary targets in a project or workspace
@@ -91,6 +100,7 @@ impl CargoDetector {
                     examples.push(ExampleInfo {
                         name: target.name.clone(),
                         package_name: package.name.to_string(),
+                        manifest_path: package.manifest_path.clone().into(),
                     });
                 }
             }
