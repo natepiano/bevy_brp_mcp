@@ -5,4 +5,4 @@ Launches a Bevy example project in detached mode with cargo run --example. Autom
 - Automatic log file creation in temp directory
 - Proper CARGO_MANIFEST_DIR setup for asset loading
 - Choice of debug (default) or release profile
-Use list_bevy_examples first to see available examples. The example will be built automatically if not already built. Logs are saved to help debug any issues.
+Use list_bevy_examples first to see available examples. The example will be built automatically if not already built. Logs are saved to help debug any issues. Use list_logs to view available logs, read_log to examine log contents, and cleanup_logs to manage disk space.

@@ -37,18 +37,21 @@ pub fn extract_optional_number(
     param_name: &str,
     default: u64,
 ) -> Result<u64, McpError> {
-    request
-        .arguments
-        .as_ref()
-        .and_then(|args| args.get(param_name))
-        .map(|v| {
-            v.as_u64()
-                .or_else(|| v.as_i64().map(|i| i as u64))
-                .ok_or_else(|| McpError::invalid_params(
-                    format!("Parameter '{}' must be a number", param_name),
-                    None
-                ))
-        })
-        .transpose()
-        .map(|opt| opt.unwrap_or(default))
+    match request.arguments.as_ref().and_then(|args| args.get(param_name)) {
+        Some(v) => v.as_u64()
+            .ok_or_else(|| McpError::invalid_params(
+                format!("Parameter '{}' must be a number", param_name),
+                None
+            )),
+        None => Ok(default),
+    }
+}
+
+/// Extract an optional u32 parameter from the request with a default value
+pub fn extract_optional_u32(
+    request: &CallToolRequestParam,
+    param_name: &str,
+    default: u32,
+) -> Result<u32, McpError> {
+    Ok(extract_optional_number(request, param_name, default as u64)? as u32)
 }

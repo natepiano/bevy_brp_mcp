@@ -429,6 +429,7 @@ dependencies = [
  "anyhow",
  "bevy",
  "cargo_metadata",
+ "chrono",
  "reqwest",
  "rmcp",
  "serde",
