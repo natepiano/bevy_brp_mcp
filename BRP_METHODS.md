@@ -2,6 +2,15 @@
 
 This document provides a complete inventory of all available BRP methods for the bevy_brp_mcp MCP server.
 
+## Prerequisites
+
+**IMPORTANT:** For Components and Resources to be visible through BRP, they must meet specific registration requirements. See [BRP_REGISTRATION.md](./BRP_REGISTRATION.md) for complete details on:
+- Required trait derives
+- Reflection attributes
+- Type registration
+
+Without proper registration, your types won't appear in `bevy/list` or be accessible through other BRP methods.
+
 ## Overview
 
 The Bevy Remote Protocol provides 18 built-in methods for interacting with a Bevy application's ECS (Entity Component System). All methods use JSON-RPC 2.0 format and are accessed through the `brp_execute` tool.
@@ -274,9 +283,18 @@ Discover all available methods with their schemas.
 - Mutation methods (complex path handling)
 - Resource manipulation (less common use cases)
 
-## Usage with brp_execute
+## Usage with MCP Tools
 
-All methods are called using the `brp_execute` tool:
+### Direct Tool Wrappers
+Some BRP methods have dedicated wrapper tools for easier use:
+
+- **`brp_list_components`** - Wraps `bevy/list` method
+  - No need to construct JSON parameters
+  - Clear parameter validation
+  - User-friendly response formatting
+
+### Generic BRP Execution
+All methods can be called using the `brp_execute` tool:
 
 ```json
 {
