@@ -5,6 +5,7 @@ use rmcp::{Error as McpError, RoleServer};
 use crate::BrpMcpService;
 
 mod brp_execute;
+mod brp_list_components;
 mod check_brp;
 mod cleanup_logs;
 mod launch_app;
@@ -25,6 +26,7 @@ pub async fn handle_tool_call(
 ) -> Result<CallToolResult, McpError> {
     match request.name.as_ref() {
         "brp_execute" => brp_execute::handle_brp_execute(request, context).await,
+        "brp_list_components" => brp_list_components::handle(service, request, context).await,
         "check_brp" => check_brp::handle(service, request, context).await,
         "cleanup_logs" => cleanup_logs::handle(service, request, context).await,
         "list_bevy_apps" => list_apps::handle(service, context).await,
