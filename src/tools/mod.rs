@@ -4,6 +4,7 @@ use rmcp::{Error as McpError, RoleServer};
 
 use crate::BrpMcpService;
 
+mod brp_execute;
 mod check_brp;
 mod launch_app;
 mod launch_example;
@@ -20,14 +21,15 @@ pub async fn handle_tool_call(
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     match request.name.as_ref() {
+        "brp_execute" => brp_execute::handle_brp_execute(request, context).await,
         "check_brp" => check_brp::handle(service, request, context).await,
         "list_bevy_apps" => list_apps::handle(service, context).await,
         "list_bevy_examples" => list_examples::handle(service, context).await,
         "launch_bevy_app" => launch_app::handle(service, request, context).await,
         "launch_bevy_example" => launch_example::handle(service, request, context).await,
-        _ => Err(McpError::invalid_params(
+        _ => Err(McpError::from(rmcp::model::ErrorData::invalid_params(
             format!("Unknown tool: {}", request.name),
             None,
-        )),
+        ))),
     }
 }

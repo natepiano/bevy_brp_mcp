@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use rmcp::model::{
-    CallToolRequestParam, CallToolResult, ListToolsResult, PaginatedRequestParam,
-    ServerCapabilities,
+    CallToolRequestParam, CallToolResult, GetPromptRequestParam, GetPromptResult,
+    ListPromptsResult, ListToolsResult, PaginatedRequestParam, ServerCapabilities,
 };
 use rmcp::service::RequestContext;
 use rmcp::transport::stdio;
@@ -12,18 +12,22 @@ use rmcp::{Error as McpError, RoleServer, ServerHandler, ServiceExt};
 
 mod cargo_detector;
 mod constants;
+mod prompts;
 mod tools;
+mod types;
 
 
 #[derive(Clone)]
 pub struct BrpMcpService {
     pub roots: Arc<Mutex<Vec<PathBuf>>>,
+    prompt_registry: Arc<prompts::PromptRegistry>,
 }
 
 impl BrpMcpService {
     fn new() -> Self {
         Self {
             roots: Arc::new(Mutex::new(Vec::new())),
+            prompt_registry: Arc::new(prompts::PromptRegistry::new()),
         }
     }
 }
@@ -34,6 +38,7 @@ impl ServerHandler for BrpMcpService {
             instructions: None,
             capabilities: ServerCapabilities::builder()
                 .enable_tools()
+                .enable_prompts()
                 .build(),
             ..Default::default()
         }
@@ -53,6 +58,22 @@ impl ServerHandler for BrpMcpService {
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
         tools::handle_tool_call(self, request, context).await
+    }
+
+    async fn list_prompts(
+        &self,
+        request: PaginatedRequestParam,
+        context: RequestContext<RoleServer>,
+    ) -> Result<ListPromptsResult, McpError> {
+        self.prompt_registry.list_prompts(request, context).await
+    }
+
+    async fn get_prompt(
+        &self,
+        request: GetPromptRequestParam,
+        context: RequestContext<RoleServer>,
+    ) -> Result<GetPromptResult, McpError> {
+        self.prompt_registry.get_prompt(&request.name, context).await
     }
 }
 

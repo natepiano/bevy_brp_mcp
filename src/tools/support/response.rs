@@ -39,16 +39,6 @@ impl JsonResponse {
         }
     }
 
-    /// Create an error response
-    #[cfg(test)]
-    pub fn error(message: impl Into<String>) -> Self {
-        Self {
-            status: ResponseStatus::Error,
-            message: message.into(),
-            data: None,
-        }
-    }
-
     /// Convert to JSON string
     pub fn to_json(&self) -> String {
         serde_json::to_string_pretty(self).unwrap_or_else(|_| {
@@ -69,6 +59,14 @@ impl ResponseBuilder {
     pub fn success() -> Self {
         Self {
             status: ResponseStatus::Success,
+            message: String::new(),
+            data: None,
+        }
+    }
+    
+    pub fn error() -> Self {
+        Self {
+            status: ResponseStatus::Error,
             message: String::new(),
             data: None,
         }

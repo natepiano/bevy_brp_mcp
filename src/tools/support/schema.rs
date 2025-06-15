@@ -55,6 +55,25 @@ impl SchemaBuilder {
         self
     }
 
+    /// Add a property that can be any type (object, array, null, etc.)
+    pub fn add_any_property(
+        mut self,
+        name: &str,
+        description: &str,
+        required: bool,
+    ) -> Self {
+        let mut prop = Map::new();
+        prop.insert("type".to_string(), vec!["object", "array", "null"].into());
+        prop.insert("description".to_string(), description.into());
+        self.properties.insert(name.to_string(), prop.into());
+        
+        if required {
+            self.required.push(name.to_string());
+        }
+        
+        self
+    }
+
     /// Add an enum property to the schema
     pub fn add_enum_property(
         mut self,
