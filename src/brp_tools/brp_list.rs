@@ -4,10 +4,10 @@ use rmcp::{Error as McpError, RoleServer};
 use serde_json::{Value, json};
 
 use super::constants::{
-    DEFAULT_BRP_PORT, JSON_FIELD_COUNT, JSON_FIELD_DATA, JSON_FIELD_ENTITY, JSON_FIELD_ENTITY_ID,
-    JSON_FIELD_ERROR_CODE, JSON_FIELD_HINT, JSON_FIELD_MESSAGE, JSON_FIELD_METADATA,
-    JSON_FIELD_METHOD, JSON_FIELD_PORT, JSON_FIELD_STATUS, QUERY_FIELD_COMPONENTS,
-    RESPONSE_STATUS_ERROR, RESPONSE_STATUS_SUCCESS,
+    BRP_METHOD_LIST, DEFAULT_BRP_PORT, JSON_FIELD_COUNT, JSON_FIELD_DATA, JSON_FIELD_ENTITY,
+    JSON_FIELD_ENTITY_ID, JSON_FIELD_ERROR_CODE, JSON_FIELD_HINT, JSON_FIELD_MESSAGE,
+    JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PORT, JSON_FIELD_STATUS,
+    QUERY_FIELD_COMPONENTS, RESPONSE_STATUS_ERROR, RESPONSE_STATUS_SUCCESS,
 };
 use super::support::builder::BrpRequestBuilder;
 use super::support::formatting::generate_empty_components_hint;
@@ -15,7 +15,7 @@ use super::support::response_processor::{BrpMetadata, BrpResponseFormatter, proc
 use super::support::serialization::json_tool_result;
 use super::support::utils::to_execute_request;
 use crate::BrpMcpService;
-use crate::constants::{BRP_METHOD_LIST, DESC_BRP_LIST, TOOL_BRP_LIST};
+use crate::constants::{DESC_BRP_LIST, TOOL_BRP_LIST};
 use crate::support::schema;
 
 pub fn register_tool() -> Tool {
