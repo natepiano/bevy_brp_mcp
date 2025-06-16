@@ -13,11 +13,19 @@ use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: "cleanup_logs".into(),
-        description: CLEANUP_LOGS_DESC.into(),
+        name:         "cleanup_logs".into(),
+        description:  CLEANUP_LOGS_DESC.into(),
         input_schema: schema::SchemaBuilder::new()
-            .add_string_property("app_name", "Optional filter to delete logs for a specific app only", false)
-            .add_number_property("older_than_seconds", "Optional filter to delete logs older than N seconds", false)
+            .add_string_property(
+                "app_name",
+                "Optional filter to delete logs for a specific app only",
+                false,
+            )
+            .add_number_property(
+                "older_than_seconds",
+                "Optional filter to delete logs older than N seconds",
+                false,
+            )
             .build(),
     }
 }

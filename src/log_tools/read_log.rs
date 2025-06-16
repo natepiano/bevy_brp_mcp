@@ -14,12 +14,24 @@ use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: "read_log".into(),
-        description: READ_LOG_DESC.into(),
+        name:         "read_log".into(),
+        description:  READ_LOG_DESC.into(),
         input_schema: schema::SchemaBuilder::new()
-            .add_string_property("filename", "The log filename (e.g., bevy_brp_mcp_myapp_1234567890.log)", true)
-            .add_string_property("keyword", "Optional keyword to filter lines (case-insensitive)", false)
-            .add_number_property("tail_lines", "Optional number of lines to read from the end of file", false)
+            .add_string_property(
+                "filename",
+                "The log filename (e.g., bevy_brp_mcp_myapp_1234567890.log)",
+                true,
+            )
+            .add_string_property(
+                "keyword",
+                "Optional keyword to filter lines (case-insensitive)",
+                false,
+            )
+            .add_number_property(
+                "tail_lines",
+                "Optional number of lines to read from the end of file",
+                false,
+            )
             .build(),
     }
 }

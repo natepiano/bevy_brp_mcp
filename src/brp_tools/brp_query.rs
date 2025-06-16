@@ -98,7 +98,7 @@ pub async fn handle(
                         } else {
                             format!("BRP query failed with error code {}", code)
                         };
-                        
+
                         let formatted_error = json!({
                             "status": "error",
                             "message": error_message,
@@ -111,9 +111,10 @@ pub async fn handle(
                                 }
                             }
                         });
-                        
+
                         return Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-                            serde_json::to_string(&formatted_error).unwrap_or_else(|_| "{}".to_string()),
+                            serde_json::to_string(&formatted_error)
+                                .unwrap_or_else(|_| "{}".to_string()),
                         )]));
                     }
                 }

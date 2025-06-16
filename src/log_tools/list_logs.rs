@@ -10,10 +10,14 @@ use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: "list_logs".into(),
-        description: LIST_LOGS_DESC.into(),
+        name:         "list_logs".into(),
+        description:  LIST_LOGS_DESC.into(),
         input_schema: schema::SchemaBuilder::new()
-            .add_string_property("app_name", "Optional filter to list logs for a specific app only", false)
+            .add_string_property(
+                "app_name",
+                "Optional filter to list logs for a specific app only",
+                false,
+            )
             .build(),
     }
 }
