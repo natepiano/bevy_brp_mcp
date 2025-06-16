@@ -12,7 +12,7 @@ use crate::support::schema;
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: "brp_list_components".into(),
+        name: "brp_list".into(),
         description: BRP_LIST_DESC.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_number_property(

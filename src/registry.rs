@@ -35,7 +35,7 @@ pub async fn handle_tool_call(
 ) -> Result<CallToolResult, McpError> {
     match request.name.as_ref() {
         "brp_execute" => brp_execute::handle_brp_execute(request, context).await,
-        "brp_list_components" => brp_list::handle(service, request, context).await,
+        "brp_list" => brp_list::handle(service, request, context).await,
         "brp_query" => brp_query::handle(service, request, context).await,
         "check_brp" => check_brp::handle(service, request, context).await,
         "cleanup_logs" => cleanup_logs::handle(service, request, context).await,

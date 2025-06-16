@@ -25,7 +25,7 @@ Example usage patterns:
 2. Find entities with Camera component, returning Transform data
 3. Find entities with Sprite but without Player component
 
-IMPORTANT: Components must be registered with BRP (see brp_list_components for requirements).
+IMPORTANT: Components must be registered with BRP (see brp_list for requirements).
 
-Note: When strict=true and invalid components are encountered, the response will have status="error" 
+Note: When strict=true and invalid components are encountered, the response will have status="error"
 with error_code=-23402 (COMPONENT_ERROR), indicating unknown or unregistered component types.
