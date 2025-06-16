@@ -15,7 +15,7 @@ use super::support::response_processor::{BrpMetadata, BrpResponseFormatter, proc
 use super::support::serialization::json_tool_result;
 use super::support::utils::to_execute_request;
 use crate::BrpMcpService;
-use crate::constants::{BRP_LIST, DESC_BRP_LIST, TOOL_BRP_LIST};
+use crate::constants::{BRP_METHOD_LIST, DESC_BRP_LIST, TOOL_BRP_LIST};
 use crate::support::schema;
 
 pub fn register_tool() -> Tool {
@@ -55,7 +55,7 @@ pub async fn handle(
         .unwrap_or(DEFAULT_BRP_PORT);
 
     // Build BRP request using the builder
-    let mut builder = BrpRequestBuilder::new(BRP_LIST).port(port);
+    let mut builder = BrpRequestBuilder::new(BRP_METHOD_LIST).port(port);
 
     if let Some(entity) = entity_id {
         builder = builder.entity(entity);
@@ -71,7 +71,7 @@ pub async fn handle(
 
     // Create formatter and metadata
     let formatter = ListFormatter::new(entity_id);
-    let metadata = BrpMetadata::new(BRP_LIST, port);
+    let metadata = BrpMetadata::new(BRP_METHOD_LIST, port);
 
     // Use the response processor to handle the result
     process_brp_response(result, formatter, metadata)

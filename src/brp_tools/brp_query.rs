@@ -15,7 +15,7 @@ use super::support::response_processor::{BrpMetadata, BrpResponseFormatter, proc
 use super::support::serialization::json_tool_result;
 use super::support::utils::to_execute_request;
 use crate::BrpMcpService;
-use crate::constants::{BRP_QUERY, DESC_BRP_QUERY, TOOL_BRP_QUERY};
+use crate::constants::{BRP_METHOD_QUERY, DESC_BRP_QUERY, TOOL_BRP_QUERY};
 use crate::support::schema;
 
 /// Data specification for bevy/query
@@ -73,7 +73,7 @@ pub async fn handle(
         .unwrap_or(DEFAULT_BRP_PORT);
 
     // Build BRP request using the builder
-    let mut builder = BrpRequestBuilder::new(BRP_QUERY).port(port);
+    let mut builder = BrpRequestBuilder::new(BRP_METHOD_QUERY).port(port);
 
     // Handle data parameter
     if let Some(data) = args.and_then(|args| args.get("data")) {
@@ -110,7 +110,7 @@ pub async fn handle(
 
     // Create formatter and metadata
     let formatter = QueryFormatter::new(data, filter, strict);
-    let metadata = BrpMetadata::new(BRP_QUERY, port);
+    let metadata = BrpMetadata::new(BRP_METHOD_QUERY, port);
 
     // Use the response processor to handle the result
     process_brp_response(result, formatter, metadata)

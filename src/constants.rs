@@ -55,5 +55,5 @@ pub const TOOL_LIST_LOGS: &str = "list_logs";
 pub const TOOL_READ_LOG: &str = "read_log";
 
 // BRP protocol method
-pub const BRP_LIST: &str = "bevy/list";
-pub const BRP_QUERY: &str = "bevy/query";
+pub const BRP_METHOD_LIST: &str = "bevy/list";
+pub const BRP_METHOD_QUERY: &str = "bevy/query";
