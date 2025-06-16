@@ -6,6 +6,7 @@ use rmcp::{Error as McpError, RoleServer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_CODE, JSON_FIELD_DATA};
 use super::support::builder::BrpJsonRpcBuilder;
 use crate::constants::TOOL_BRP_EXECUTE;
 use crate::support::response::ResponseBuilder;
@@ -20,7 +21,7 @@ pub fn register_tool() -> Tool {
         input_schema: schema::SchemaBuilder::new()
             .add_string_property("method", "The BRP method to execute (e.g., 'rpc.discover', 'bevy/get', 'bevy/query')", true)
             .add_any_property("params", "Optional parameters for the method, as a JSON object or array", false)
-            .add_number_property("port", "The BRP port (default: 15702)", false)
+            .add_number_property("port", &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
             .build(),
     }
 }
@@ -109,8 +110,8 @@ pub async fn handle_brp_execute(
         let response = ResponseBuilder::error()
             .message(format!("BRP error: {}", error.message))
             .data(serde_json::json!({
-                "code": error.code,
-                "data": error.data
+                JSON_FIELD_CODE: error.code,
+                JSON_FIELD_DATA: error.data
             }))
             .build();
 

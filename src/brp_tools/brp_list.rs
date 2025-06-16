@@ -3,9 +3,16 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::{Value, json};
 
+use super::constants::{
+    DEFAULT_BRP_PORT, JSON_FIELD_COUNT, JSON_FIELD_DATA, JSON_FIELD_ENTITY, JSON_FIELD_ENTITY_ID,
+    JSON_FIELD_ERROR_CODE, JSON_FIELD_HINT, JSON_FIELD_MESSAGE, JSON_FIELD_METADATA,
+    JSON_FIELD_METHOD, JSON_FIELD_PORT, JSON_FIELD_STATUS, QUERY_FIELD_COMPONENTS,
+    RESPONSE_STATUS_ERROR, RESPONSE_STATUS_SUCCESS,
+};
 use super::support::builder::BrpRequestBuilder;
 use super::support::formatting::generate_empty_components_hint;
 use super::support::response_processor::{BrpMetadata, BrpResponseFormatter, process_brp_response};
+use super::support::serialization::json_tool_result;
 use super::support::utils::to_execute_request;
 use crate::BrpMcpService;
 use crate::constants::{BRP_LIST, DESC_BRP_LIST, TOOL_BRP_LIST};
@@ -22,7 +29,7 @@ pub fn register_tool() -> Tool {
                  components in the app. Internally calls bevy/list with or without entity parameter.",
                 false
             )
-            .add_number_property("port", "The BRP port (default: 15702)", false)
+            .add_number_property("port", &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
             .build(),
     }
 }
@@ -45,7 +52,7 @@ pub async fn handle(
         .and_then(|args| args.get("port"))
         .and_then(|v| v.as_u64())
         .map(|v| v as u16)
-        .unwrap_or(15702);
+        .unwrap_or(DEFAULT_BRP_PORT);
 
     // Build BRP request using the builder
     let mut builder = BrpRequestBuilder::new(BRP_LIST).port(port);
@@ -90,42 +97,40 @@ impl BrpResponseFormatter for ListFormatter {
         // Format the response based on entity_id
         let formatted_data = if let Some(entity) = self.entity_id {
             let mut response = json!({
-                "status": "success",
-                "message": format!("Found {} components on entity {}", components.len(), entity),
-                "data": {
-                    "entity": entity,
-                    "components": components,
-                    "count": components.len()
+                JSON_FIELD_STATUS: RESPONSE_STATUS_SUCCESS,
+                JSON_FIELD_MESSAGE: format!("Found {} components on entity {}", components.len(), entity),
+                JSON_FIELD_DATA: {
+                    JSON_FIELD_ENTITY: entity,
+                    QUERY_FIELD_COMPONENTS: components,
+                    JSON_FIELD_COUNT: components.len()
                 }
             });
 
             // Add hint if no components found
             if components.is_empty() {
-                response["hint"] = json!(generate_empty_components_hint(Some(entity)));
+                response[JSON_FIELD_HINT] = json!(generate_empty_components_hint(Some(entity)));
             }
 
             response
         } else {
             let mut response = json!({
-                "status": "success",
-                "message": format!("Found {} registered component types", components.len()),
-                "data": {
-                    "components": components,
-                    "count": components.len()
+                JSON_FIELD_STATUS: RESPONSE_STATUS_SUCCESS,
+                JSON_FIELD_MESSAGE: format!("Found {} registered component types", components.len()),
+                JSON_FIELD_DATA: {
+                    QUERY_FIELD_COMPONENTS: components,
+                    JSON_FIELD_COUNT: components.len()
                 }
             });
 
             // Add hint if no components found
             if components.is_empty() {
-                response["hint"] = json!(generate_empty_components_hint(None));
+                response[JSON_FIELD_HINT] = json!(generate_empty_components_hint(None));
             }
 
             response
         };
 
-        CallToolResult::success(vec![rmcp::model::Content::text(
-            serde_json::to_string(&formatted_data).unwrap_or_else(|_| "{}".to_string()),
-        )])
+        json_tool_result(&formatted_data)
     }
 
     fn format_error(
@@ -134,19 +139,17 @@ impl BrpResponseFormatter for ListFormatter {
         metadata: BrpMetadata,
     ) -> CallToolResult {
         let formatted_error = json!({
-            "status": "error",
-            "message": error.message,
-            "error_code": error.code,
-            "data": error.data,
-            "metadata": {
-                "method": metadata.method,
-                "port": metadata.port,
-                "entity_id": self.entity_id
+            JSON_FIELD_STATUS: RESPONSE_STATUS_ERROR,
+            JSON_FIELD_MESSAGE: error.message,
+            JSON_FIELD_ERROR_CODE: error.code,
+            JSON_FIELD_DATA: error.data,
+            JSON_FIELD_METADATA: {
+                JSON_FIELD_METHOD: metadata.method,
+                JSON_FIELD_PORT: metadata.port,
+                JSON_FIELD_ENTITY_ID: self.entity_id
             }
         });
 
-        CallToolResult::success(vec![rmcp::model::Content::text(
-            serde_json::to_string(&formatted_error).unwrap_or_else(|_| "{}".to_string()),
-        )])
+        json_tool_result(&formatted_error)
     }
 }

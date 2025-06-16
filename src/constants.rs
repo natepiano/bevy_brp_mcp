@@ -3,6 +3,9 @@ pub const PROFILE_DEBUG: &str = "debug";
 pub const PROFILE_RELEASE: &str = "release";
 pub const DEFAULT_PROFILE: &str = PROFILE_DEBUG;
 
+// Re-export DEFAULT_BRP_PORT from brp_tools for use by types.rs
+pub use crate::brp_tools::constants::DEFAULT_BRP_PORT;
+
 // Parameter name constants
 pub const PARAM_PROFILE: &str = "profile";
 pub const PARAM_APP_NAME: &str = "app_name";

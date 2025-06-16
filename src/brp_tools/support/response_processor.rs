@@ -47,7 +47,6 @@ pub trait BrpResponseFormatter {
     fn format_error(&self, error: BrpError, metadata: BrpMetadata) -> CallToolResult;
 }
 
-
 /// Generic function to process BRP responses using a formatter
 pub fn process_brp_response<F: BrpResponseFormatter>(
     brp_result: CallToolResult,
