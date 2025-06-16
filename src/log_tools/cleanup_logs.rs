@@ -8,13 +8,13 @@ use serde_json::json;
 
 use super::support::log_utils;
 use crate::BrpMcpService;
-use crate::constants::CLEANUP_LOGS_DESC;
+use crate::constants::{DESC_CLEANUP_LOGS, TOOL_CLEANUP_LOGS};
 use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name:         "cleanup_logs".into(),
-        description:  CLEANUP_LOGS_DESC.into(),
+        name:         TOOL_CLEANUP_LOGS.into(),
+        description:  DESC_CLEANUP_LOGS.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property(
                 "app_name",

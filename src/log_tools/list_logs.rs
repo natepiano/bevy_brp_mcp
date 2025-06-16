@@ -5,13 +5,13 @@ use serde_json::json;
 
 use super::support::log_utils;
 use crate::BrpMcpService;
-use crate::constants::LIST_LOGS_DESC;
+use crate::constants::{DESC_LIST_LOGS, TOOL_LIST_LOGS};
 use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name:         "list_logs".into(),
-        description:  LIST_LOGS_DESC.into(),
+        name:         TOOL_LIST_LOGS.into(),
+        description:  DESC_LIST_LOGS.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property(
                 "app_name",
