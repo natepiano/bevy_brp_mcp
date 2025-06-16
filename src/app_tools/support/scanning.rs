@@ -6,15 +6,17 @@ use crate::cargo_detector::{BinaryInfo, ExampleInfo};
 
 /// Iterator over all valid Cargo project paths found in the given search paths
 /// Yields paths to directories containing Cargo.toml files
-pub fn iter_cargo_project_paths<'a>(search_paths: &'a [PathBuf]) -> impl Iterator<Item = PathBuf> + 'a {
+pub fn iter_cargo_project_paths<'a>(
+    search_paths: &'a [PathBuf],
+) -> impl Iterator<Item = PathBuf> + 'a {
     search_paths.iter().flat_map(|root| {
         let mut paths = Vec::new();
-        
+
         // Check the root itself
         if root.join("Cargo.toml").exists() {
             paths.push(root.clone());
         }
-        
+
         // Check immediate subdirectories
         if let Ok(entries) = std::fs::read_dir(root) {
             for entry in entries.flatten() {
@@ -31,14 +33,16 @@ pub fn iter_cargo_project_paths<'a>(search_paths: &'a [PathBuf]) -> impl Iterato
                 }
             }
         }
-        
+
         paths.into_iter()
     })
 }
 
-
 /// Find a specific app by name across search paths
-pub fn find_app_by_name(app_name: &str, search_paths: &[PathBuf]) -> Option<crate::cargo_detector::BinaryInfo> {
+pub fn find_app_by_name(
+    app_name: &str,
+    search_paths: &[PathBuf],
+) -> Option<crate::cargo_detector::BinaryInfo> {
     // Use the generic iterator to find all cargo projects
     for path in iter_cargo_project_paths(search_paths) {
         if let Ok(detector) = crate::cargo_detector::CargoDetector::from_path(&path) {
@@ -52,7 +56,10 @@ pub fn find_app_by_name(app_name: &str, search_paths: &[PathBuf]) -> Option<crat
 }
 
 /// Find a specific example by name across search paths
-pub fn find_example_by_name(example_name: &str, search_paths: &[PathBuf]) -> Option<crate::cargo_detector::ExampleInfo> {
+pub fn find_example_by_name(
+    example_name: &str,
+    search_paths: &[PathBuf],
+) -> Option<crate::cargo_detector::ExampleInfo> {
     // Use the generic iterator to find all cargo projects
     for path in iter_cargo_project_paths(search_paths) {
         if let Ok(detector) = crate::cargo_detector::CargoDetector::from_path(&path) {
@@ -67,15 +74,13 @@ pub fn find_example_by_name(example_name: &str, search_paths: &[PathBuf]) -> Opt
 
 /// Find a required app by name, returning an error if not found
 /// This eliminates the duplicated pattern of finding an app with error handling
-pub fn find_required_app(
-    app_name: &str,
-    search_paths: &[PathBuf],
-) -> Result<BinaryInfo, McpError> {
-    find_app_by_name(app_name, search_paths)
-        .ok_or_else(|| McpError::invalid_params(
+pub fn find_required_app(app_name: &str, search_paths: &[PathBuf]) -> Result<BinaryInfo, McpError> {
+    find_app_by_name(app_name, search_paths).ok_or_else(|| {
+        McpError::invalid_params(
             format!("Bevy app '{}' not found in any search path", app_name),
-            None
-        ))
+            None,
+        )
+    })
 }
 
 /// Find a required example by name, returning an error if not found
@@ -84,9 +89,13 @@ pub fn find_required_example(
     example_name: &str,
     search_paths: &[PathBuf],
 ) -> Result<ExampleInfo, McpError> {
-    find_example_by_name(example_name, search_paths)
-        .ok_or_else(|| McpError::invalid_params(
-            format!("Bevy example '{}' not found in any search path", example_name),
-            None
-        ))
+    find_example_by_name(example_name, search_paths).ok_or_else(|| {
+        McpError::invalid_params(
+            format!(
+                "Bevy example '{}' not found in any search path",
+                example_name
+            ),
+            None,
+        )
+    })
 }

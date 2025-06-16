@@ -20,17 +20,18 @@ mod registry;
 mod support;
 mod types;
 
+use constants::BEVY_BRP_MCP_INFO;
 
 #[derive(Clone)]
 pub struct BrpMcpService {
-    pub roots: Arc<Mutex<Vec<PathBuf>>>,
+    pub roots:       Arc<Mutex<Vec<PathBuf>>>,
     prompt_registry: Arc<prompts::PromptRegistry>,
 }
 
 impl BrpMcpService {
     fn new() -> Self {
         Self {
-            roots: Arc::new(Mutex::new(Vec::new())),
+            roots:           Arc::new(Mutex::new(Vec::new())),
             prompt_registry: Arc::new(prompts::PromptRegistry::new()),
         }
     }
@@ -39,7 +40,7 @@ impl BrpMcpService {
 impl ServerHandler for BrpMcpService {
     fn get_info(&self) -> rmcp::model::ServerInfo {
         rmcp::model::ServerInfo {
-            instructions: None,
+            instructions: Some(BEVY_BRP_MCP_INFO.to_string()),
             capabilities: ServerCapabilities::builder()
                 .enable_tools()
                 .enable_prompts()
@@ -77,7 +78,9 @@ impl ServerHandler for BrpMcpService {
         request: GetPromptRequestParam,
         context: RequestContext<RoleServer>,
     ) -> Result<GetPromptResult, McpError> {
-        self.prompt_registry.get_prompt(&request.name, context).await
+        self.prompt_registry
+            .get_prompt(&request.name, context)
+            .await
     }
 }
 

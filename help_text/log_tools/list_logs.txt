@@ -1,0 +1,1 @@
+Lists all bevy_brp_mcp log files with metadata. Returns log files sorted by timestamp (newest first), showing file size and last modified time. Use the optional app_name filter to see logs for a specific app. Logs are created when launching Bevy apps and stored in the temp directory.

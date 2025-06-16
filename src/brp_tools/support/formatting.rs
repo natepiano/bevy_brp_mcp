@@ -4,10 +4,10 @@
 use crate::constants::BRP_REGISTRATION_REQUIREMENTS;
 
 /// Generates a hint message for when no components are found.
-/// 
+///
 /// # Arguments
 /// * `entity_id` - Optional entity ID for entity-specific queries
-/// 
+///
 /// # Returns
 /// A formatted hint message explaining why components might not be visible
 pub fn generate_empty_components_hint(entity_id: Option<u64>) -> String {
@@ -18,8 +18,7 @@ pub fn generate_empty_components_hint(entity_id: Option<u64>) -> String {
             2. The entity has no components registered for BRP access\n\
             3. Components aren't properly configured for reflection\n\n\
             {}",
-            id,
-            BRP_REGISTRATION_REQUIREMENTS
+            id, BRP_REGISTRATION_REQUIREMENTS
         )
     } else {
         format!(

@@ -4,10 +4,10 @@ use serde_json::Value;
 /// Standard JSON response structure for all tools
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonResponse {
-    pub status: ResponseStatus,
+    pub status:  ResponseStatus,
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data: Option<Value>,
+    pub data:    Option<Value>,
 }
 
 /// Response status types
@@ -23,9 +23,9 @@ impl JsonResponse {
     #[cfg(test)]
     pub fn success(message: impl Into<String>) -> Self {
         Self {
-            status: ResponseStatus::Success,
+            status:  ResponseStatus::Success,
             message: message.into(),
-            data: None,
+            data:    None,
         }
     }
 
@@ -33,9 +33,9 @@ impl JsonResponse {
     #[cfg(test)]
     pub fn success_with_data(message: impl Into<String>, data: impl Serialize) -> Self {
         Self {
-            status: ResponseStatus::Success,
+            status:  ResponseStatus::Success,
             message: message.into(),
-            data: Some(serde_json::to_value(data).unwrap_or(Value::Null)),
+            data:    Some(serde_json::to_value(data).unwrap_or(Value::Null)),
         }
     }
 
@@ -47,31 +47,29 @@ impl JsonResponse {
     }
 }
 
-
 /// Builder for constructing JSON responses
 pub struct ResponseBuilder {
-    status: ResponseStatus,
+    status:  ResponseStatus,
     message: String,
-    data: Option<Value>,
+    data:    Option<Value>,
 }
 
 impl ResponseBuilder {
     pub fn success() -> Self {
         Self {
-            status: ResponseStatus::Success,
+            status:  ResponseStatus::Success,
             message: String::new(),
-            data: None,
-        }
-    }
-    
-    pub fn error() -> Self {
-        Self {
-            status: ResponseStatus::Error,
-            message: String::new(),
-            data: None,
+            data:    None,
         }
     }
 
+    pub fn error() -> Self {
+        Self {
+            status:  ResponseStatus::Error,
+            message: String::new(),
+            data:    None,
+        }
+    }
 
     pub fn message(mut self, message: impl Into<String>) -> Self {
         self.message = message.into();
@@ -85,9 +83,9 @@ impl ResponseBuilder {
 
     pub fn build(self) -> JsonResponse {
         JsonResponse {
-            status: self.status,
+            status:  self.status,
             message: self.message,
-            data: self.data,
+            data:    self.data,
         }
     }
 }
@@ -101,22 +99,21 @@ pub fn success_json_response(
         .message(message)
         .data(data)
         .build();
-    
-    rmcp::model::CallToolResult::success(vec![rmcp::model::Content::text(
-        response.to_json()
-    )])
+
+    rmcp::model::CallToolResult::success(vec![rmcp::model::Content::text(response.to_json())])
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_success_response() {
         let response = JsonResponse::success("Operation successful");
         let json = serde_json::to_value(&response).unwrap();
-        
+
         assert_eq!(json["status"], "success");
         assert_eq!(json["message"], "Operation successful");
         assert!(json["data"].is_null());
@@ -127,12 +124,11 @@ mod tests {
         let data = json!({"key": "value"});
         let response = JsonResponse::success_with_data("Data retrieved", data);
         let json = serde_json::to_value(&response).unwrap();
-        
+
         assert_eq!(json["status"], "success");
         assert_eq!(json["message"], "Data retrieved");
         assert_eq!(json["data"]["key"], "value");
     }
-
 
     #[test]
     fn test_response_builder() {
@@ -140,7 +136,7 @@ mod tests {
             .message("Custom message")
             .data(json!({"count": 42}))
             .build();
-        
+
         let json = serde_json::to_value(&response).unwrap();
         assert_eq!(json["status"], "success");
         assert_eq!(json["message"], "Custom message");
