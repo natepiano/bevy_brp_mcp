@@ -26,7 +26,7 @@ pub fn register_tool() -> Tool {
             )
             .add_boolean_property(
                 "strict",
-                "If true, query fails on unknown component types",
+                "If true, returns error on unknown component types (default: false)",
                 false
             )
             .add_number_property("port", "The BRP port (default: 15702)", false)
@@ -88,9 +88,40 @@ pub async fn handle(
                 McpError::internal_error("Invalid response format from bevy/query", None)
             })?;
 
+            // Check if the response contains an embedded error (happens with strict mode)
+            if let Some(obj) = query_results.as_object() {
+                if let Some(code) = obj.get("code").and_then(|c| c.as_i64()) {
+                    if code < 0 {
+                        // This is an error response embedded in the data
+                        let error_message = if let Some(data) = obj.get("data") {
+                            format!("BRP query failed with error code {}: {:?}", code, data)
+                        } else {
+                            format!("BRP query failed with error code {}", code)
+                        };
+                        
+                        let formatted_error = json!({
+                            "status": "error",
+                            "message": error_message,
+                            "error_code": code,
+                            "metadata": {
+                                "query_params": {
+                                    "data": args.and_then(|a| a.get("data")),
+                                    "filter": args.and_then(|a| a.get("filter")),
+                                    "strict": args.and_then(|a| a.get("strict"))
+                                }
+                            }
+                        });
+                        
+                        return Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+                            serde_json::to_string(&formatted_error).unwrap_or_else(|_| "{}".to_string()),
+                        )]));
+                    }
+                }
+            }
+
             // Count entities in results
-            let entity_count = if let Some(obj) = query_results.as_object() {
-                obj.len()
+            let entity_count = if let Some(arr) = query_results.as_array() {
+                arr.len()
             } else {
                 0
             };

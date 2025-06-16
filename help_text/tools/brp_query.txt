@@ -14,7 +14,11 @@ Parameters:
 - filter (object): Filters which entities to query
   - with: Array of components entities must have
   - without: Array of components entities must NOT have
-- strict (boolean): If true, query fails on unknown component types
+- strict (boolean): If true, returns an error when encountering unknown component types.
+                   If false (default), silently handles invalid components as follows:
+                   - Invalid components in "components" or "with": returns empty results
+                   - Invalid components in "option" or "without": ignored
+                   - Invalid components in "has": treated as absent from entities
 
 Example usage patterns:
 1. Find all entities with Transform and return their data
@@ -22,3 +26,6 @@ Example usage patterns:
 3. Find entities with Sprite but without Player component
 
 IMPORTANT: Components must be registered with BRP (see brp_list_components for requirements).
+
+Note: When strict=true and invalid components are encountered, the response will have status="error" 
+with error_code=-23402 (COMPONENT_ERROR), indicating unknown or unregistered component types.
