@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cargo install:*)"
+      "Bash(cargo install:*)",
+      "mcp__brp__list_bevy_apps",
+      "mcp__brp__launch_bevy_app",
+      "mcp__brp__bevy_list",
+      "mcp__brp__brp_status",
+      "mcp__brp__list_logs",
+      "mcp__brp__list_bevy_examples"
     ],
     "deny": []
   }

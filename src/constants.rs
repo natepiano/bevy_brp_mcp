@@ -40,8 +40,8 @@ pub const DESC_CLEANUP_LOGS: &str = include_help_text!("log_tools/cleanup_logs.t
 
 // Tool name constants
 pub const TOOL_BRP_EXECUTE: &str = "brp_execute";
-pub const TOOL_BRP_LIST: &str = "brp_list";
-pub const TOOL_BRP_QUERY: &str = "brp_query";
+pub const TOOL_BRP_LIST: &str = "bevy_list";
+pub const TOOL_BRP_QUERY: &str = "bevy_query";
 pub const TOOL_BRP_STATUS: &str = "brp_status";
 pub const TOOL_CLEANUP_LOGS: &str = "cleanup_logs";
 pub const TOOL_LIST_BEVY_APPS: &str = "list_bevy_apps";
@@ -50,3 +50,7 @@ pub const TOOL_LAUNCH_BEVY_APP: &str = "launch_bevy_app";
 pub const TOOL_LAUNCH_BEVY_EXAMPLE: &str = "launch_bevy_example";
 pub const TOOL_LIST_LOGS: &str = "list_logs";
 pub const TOOL_READ_LOG: &str = "read_log";
+
+// BRP protocol method
+pub const BRP_LIST: &str = "bevy/list";
+pub const BRP_QUERY: &str = "bevy/query";
