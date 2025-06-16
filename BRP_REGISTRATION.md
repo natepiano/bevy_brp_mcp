@@ -101,13 +101,13 @@ Many Bevy built-in components are already registered and will appear automatical
 
 ## Checking Registration
 
-Use the `brp_list_components` tool to verify your types are registered:
+Use the `brp_list` tool to verify your types are registered:
 ```bash
 # List all registered components
-brp_list_components
+brp_list
 
 # Check a specific entity
-brp_list_components --entity_id 0
+brp_list --entity_id 0
 ```
 
 If your type doesn't appear, double-check all three requirements!

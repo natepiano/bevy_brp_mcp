@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use std::time::SystemTime;
+
 use rmcp::Error as McpError;
 use serde_json::json;
 
@@ -19,21 +20,21 @@ pub fn parse_log_filename(filename: &str) -> Option<(String, String)> {
     if !is_valid_log_filename(filename) {
         return None;
     }
-    
+
     let parts: Vec<&str> = filename
         .trim_start_matches(LOG_PREFIX)
         .trim_end_matches(LOG_EXTENSION)
         .rsplitn(2, '_')
         .collect();
-    
+
     if parts.len() != 2 {
         return None;
     }
-    
+
     // Parts are reversed due to rsplitn
     let timestamp_str = parts[0].to_string();
     let app_name = parts[1].to_string();
-    
+
     Some((app_name, timestamp_str))
 }
 
@@ -42,12 +43,12 @@ pub fn format_bytes(bytes: u64) -> String {
     const UNITS: &[&str] = &["B", "KB", "MB", "GB"];
     let mut size = bytes as f64;
     let mut unit_index = 0;
-    
+
     while size >= 1024.0 && unit_index < UNITS.len() - 1 {
         size /= 1024.0;
         unit_index += 1;
     }
-    
+
     if unit_index == 0 {
         format!("{} {}", bytes, UNITS[unit_index])
     } else {
@@ -68,32 +69,38 @@ pub fn get_log_file_path(filename: &str) -> PathBuf {
 /// Represents a log file entry with metadata
 #[derive(Debug, Clone)]
 pub struct LogFileEntry {
-    pub filename: String,
-    pub app_name: String,
+    pub filename:  String,
+    pub app_name:  String,
     pub timestamp: String,
-    pub path: PathBuf,
-    pub metadata: fs::Metadata,
+    pub path:      PathBuf,
+    pub metadata:  fs::Metadata,
 }
 
 impl LogFileEntry {
     /// Converts the entry to a JSON value for API responses
     pub fn to_json(&self) -> serde_json::Value {
         let size = self.metadata.len();
-        let modified = self.metadata.modified()
+        let modified = self
+            .metadata
+            .modified()
             .ok()
             .and_then(|t| t.duration_since(SystemTime::UNIX_EPOCH).ok())
             .map(|d| d.as_secs())
             .unwrap_or(0);
-        
-        let modified_str = self.metadata.modified()
+
+        let modified_str = self
+            .metadata
+            .modified()
             .ok()
-            .map(|t| chrono::DateTime::<chrono::Local>::from(t)
-                .format("%Y-%m-%d %H:%M:%S")
-                .to_string())
+            .map(|t| {
+                chrono::DateTime::<chrono::Local>::from(t)
+                    .format("%Y-%m-%d %H:%M:%S")
+                    .to_string()
+            })
             .unwrap_or_else(|| "Unknown".to_string());
-        
+
         let timestamp_value = self.timestamp.parse::<u128>().unwrap_or(0);
-        
+
         json!({
             "filename": self.filename,
             "app_name": self.app_name,
@@ -115,34 +122,28 @@ where
 {
     let temp_dir = get_log_directory();
     let mut log_entries = Vec::new();
-    
+
     // Read the temp directory
-    let entries = fs::read_dir(&temp_dir)
-        .map_err(|e| McpError::internal_error(
-            format!("Failed to read temp directory: {}", e),
-            None
-        ))?;
-    
+    let entries = fs::read_dir(&temp_dir).map_err(|e| {
+        McpError::internal_error(format!("Failed to read temp directory: {}", e), None)
+    })?;
+
     // Process each entry
     for entry in entries {
-        let entry = entry.map_err(|e| McpError::internal_error(
-            format!("Failed to read directory entry: {}", e),
-            None
-        ))?;
-        
+        let entry = entry.map_err(|e| {
+            McpError::internal_error(format!("Failed to read directory entry: {}", e), None)
+        })?;
+
         let path = entry.path();
-        let filename = path.file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("");
-        
+        let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+
         // Parse the filename
         if let Some((app_name, timestamp)) = parse_log_filename(filename) {
             // Get file metadata
-            let metadata = entry.metadata().map_err(|e| McpError::internal_error(
-                format!("Failed to get file metadata: {}", e),
-                None
-            ))?;
-            
+            let metadata = entry.metadata().map_err(|e| {
+                McpError::internal_error(format!("Failed to get file metadata: {}", e), None)
+            })?;
+
             let log_entry = LogFileEntry {
                 filename: filename.to_string(),
                 app_name,
@@ -150,13 +151,13 @@ where
                 path,
                 metadata,
             };
-            
+
             // Apply filter
             if filter(&log_entry) {
                 log_entries.push(log_entry);
             }
         }
     }
-    
+
     Ok(log_entries)
 }

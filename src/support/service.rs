@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use std::future::Future;
+use std::path::PathBuf;
 
 use rmcp::model::{CallToolRequestParam, CallToolResult};
 use rmcp::service::RequestContext;
@@ -17,7 +17,7 @@ pub async fn fetch_roots_and_get_paths(
     if let Err(e) = service.fetch_roots_from_client(context.peer.clone()).await {
         eprintln!("Failed to fetch roots: {}", e);
     }
-    
+
     Ok(service.roots.lock().unwrap().clone())
 }
 
