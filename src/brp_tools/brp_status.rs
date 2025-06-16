@@ -8,6 +8,7 @@ use serde_json::json;
 use sysinfo::System;
 use tokio::time::timeout;
 
+use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_STATUS};
 use super::support::builder::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
 use crate::app_tools::support::scanning;
@@ -20,7 +21,7 @@ pub fn register_tool() -> Tool {
         description: "Check if a specific Bevy app is running and has BRP (Bevy Remote Protocol) enabled. This tool helps diagnose whether your app is running and properly configured with RemotePlugin.".into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property(PARAM_APP_NAME, "Name of the Bevy app to check", true)
-            .add_number_property(PARAM_PORT, "Port to check for BRP (default: 15702)", false)
+            .add_number_property(PARAM_PORT, &format!("Port to check for BRP (default: {})", DEFAULT_BRP_PORT), false)
             .build(),
     }
 }
@@ -37,7 +38,7 @@ pub async fn handle(
         |req, search_paths| async move {
             // Get parameters
             let app_name = params::extract_required_string(&req, PARAM_APP_NAME)?;
-            let port = params::extract_optional_number(&req, PARAM_PORT, 15702)?;
+            let port = params::extract_optional_number(&req, PARAM_PORT, DEFAULT_BRP_PORT as u64)?;
 
             // Check the app
             check_brp_for_app(app_name, port as u16, &search_paths).await
@@ -119,9 +120,9 @@ async fn check_brp_for_app(
     Ok(response::success_json_response(
         message,
         json!({
-            "status": status,
+            JSON_FIELD_STATUS: status,
             "app_name": app_name,
-            "port": port,
+            JSON_FIELD_PORT: port,
             "app_running": app_running,
             "brp_responsive": brp_responsive,
             "app_pid": app_pid

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::constants::DEFAULT_BRP_PORT;
+
 /// Represents a prompt that can be used to guide users
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Prompt {
@@ -51,5 +53,5 @@ pub struct BrpExecuteParams {
 }
 
 fn default_port() -> u16 {
-    15702
+    DEFAULT_BRP_PORT
 }
