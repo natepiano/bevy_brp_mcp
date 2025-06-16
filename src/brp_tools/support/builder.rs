@@ -159,29 +159,10 @@ impl BrpJsonRpcBuilder {
         }
     }
 
-    /// Helper method to set a parameter value
-    fn set_param(mut self, key: &str, value: Value) -> Self {
-        let mut params = self.params.take().unwrap_or_else(|| json!({}));
-        params[key] = value;
-        self.params = Some(params);
-        self
-    }
-
-    /// Set the request ID
-    pub fn id(mut self, id: u64) -> Self {
-        self.id = id;
-        self
-    }
-
     /// Set raw params
     pub fn params(mut self, params: Value) -> Self {
         self.params = Some(params);
         self
-    }
-
-    /// Set entity parameter
-    pub fn entity(self, entity_id: u64) -> Self {
-        self.set_param("entity", json!(entity_id))
     }
 
     /// Build the final JSON-RPC request
