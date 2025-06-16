@@ -44,8 +44,6 @@ pub const JSONRPC_FIELD: &str = "jsonrpc";
 pub const JSONRPC_FIELD_ID: &str = "id";
 pub const JSONRPC_FIELD_METHOD: &str = "method";
 pub const JSONRPC_FIELD_PARAMS: &str = "params";
-pub const JSONRPC_FIELD_RESULT: &str = "result";
-pub const JSONRPC_FIELD_ERROR: &str = "error";
 
 // Error Handling Constants
 pub const ERROR_CODE_THRESHOLD: i64 = 0;

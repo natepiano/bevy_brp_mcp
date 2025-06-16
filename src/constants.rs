@@ -53,7 +53,3 @@ pub const TOOL_LAUNCH_BEVY_APP: &str = "launch_bevy_app";
 pub const TOOL_LAUNCH_BEVY_EXAMPLE: &str = "launch_bevy_example";
 pub const TOOL_LIST_LOGS: &str = "list_logs";
 pub const TOOL_READ_LOG: &str = "read_log";
-
-// BRP protocol method
-pub const BRP_METHOD_LIST: &str = "bevy/list";
-pub const BRP_METHOD_QUERY: &str = "bevy/query";
