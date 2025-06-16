@@ -8,12 +8,13 @@ use serde_json::json;
 
 use super::support::log_utils;
 use crate::BrpMcpService;
+use crate::constants::CLEANUP_LOGS_DESC;
 use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "cleanup_logs".into(),
-        description: "Deletes bevy_brp_mcp log files from the temp directory. Can filter by app name or age. Returns the count of deleted files. Use list_logs first to see what will be deleted. For safety, only bevy_brp_mcp log files can be deleted.".into(),
+        description: CLEANUP_LOGS_DESC.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property("app_name", "Optional filter to delete logs for a specific app only", false)
             .add_number_property("older_than_seconds", "Optional filter to delete logs older than N seconds", false)
