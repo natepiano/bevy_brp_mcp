@@ -1,13 +1,14 @@
 use rmcp::model::{CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
-use serde_json::json;
+use serde_json::{Value, json};
 
 use super::support::builder::BrpRequestBuilder;
 use super::support::formatting::generate_empty_components_hint;
-use super::support::utils::{parse_brp_response, to_execute_request};
+use super::support::response_processor::{BrpMetadata, BrpResponseFormatter, process_brp_response};
+use super::support::utils::to_execute_request;
 use crate::BrpMcpService;
-use crate::constants::{DESC_BRP_LIST, TOOL_BRP_LIST};
+use crate::constants::{BRP_LIST, DESC_BRP_LIST, TOOL_BRP_LIST};
 use crate::support::schema;
 
 pub fn register_tool() -> Tool {
@@ -47,7 +48,7 @@ pub async fn handle(
         .unwrap_or(15702);
 
     // Build BRP request using the builder
-    let mut builder = BrpRequestBuilder::new("bevy/list").port(port);
+    let mut builder = BrpRequestBuilder::new(BRP_LIST).port(port);
 
     if let Some(entity) = entity_id {
         builder = builder.entity(entity);
@@ -61,66 +62,91 @@ pub async fn handle(
     // Call brp_execute
     let result = super::brp_execute::handle_brp_execute(execute_request, context).await?;
 
-    // Extract and format the response
-    if let Some(content) = result.content.first() {
-        if let Some(text) = content.as_text() {
-            // Parse the response from brp_execute
-            let response = parse_brp_response(&text.text)?;
+    // Create formatter and metadata
+    let formatter = ListFormatter::new(entity_id);
+    let metadata = BrpMetadata::new(BRP_LIST, port);
 
-            // Extract the component list from the data field
-            let components = response
-                .get("data")
-                .and_then(|v| v.as_array())
-                .ok_or_else(|| {
-                    McpError::internal_error("Invalid response format from bevy/list", None)
-                })?;
+    // Use the response processor to handle the result
+    process_brp_response(result, formatter, metadata)
+}
 
-            // Format the response
-            let formatted_data = if let Some(entity) = entity_id {
-                let mut response = json!({
-                    "status": "success",
-                    "message": format!("Found {} components on entity {}", components.len(), entity),
-                    "data": {
-                        "entity": entity,
-                        "components": components,
-                        "count": components.len()
-                    }
-                });
+/// Formatter for bevy/list responses
+struct ListFormatter {
+    entity_id: Option<u64>,
+}
 
-                // Add hint if no components found
-                if components.is_empty() {
-                    response["hint"] = json!(generate_empty_components_hint(Some(entity)));
+impl ListFormatter {
+    fn new(entity_id: Option<u64>) -> Self {
+        Self { entity_id }
+    }
+}
+
+impl BrpResponseFormatter for ListFormatter {
+    fn format_success(&self, data: Value, _metadata: BrpMetadata) -> CallToolResult {
+        // Extract the component list from the data field
+        let empty_vec = vec![];
+        let components = data.as_array().unwrap_or(&empty_vec);
+
+        // Format the response based on entity_id
+        let formatted_data = if let Some(entity) = self.entity_id {
+            let mut response = json!({
+                "status": "success",
+                "message": format!("Found {} components on entity {}", components.len(), entity),
+                "data": {
+                    "entity": entity,
+                    "components": components,
+                    "count": components.len()
                 }
+            });
 
-                response
-            } else {
-                let mut response = json!({
-                    "status": "success",
-                    "message": format!("Found {} registered component types", components.len()),
-                    "data": {
-                        "components": components,
-                        "count": components.len()
-                    }
-                });
+            // Add hint if no components found
+            if components.is_empty() {
+                response["hint"] = json!(generate_empty_components_hint(Some(entity)));
+            }
 
-                // Add hint if no components found
-                if components.is_empty() {
-                    response["hint"] = json!(generate_empty_components_hint(None));
-                }
-
-                response
-            };
-
-            Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-                serde_json::to_string(&formatted_data).unwrap_or_else(|_| "{}".to_string()),
-            )]))
+            response
         } else {
-            Err(McpError::internal_error(
-                "No text content in BRP response",
-                None,
-            ))
-        }
-    } else {
-        Err(McpError::internal_error("No content in BRP response", None))
+            let mut response = json!({
+                "status": "success",
+                "message": format!("Found {} registered component types", components.len()),
+                "data": {
+                    "components": components,
+                    "count": components.len()
+                }
+            });
+
+            // Add hint if no components found
+            if components.is_empty() {
+                response["hint"] = json!(generate_empty_components_hint(None));
+            }
+
+            response
+        };
+
+        CallToolResult::success(vec![rmcp::model::Content::text(
+            serde_json::to_string(&formatted_data).unwrap_or_else(|_| "{}".to_string()),
+        )])
+    }
+
+    fn format_error(
+        &self,
+        error: super::support::response_processor::BrpError,
+        metadata: BrpMetadata,
+    ) -> CallToolResult {
+        let formatted_error = json!({
+            "status": "error",
+            "message": error.message,
+            "error_code": error.code,
+            "data": error.data,
+            "metadata": {
+                "method": metadata.method,
+                "port": metadata.port,
+                "entity_id": self.entity_id
+            }
+        });
+
+        CallToolResult::success(vec![rmcp::model::Content::text(
+            serde_json::to_string(&formatted_error).unwrap_or_else(|_| "{}".to_string()),
+        )])
     }
 }

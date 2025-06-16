@@ -91,44 +91,6 @@ impl BrpRequestBuilder {
         self.set_param("filter", filter)
     }
 
-    /// Helper method to build query data object
-    pub fn query_data(
-        self,
-        components: Option<Vec<String>>,
-        option: Option<Vec<String>>,
-        has: Option<Vec<String>>,
-    ) -> Self {
-        let mut data = json!({});
-        if let Some(c) = components {
-            data["components"] = json!(c);
-        }
-        if let Some(o) = option {
-            data["option"] = json!(o);
-        }
-        if let Some(h) = has {
-            data["has"] = json!(h);
-        }
-        self.data(data)
-    }
-
-    /// Helper method to build query filter object
-    pub fn query_filter(self, with: Option<Vec<String>>, without: Option<Vec<String>>) -> Self {
-        let mut filter = json!({});
-        if let Some(w) = with {
-            filter["with"] = json!(w);
-        }
-        if let Some(wo) = without {
-            filter["without"] = json!(wo);
-        }
-        self.filter(filter)
-    }
-
-    /// Set raw params (for methods with complex structures)
-    pub fn params(mut self, params: Value) -> Self {
-        self.params = Some(params);
-        self
-    }
-
     /// Build the final BrpExecuteParams
     pub fn build(self) -> BrpExecuteParams {
         BrpExecuteParams {
@@ -157,12 +119,6 @@ impl BrpJsonRpcBuilder {
             params: None,
             id:     1,
         }
-    }
-
-    /// Set the request ID
-    pub fn id(mut self, id: u64) -> Self {
-        self.id = id;
-        self
     }
 
     /// Set raw params
@@ -211,41 +167,14 @@ mod tests {
     }
 
     #[test]
-    fn test_brp_request_builder_query() {
-        let params = BrpRequestBuilder::new("bevy/query")
-            .query_data(
-                Some(vec!["Transform".to_string()]),
-                None,
-                Some(vec!["Name".to_string()]),
-            )
-            .query_filter(Some(vec!["Camera".to_string()]), None)
-            .strict(true)
-            .build();
-
-        let expected_params = json!({
-            "data": {
-                "components": ["Transform"],
-                "has": ["Name"]
-            },
-            "filter": {
-                "with": ["Camera"]
-            },
-            "strict": true
-        });
-
-        assert_eq!(params.params, Some(expected_params));
-    }
-
-    #[test]
     fn test_brp_json_rpc_builder() {
         let request = BrpJsonRpcBuilder::new("bevy/list")
-            .id(42)
             .params(json!({"entity": 123}))
             .build();
 
         assert_eq!(request["jsonrpc"], "2.0");
         assert_eq!(request["method"], "bevy/list");
-        assert_eq!(request["id"], 42);
+        assert_eq!(request["id"], 1);
         assert_eq!(request["params"]["entity"], 123);
     }
 }

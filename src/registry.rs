@@ -35,9 +35,9 @@ pub async fn handle_tool_call(
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     match request.name.as_ref() {
-        TOOL_BRP_EXECUTE => brp_execute::handle_brp_execute(request, context).await,
         TOOL_BRP_LIST => brp_list::handle(service, request, context).await,
         TOOL_BRP_QUERY => brp_query::handle(service, request, context).await,
+        TOOL_BRP_EXECUTE => brp_execute::handle_brp_execute(request, context).await,
         TOOL_BRP_STATUS => brp_status::handle(service, request, context).await,
         TOOL_CLEANUP_LOGS => cleanup_logs::handle(service, request, context).await,
         TOOL_LIST_BEVY_APPS => list_apps::handle(service, context).await,
