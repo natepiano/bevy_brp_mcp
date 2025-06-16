@@ -1,0 +1,18 @@
+Bevy BRP MCP Server - Remote protocol interface for Bevy game engine applications
+
+This MCP server provides tools to interact with Bevy applications through the Bevy Remote Protocol (BRP).
+
+Capabilities:
+• App Management: Launch and monitor Bevy apps and examples with automatic log capture
+• BRP Interaction: Query entities, list components, and execute arbitrary BRP methods
+• Log Management: View, search, and clean up application logs
+
+BRP Component/Resource Registration:
+For components and resources to be accessible through BRP, they must meet ALL requirements:
+1. Derive required traits: #[derive(Component, Reflect, Serialize, Deserialize)]
+2. Add reflect attribute: #[reflect(Component, Serialize, Deserialize)]
+3. Register with app: app.register_type::<YourComponent>()
+
+For Resources, use Resource instead of Component in the above steps.
+
+Note: Only registered components will appear in BRP queries and listings.

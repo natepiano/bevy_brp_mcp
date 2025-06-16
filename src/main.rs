@@ -20,6 +20,8 @@ mod registry;
 mod support;
 mod types;
 
+use constants::BEVY_BRP_MCP_INFO;
+
 #[derive(Clone)]
 pub struct BrpMcpService {
     pub roots:       Arc<Mutex<Vec<PathBuf>>>,
@@ -38,7 +40,7 @@ impl BrpMcpService {
 impl ServerHandler for BrpMcpService {
     fn get_info(&self) -> rmcp::model::ServerInfo {
         rmcp::model::ServerInfo {
-            instructions: None,
+            instructions: Some(BEVY_BRP_MCP_INFO.to_string()),
             capabilities: ServerCapabilities::builder()
                 .enable_tools()
                 .enable_prompts()

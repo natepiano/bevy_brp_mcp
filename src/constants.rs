@@ -16,6 +16,9 @@ macro_rules! include_help_text {
     };
 }
 
+// Server info
+pub const BEVY_BRP_MCP_INFO: &str = include_help_text!("bevy_brp_mcp_info.txt");
+
 // App tool descriptions
 pub const LIST_BEVY_APPS_DESC: &str = include_help_text!("app_tools/list_bevy_apps.txt");
 pub const LIST_BEVY_EXAMPLES_DESC: &str = include_help_text!("app_tools/list_bevy_examples.txt");
@@ -27,8 +30,7 @@ pub const BRP_LIST_DESC: &str = include_help_text!("brp_tools/brp_list.txt");
 pub const BRP_QUERY_DESC: &str = include_help_text!("brp_tools/brp_query.txt");
 
 // BRP Registration Requirements
-pub const BRP_REGISTRATION_REQUIREMENTS: &str =
-    include_help_text!("brp_tools/brp_registration_requirements.txt");
+pub const BRP_REGISTRATION_REQUIREMENTS: &str = include_help_text!("brp_tools/brp_registration_requirements.txt");
 
 // Log tool descriptions
 pub const LIST_LOGS_DESC: &str = include_help_text!("log_tools/list_logs.txt");
