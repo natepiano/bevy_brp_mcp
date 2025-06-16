@@ -288,7 +288,7 @@ Discover all available methods with their schemas.
 ### Direct Tool Wrappers
 Some BRP methods have dedicated wrapper tools for easier use:
 
-- **`brp_list_components`** - Wraps `bevy/list` method
+- **`brp_list`** - Wraps `bevy/list` method
   - No need to construct JSON parameters
   - Clear parameter validation
   - User-friendly response formatting
