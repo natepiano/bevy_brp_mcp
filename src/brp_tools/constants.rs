@@ -1,6 +1,10 @@
 // Network/Port Constants
 pub const DEFAULT_BRP_PORT: u16 = 15702;
 
+// BRP protocol method
+pub const BRP_METHOD_LIST: &str = "bevy/list";
+pub const BRP_METHOD_QUERY: &str = "bevy/query";
+
 // Response Status Constants
 pub const RESPONSE_STATUS_SUCCESS: &str = "success";
 pub const RESPONSE_STATUS_ERROR: &str = "error";
