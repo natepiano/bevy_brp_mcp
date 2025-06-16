@@ -159,6 +159,12 @@ impl BrpJsonRpcBuilder {
         }
     }
 
+    /// Set the request ID
+    pub fn id(mut self, id: u64) -> Self {
+        self.id = id;
+        self
+    }
+
     /// Set raw params
     pub fn params(mut self, params: Value) -> Self {
         self.params = Some(params);
@@ -234,7 +240,7 @@ mod tests {
     fn test_brp_json_rpc_builder() {
         let request = BrpJsonRpcBuilder::new("bevy/list")
             .id(42)
-            .entity(123)
+            .params(json!({"entity": 123}))
             .build();
 
         assert_eq!(request["jsonrpc"], "2.0");

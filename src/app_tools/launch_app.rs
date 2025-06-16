@@ -9,14 +9,15 @@ use serde_json::json;
 use super::support::{logging, process, scanning};
 use crate::BrpMcpService;
 use crate::constants::{
-    DEFAULT_PROFILE, LAUNCH_BEVY_APP_DESC, PARAM_APP_NAME, PARAM_PROFILE, PROFILE_RELEASE,
+    DEFAULT_PROFILE, DESC_LAUNCH_BEVY_APP, PARAM_APP_NAME, PARAM_PROFILE, PROFILE_RELEASE,
+    TOOL_LAUNCH_BEVY_APP,
 };
 use crate::support::{params, response, schema, service};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name:         "launch_bevy_app".into(),
-        description:  LAUNCH_BEVY_APP_DESC.into(),
+        name:         TOOL_LAUNCH_BEVY_APP.into(),
+        description:  DESC_LAUNCH_BEVY_APP.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property(PARAM_APP_NAME, "Name of the Bevy app to launch", true)
             .add_profile_property()

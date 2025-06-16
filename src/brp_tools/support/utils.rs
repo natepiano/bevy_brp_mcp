@@ -1,6 +1,8 @@
 use rmcp::Error as McpError;
 use serde_json::Value;
 
+use crate::constants::TOOL_BRP_EXECUTE;
+
 /// Parse a BRP response from JSON string
 pub fn parse_brp_response(text: &str) -> Result<Value, McpError> {
     serde_json::from_str(text)
@@ -19,7 +21,7 @@ pub fn to_execute_request(
         .cloned();
 
     Ok(rmcp::model::CallToolRequestParam {
-        name: "brp_execute".into(),
+        name: TOOL_BRP_EXECUTE.into(),
         arguments,
     })
 }

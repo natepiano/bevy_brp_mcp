@@ -1,0 +1,27 @@
+Check if a specific Bevy app is running and has BRP (Bevy Remote Protocol) enabled. This tool helps diagnose whether your app is running and properly configured with RemotePlugin.
+
+This is useful for:
+- Verifying that your Bevy app is currently running
+- Confirming BRP is enabled and responding on the expected port
+- Troubleshooting connection issues between MCP tools and your Bevy app
+- Getting process information (PID) for running apps
+
+Parameters:
+- app_name (required): Name of the Bevy app to check
+- port (optional): Port to check for BRP connectivity (default: 15702)
+
+Return status values:
+- "running_with_brp": App is running and BRP is responding
+- "running_no_brp": App is running but BRP is not responding (check RemotePlugin configuration)  
+- "brp_found_app_not_detected": BRP responds but the specific app process wasn't detected (may be running with different build profile)
+- "not_running": App is not currently running
+
+The response includes:
+- status: One of the status values above
+- app_name: The app name that was checked
+- port: The port that was checked
+- app_running: Boolean indicating if the app process was detected
+- brp_responsive: Boolean indicating if BRP responded
+- app_pid: Process ID if the app was detected (null otherwise)
+
+IMPORTANT: For BRP to work, your Bevy app must include the RemotePlugin in its plugin configuration.

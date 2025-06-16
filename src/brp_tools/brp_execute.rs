@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::support::builder::BrpJsonRpcBuilder;
+use crate::constants::TOOL_BRP_EXECUTE;
 use crate::support::response::ResponseBuilder;
 use crate::support::schema;
 use crate::types::BrpExecuteParams;
@@ -14,7 +15,7 @@ use crate::types::BrpExecuteParams;
 /// Execute any BRP method on a running Bevy app
 pub fn register_tool() -> Tool {
     Tool {
-        name: "brp_execute".into(),
+        name: TOOL_BRP_EXECUTE.into(),
         description: "Execute any Bevy Remote Protocol (BRP) method on a running Bevy app. This tool allows you to send arbitrary BRP commands and receive responses.".into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property("method", "The BRP method to execute (e.g., 'rpc.discover', 'bevy/get', 'bevy/query')", true)

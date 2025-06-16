@@ -5,13 +5,13 @@ use serde_json::json;
 
 use super::support::scanning;
 use crate::BrpMcpService;
-use crate::constants::LIST_BEVY_EXAMPLES_DESC;
+use crate::constants::{DESC_LIST_BEVY_EXAMPLES, TOOL_LIST_BEVY_EXAMPLES};
 use crate::support::{response, schema, service};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name:         "list_bevy_examples".into(),
-        description:  LIST_BEVY_EXAMPLES_DESC.into(),
+        name:         TOOL_LIST_BEVY_EXAMPLES.into(),
+        description:  DESC_LIST_BEVY_EXAMPLES.into(),
         input_schema: schema::empty_object_schema(),
     }
 }

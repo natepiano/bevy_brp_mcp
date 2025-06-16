@@ -7,13 +7,13 @@ use super::support::builder::BrpRequestBuilder;
 use super::support::formatting::generate_empty_components_hint;
 use super::support::utils::{parse_brp_response, to_execute_request};
 use crate::BrpMcpService;
-use crate::constants::BRP_LIST_DESC;
+use crate::constants::{DESC_BRP_LIST, TOOL_BRP_LIST};
 use crate::support::schema;
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: "brp_list".into(),
-        description: BRP_LIST_DESC.into(),
+        name: TOOL_BRP_LIST.into(),
+        description: DESC_BRP_LIST.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_number_property(
                 "entity_id",

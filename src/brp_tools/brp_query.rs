@@ -6,13 +6,13 @@ use serde_json::json;
 use super::support::builder::BrpRequestBuilder;
 use super::support::utils::{parse_brp_response, to_execute_request};
 use crate::BrpMcpService;
-use crate::constants::BRP_QUERY_DESC;
+use crate::constants::{DESC_BRP_QUERY, TOOL_BRP_QUERY};
 use crate::support::schema;
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: "brp_query".into(),
-        description: BRP_QUERY_DESC.into(),
+        name: TOOL_BRP_QUERY.into(),
+        description: DESC_BRP_QUERY.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_any_property(
                 "data",

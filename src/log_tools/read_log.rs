@@ -9,13 +9,13 @@ use serde_json::json;
 
 use super::support::log_utils;
 use crate::BrpMcpService;
-use crate::constants::READ_LOG_DESC;
+use crate::constants::{DESC_READ_LOG, TOOL_READ_LOG};
 use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name:         "read_log".into(),
-        description:  READ_LOG_DESC.into(),
+        name:         TOOL_READ_LOG.into(),
+        description:  DESC_READ_LOG.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property(
                 "filename",
