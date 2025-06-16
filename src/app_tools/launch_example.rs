@@ -8,14 +8,15 @@ use serde_json::json;
 
 use crate::BrpMcpService;
 use crate::constants::{PROFILE_RELEASE, DEFAULT_PROFILE, LAUNCH_BEVY_EXAMPLE_DESC, PARAM_EXAMPLE_NAME, PARAM_PROFILE};
+use crate::support::{params, response, schema, service};
 
-use super::support;
+use super::support::{logging, process, scanning};
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "launch_bevy_example".into(),
         description: LAUNCH_BEVY_EXAMPLE_DESC.into(),
-        input_schema: support::schema::SchemaBuilder::new()
+        input_schema: schema::SchemaBuilder::new()
             .add_string_property(PARAM_EXAMPLE_NAME, "Name of the Bevy example to launch", true)
             .add_profile_property()
             .build(),
@@ -28,11 +29,11 @@ pub async fn handle(
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     // Get parameters
-    let example_name = support::params::extract_required_string(&request, PARAM_EXAMPLE_NAME)?;
-    let profile = support::params::extract_optional_string(&request, PARAM_PROFILE, DEFAULT_PROFILE);
+    let example_name = params::extract_required_string(&request, PARAM_EXAMPLE_NAME)?;
+    let profile = params::extract_optional_string(&request, PARAM_PROFILE, DEFAULT_PROFILE);
     
     // Fetch current roots
-    let search_paths = support::service::fetch_roots_and_get_paths(service, context).await?;
+    let search_paths = service::fetch_roots_and_get_paths(service, context).await?;
     
     // Launch the example
     launch_bevy_example(example_name, profile, &search_paths).await
@@ -45,7 +46,7 @@ pub async fn launch_bevy_example(
     search_paths: &[PathBuf],
 ) -> Result<CallToolResult, McpError> {
     // Find the example
-    let example = support::scanning::find_required_example(example_name, search_paths)?;
+    let example = scanning::find_required_example(example_name, search_paths)?;
     
     // Get the manifest directory (parent of Cargo.toml)
     let manifest_dir = example.manifest_path.parent()
@@ -64,7 +65,7 @@ pub async fn launch_bevy_example(
         if profile == PROFILE_RELEASE { "--release" } else { "" }
     ).trim().to_string();
     
-    let (log_file_path, _) = support::logging::create_log_file(
+    let (log_file_path, _) = logging::create_log_file(
         example_name,
         profile,
         &PathBuf::from(&cargo_command),
@@ -72,12 +73,12 @@ pub async fn launch_bevy_example(
     )?;
     
     // Add extra info to log file
-    support::logging::append_to_log_file(&log_file_path, &format!(
+    logging::append_to_log_file(&log_file_path, &format!(
         "Package: {}\n", example.package_name
     ))?;
     
     // Open log file for stdout/stderr redirection
-    let log_file_for_redirect = support::logging::open_log_file_for_redirect(&log_file_path)?;
+    let log_file_for_redirect = logging::open_log_file_for_redirect(&log_file_path)?;
     
     // Build cargo command
     let mut cmd = Command::new("cargo");
@@ -91,14 +92,14 @@ pub async fn launch_bevy_example(
     }
     
     // Launch the process
-    let pid = support::process::launch_detached_process(
+    let pid = process::launch_detached_process(
         cmd,
         manifest_dir,
         log_file_for_redirect,
         example_name,
     )?;
     
-    Ok(support::response::success_json_response(
+    Ok(response::success_json_response(
         format!("Successfully launched example '{}' (PID: {})", example_name, pid),
         json!({
             "example_name": example_name,

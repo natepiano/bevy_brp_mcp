@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::time::Duration;
 
-use crate::tools::support::{response::ResponseBuilder, schema};
+use crate::support::{response::ResponseBuilder, schema};
 use crate::types::BrpExecuteParams;
 
 /// Execute any BRP method on a running Bevy app

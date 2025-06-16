@@ -7,14 +7,15 @@ use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
 use crate::BrpMcpService;
+use crate::support::{params, response, schema};
 
-use super::support;
+use super::support::log_utils;
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "cleanup_logs".into(),
         description: "Deletes bevy_brp_mcp log files from the temp directory. Can filter by app name or age. Returns the count of deleted files. Use list_logs first to see what will be deleted. For safety, only bevy_brp_mcp log files can be deleted.".into(),
-        input_schema: support::schema::SchemaBuilder::new()
+        input_schema: schema::SchemaBuilder::new()
             .add_string_property("app_name", "Optional filter to delete logs for a specific app only", false)
             .add_number_property("older_than_seconds", "Optional filter to delete logs older than N seconds", false)
             .build(),
@@ -27,12 +28,12 @@ pub async fn handle(
     _context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     // Extract parameters
-    let app_name_filter = support::params::extract_optional_string(&request, "app_name", "");
-    let older_than_seconds = support::params::extract_optional_u32(&request, "older_than_seconds", 0)?;
+    let app_name_filter = params::extract_optional_string(&request, "app_name", "");
+    let older_than_seconds = params::extract_optional_u32(&request, "older_than_seconds", 0)?;
     
     let (deleted_count, deleted_files) = cleanup_log_files(app_name_filter, older_than_seconds)?;
     
-    Ok(support::response::success_json_response(
+    Ok(response::success_json_response(
         format!("Deleted {} log files", deleted_count),
         json!({
             "deleted_count": deleted_count,
@@ -57,7 +58,7 @@ fn cleanup_log_files(
     };
     
     // Use the iterator to get all log files with filters
-    let filter = |entry: &support::log_utils::LogFileEntry| -> bool {
+    let filter = |entry: &log_utils::LogFileEntry| -> bool {
         // Apply app name filter
         if !app_name_filter.is_empty() && entry.app_name != app_name_filter {
             return false;
@@ -76,7 +77,7 @@ fn cleanup_log_files(
         true
     };
     
-    let log_entries = support::log_utils::iterate_log_files(filter)?;
+    let log_entries = log_utils::iterate_log_files(filter)?;
     
     // Delete the files
     for entry in log_entries {

@@ -6,15 +6,15 @@ use serde_json::{json, Value};
 use crate::BrpMcpService;
 use crate::types::BrpExecuteParams;
 use crate::constants::BRP_LIST_COMPONENTS_DESC;
+use crate::support::schema;
 
-use super::support;
 use super::support::formatting::generate_empty_components_hint;
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "brp_list_components".into(),
         description: BRP_LIST_COMPONENTS_DESC.into(),
-        input_schema: support::schema::SchemaBuilder::new()
+        input_schema: schema::SchemaBuilder::new()
             .add_number_property(
                 "entity_id", 
                 "Optional entity ID to list components for. If not provided, lists all registered \

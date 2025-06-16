@@ -10,10 +10,14 @@ use rmcp::service::RequestContext;
 use rmcp::transport::stdio;
 use rmcp::{Error as McpError, RoleServer, ServerHandler, ServiceExt};
 
+mod app_tools;
+mod brp_tools;
 mod cargo_detector;
 mod constants;
+mod log_tools;
 mod prompts;
-mod tools;
+mod registry;
+mod support;
 mod types;
 
 
@@ -49,7 +53,7 @@ impl ServerHandler for BrpMcpService {
         _request: PaginatedRequestParam,
         _context: RequestContext<RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
-        Ok(tools::register_tools().await)
+        Ok(registry::register_tools().await)
     }
 
     async fn call_tool(
@@ -57,7 +61,7 @@ impl ServerHandler for BrpMcpService {
         request: CallToolRequestParam,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        tools::handle_tool_call(self, request, context).await
+        registry::handle_tool_call(self, request, context).await
     }
 
     async fn list_prompts(

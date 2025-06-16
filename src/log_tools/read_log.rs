@@ -8,14 +8,15 @@ use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
 use crate::BrpMcpService;
+use crate::support::{params, response, schema};
 
-use super::support;
+use super::support::log_utils;
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "read_log".into(),
         description: "Reads the contents of a specific bevy_brp_mcp log file. For security, only logs created by bevy_brp_mcp can be read. Supports optional keyword filtering (case-insensitive) and tail mode to read only the last N lines. Use list_logs first to find available log files.".into(),
-        input_schema: support::schema::SchemaBuilder::new()
+        input_schema: schema::SchemaBuilder::new()
             .add_string_property("filename", "The log filename (e.g., bevy_brp_mcp_myapp_1234567890.log)", true)
             .add_string_property("keyword", "Optional keyword to filter lines (case-insensitive)", false)
             .add_number_property("tail_lines", "Optional number of lines to read from the end of file", false)
@@ -29,12 +30,12 @@ pub async fn handle(
     _context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     // Extract parameters
-    let filename = support::params::extract_required_string(&request, "filename")?;
-    let keyword = support::params::extract_optional_string(&request, "keyword", "");
-    let tail_lines = support::params::extract_optional_number(&request, "tail_lines", 0)? as usize;
+    let filename = params::extract_required_string(&request, "filename")?;
+    let keyword = params::extract_optional_string(&request, "keyword", "");
+    let tail_lines = params::extract_optional_number(&request, "tail_lines", 0)? as usize;
     
     // Validate filename format for security
-    if !support::log_utils::is_valid_log_filename(filename) {
+    if !log_utils::is_valid_log_filename(filename) {
         return Err(McpError::invalid_params(
             "Invalid log filename. Only bevy_brp_mcp log files can be read.",
             None
@@ -42,7 +43,7 @@ pub async fn handle(
     }
     
     // Build full path
-    let log_path = support::log_utils::get_log_file_path(filename);
+    let log_path = log_utils::get_log_file_path(filename);
     
     // Check if file exists
     if !log_path.exists() {
@@ -55,13 +56,13 @@ pub async fn handle(
     // Read the log file
     let (content, metadata) = read_log_file(&log_path, keyword, tail_lines)?;
     
-    Ok(support::response::success_json_response(
+    Ok(response::success_json_response(
         format!("Successfully read log file: {}", filename),
         json!({
             "filename": filename,
             "path": log_path.display().to_string(),
             "size_bytes": metadata.len(),
-            "size_human": support::log_utils::format_bytes(metadata.len()),
+            "size_human": log_utils::format_bytes(metadata.len()),
             "lines_read": content.lines().count(),
             "content": content,
             "filtered_by_keyword": !keyword.is_empty(),

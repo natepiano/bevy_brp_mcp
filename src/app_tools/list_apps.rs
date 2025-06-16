@@ -5,14 +5,15 @@ use serde_json::json;
 
 use crate::BrpMcpService;
 use crate::constants::{LIST_BEVY_APPS_DESC, PROFILE_DEBUG, PROFILE_RELEASE};
+use crate::support::{response, schema, service};
 
-use super::support;
+use super::support::scanning;
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "list_bevy_apps".into(),
         description: LIST_BEVY_APPS_DESC.into(),
-        input_schema: support::schema::empty_object_schema(),
+        input_schema: schema::empty_object_schema(),
     }
 }
 
@@ -20,10 +21,10 @@ pub async fn handle(
     service: &BrpMcpService,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    support::service::handle_with_paths(service, context, |search_paths| async move {
+    service::handle_with_paths(service, context, |search_paths| async move {
         let apps = collect_all_apps(&search_paths);
         
-        Ok(support::response::success_json_response(
+        Ok(response::success_json_response(
             format!("Found {} Bevy apps", apps.len()),
             json!({
                 "apps": apps
@@ -37,7 +38,7 @@ fn collect_all_apps(search_paths: &[std::path::PathBuf]) -> Vec<serde_json::Valu
     let profiles = vec![PROFILE_DEBUG, PROFILE_RELEASE];
     
     // Use the iterator to find all cargo projects
-    for path in support::scanning::iter_cargo_project_paths(search_paths) {
+    for path in scanning::iter_cargo_project_paths(search_paths) {
         if let Ok(detector) = crate::cargo_detector::CargoDetector::from_path(&path) {
             let apps = detector.find_bevy_apps();
             for app in apps {

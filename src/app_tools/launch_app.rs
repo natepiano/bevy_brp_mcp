@@ -8,14 +8,15 @@ use serde_json::json;
 
 use crate::BrpMcpService;
 use crate::constants::{PROFILE_RELEASE, DEFAULT_PROFILE, LAUNCH_BEVY_APP_DESC, PARAM_APP_NAME, PARAM_PROFILE};
+use crate::support::{params, response, schema, service};
 
-use super::support;
+use super::support::{logging, process, scanning};
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "launch_bevy_app".into(),
         description: LAUNCH_BEVY_APP_DESC.into(),
-        input_schema: support::schema::SchemaBuilder::new()
+        input_schema: schema::SchemaBuilder::new()
             .add_string_property(PARAM_APP_NAME, "Name of the Bevy app to launch", true)
             .add_profile_property()
             .build(),
@@ -27,10 +28,10 @@ pub async fn handle(
     request: rmcp::model::CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    support::service::handle_with_request_and_paths(service, request, context, |req, search_paths| async move {
+    service::handle_with_request_and_paths(service, request, context, |req, search_paths| async move {
         // Get parameters
-        let app_name = support::params::extract_required_string(&req, PARAM_APP_NAME)?;
-        let profile = support::params::extract_optional_string(&req, PARAM_PROFILE, DEFAULT_PROFILE);
+        let app_name = params::extract_required_string(&req, PARAM_APP_NAME)?;
+        let profile = params::extract_optional_string(&req, PARAM_PROFILE, DEFAULT_PROFILE);
         
         // Launch the app
         launch_bevy_app(app_name, profile, &search_paths).await
@@ -44,7 +45,7 @@ pub async fn launch_bevy_app(
     search_paths: &[PathBuf],
 ) -> Result<CallToolResult, McpError> {
     // Find the app
-    let app = support::scanning::find_required_app(app_name, search_paths)?;
+    let app = scanning::find_required_app(app_name, search_paths)?;
     
     // Build the binary path
     let binary_path = app.get_binary_path(profile);
@@ -74,7 +75,7 @@ pub async fn launch_bevy_app(
     eprintln!("CARGO_MANIFEST_DIR: {}", manifest_dir.display());
     
     // Create log file
-    let (log_file_path, _) = support::logging::create_log_file(
+    let (log_file_path, _) = logging::create_log_file(
         app_name,
         profile,
         &binary_path,
@@ -82,18 +83,18 @@ pub async fn launch_bevy_app(
     )?;
     
     // Open log file for stdout/stderr redirection
-    let log_file_for_redirect = support::logging::open_log_file_for_redirect(&log_file_path)?;
+    let log_file_for_redirect = logging::open_log_file_for_redirect(&log_file_path)?;
     
     // Launch the binary
     let cmd = Command::new(&binary_path);
-    let pid = support::process::launch_detached_process(
+    let pid = process::launch_detached_process(
         cmd,
         manifest_dir,
         log_file_for_redirect,
         app_name,
     )?;
     
-    Ok(support::response::success_json_response(
+    Ok(response::success_json_response(
         format!("Successfully launched '{}' (PID: {})", app_name, pid),
         json!({
             "app_name": app_name,

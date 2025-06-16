@@ -10,14 +10,14 @@ use tokio::time::timeout;
 
 use crate::BrpMcpService;
 use crate::constants::{PARAM_APP_NAME, PARAM_PORT, DEFAULT_PROFILE};
-
-use super::support;
+use crate::support::{params, response, schema, service};
+use crate::app_tools::support::scanning;
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "check_brp".into(),
         description: "Check if a specific Bevy app is running and has BRP (Bevy Remote Protocol) enabled. This tool helps diagnose whether your app is running and properly configured with RemotePlugin.".into(),
-        input_schema: support::schema::SchemaBuilder::new()
+        input_schema: schema::SchemaBuilder::new()
             .add_string_property(PARAM_APP_NAME, "Name of the Bevy app to check", true)
             .add_number_property(PARAM_PORT, "Port to check for BRP (default: 15702)", false)
             .build(),
@@ -29,10 +29,10 @@ pub async fn handle(
     request: rmcp::model::CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    support::service::handle_with_request_and_paths(service, request, context, |req, search_paths| async move {
+    service::handle_with_request_and_paths(service, request, context, |req, search_paths| async move {
         // Get parameters
-        let app_name = support::params::extract_required_string(&req, PARAM_APP_NAME)?;
-        let port = support::params::extract_optional_number(&req, PARAM_PORT, 15702)?;
+        let app_name = params::extract_required_string(&req, PARAM_APP_NAME)?;
+        let port = params::extract_optional_number(&req, PARAM_PORT, 15702)?;
         
         // Check the app
         check_brp_for_app(app_name, port as u16, &search_paths).await
@@ -45,7 +45,7 @@ async fn check_brp_for_app(
     search_paths: &[PathBuf],
 ) -> Result<CallToolResult, McpError> {
     // Find the app info
-    let app = support::scanning::find_required_app(app_name, search_paths)?;
+    let app = scanning::find_required_app(app_name, search_paths)?;
     
     // Get the binary path for the default profile 
     let binary_path = app.get_binary_path(DEFAULT_PROFILE);
@@ -100,7 +100,7 @@ async fn check_brp_for_app(
         }
     };
     
-    Ok(support::response::success_json_response(
+    Ok(response::success_json_response(
         message,
         json!({
             "status": status,

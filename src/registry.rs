@@ -1,23 +1,31 @@
-use rmcp::model::{CallToolRequestParam, CallToolResult};
+use rmcp::model::{CallToolRequestParam, CallToolResult, ListToolsResult};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
+use crate::app_tools::{launch_app, launch_example, list_apps, list_examples};
+use crate::brp_tools::{brp_execute, brp_list_components, check_brp};
+use crate::log_tools::{cleanup_logs, list_logs, read_log};
 use crate::BrpMcpService;
 
-mod brp_execute;
-mod brp_list_components;
-mod check_brp;
-mod cleanup_logs;
-mod launch_app;
-mod launch_example;
-mod list_apps;
-mod list_examples;
-mod list_logs;
-mod read_log;
-mod registry;
-mod support;
+pub async fn register_tools() -> ListToolsResult {
+    let tools = vec![
+        brp_execute::register_tool(),
+        brp_list_components::register_tool(),
+        check_brp::register_tool(),
+        list_apps::register_tool(),
+        list_examples::register_tool(),
+        launch_app::register_tool(),
+        launch_example::register_tool(),
+        list_logs::register_tool(),
+        read_log::register_tool(),
+        cleanup_logs::register_tool(),
+    ];
 
-pub use registry::register_tools;
+    ListToolsResult {
+        next_cursor: None,
+        tools,
+    }
+}
 
 pub async fn handle_tool_call(
     service: &BrpMcpService,
