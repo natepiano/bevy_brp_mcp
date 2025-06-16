@@ -9,12 +9,13 @@ use serde_json::json;
 
 use super::support::log_utils;
 use crate::BrpMcpService;
+use crate::constants::READ_LOG_DESC;
 use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "read_log".into(),
-        description: "Reads the contents of a specific bevy_brp_mcp log file. For security, only logs created by bevy_brp_mcp can be read. Supports optional keyword filtering (case-insensitive) and tail mode to read only the last N lines. Use list_logs first to find available log files.".into(),
+        description: READ_LOG_DESC.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property("filename", "The log filename (e.g., bevy_brp_mcp_myapp_1234567890.log)", true)
             .add_string_property("keyword", "Optional keyword to filter lines (case-insensitive)", false)

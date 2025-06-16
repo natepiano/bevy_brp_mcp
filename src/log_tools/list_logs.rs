@@ -5,12 +5,13 @@ use serde_json::json;
 
 use super::support::log_utils;
 use crate::BrpMcpService;
+use crate::constants::LIST_LOGS_DESC;
 use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
         name: "list_logs".into(),
-        description: "Lists all bevy_brp_mcp log files with metadata. Returns log files sorted by timestamp (newest first), showing file size and last modified time. Use the optional app_name filter to see logs for a specific app. Logs are created when launching Bevy apps and stored in the temp directory.".into(),
+        description: LIST_LOGS_DESC.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property("app_name", "Optional filter to list logs for a specific app only", false)
             .build(),

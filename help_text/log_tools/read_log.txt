@@ -1,0 +1,1 @@
+Reads the contents of a specific bevy_brp_mcp log file. For security, only logs created by bevy_brp_mcp can be read. Supports optional keyword filtering (case-insensitive) and tail mode to read only the last N lines. Use list_logs first to find available log files.
