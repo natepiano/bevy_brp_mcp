@@ -1,0 +1,24 @@
+Query entities using the bevy/query BRP method. This powerful tool allows you to search for entities based on their components, applying filters and returning component data. This tool wraps the bevy/query method for easier use.
+
+This is useful for:
+- Finding all entities with specific component combinations
+- Retrieving component data from matching entities
+- Filtering entities based on presence/absence of components
+- Debugging entity-component relationships in your Bevy app
+
+Parameters:
+- data (object): Specifies what component data to retrieve
+  - components: Array of component types to include in results
+  - option: Array of optional components (won't fail if missing)
+  - has: Array of components that must exist (but aren't returned)
+- filter (object): Filters which entities to query
+  - with: Array of components entities must have
+  - without: Array of components entities must NOT have
+- strict (boolean): If true, query fails on unknown component types
+
+Example usage patterns:
+1. Find all entities with Transform and return their data
+2. Find entities with Camera component, returning Transform data
+3. Find entities with Sprite but without Player component
+
+IMPORTANT: Components must be registered with BRP (see brp_list_components for requirements).

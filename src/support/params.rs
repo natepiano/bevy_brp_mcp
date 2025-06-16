@@ -1,5 +1,5 @@
-use rmcp::model::CallToolRequestParam;
 use rmcp::Error as McpError;
+use rmcp::model::CallToolRequestParam;
 
 /// Extract a required string parameter from the request
 pub fn extract_required_string<'a>(
@@ -11,10 +11,9 @@ pub fn extract_required_string<'a>(
         .as_ref()
         .and_then(|args| args.get(param_name))
         .and_then(|v| v.as_str())
-        .ok_or_else(|| McpError::invalid_params(
-            format!("Missing required parameter: {}", param_name),
-            None
-        ))
+        .ok_or_else(|| {
+            McpError::invalid_params(format!("Missing required parameter: {}", param_name), None)
+        })
 }
 
 /// Extract an optional string parameter from the request with a default value
@@ -37,12 +36,14 @@ pub fn extract_optional_number(
     param_name: &str,
     default: u64,
 ) -> Result<u64, McpError> {
-    match request.arguments.as_ref().and_then(|args| args.get(param_name)) {
-        Some(v) => v.as_u64()
-            .ok_or_else(|| McpError::invalid_params(
-                format!("Parameter '{}' must be a number", param_name),
-                None
-            )),
+    match request
+        .arguments
+        .as_ref()
+        .and_then(|args| args.get(param_name))
+    {
+        Some(v) => v.as_u64().ok_or_else(|| {
+            McpError::invalid_params(format!("Parameter '{}' must be a number", param_name), None)
+        }),
         None => Ok(default),
     }
 }

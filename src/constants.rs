@@ -21,7 +21,11 @@ pub const LIST_BEVY_APPS_DESC: &str = include_help_text!("tools/list_bevy_apps.t
 pub const LIST_BEVY_EXAMPLES_DESC: &str = include_help_text!("tools/list_bevy_examples.txt");
 pub const LAUNCH_BEVY_APP_DESC: &str = include_help_text!("tools/launch_bevy_app.txt");
 pub const LAUNCH_BEVY_EXAMPLE_DESC: &str = include_help_text!("tools/launch_bevy_example.txt");
-pub const BRP_LIST_COMPONENTS_DESC: &str = include_help_text!("tools/brp_list_components.txt");
+
+// BRP methods
+pub const BRP_LIST_DESC: &str = include_help_text!("tools/brp_list.txt");
+pub const BRP_QUERY_DESC: &str = include_help_text!("tools/brp_query.txt");
 
 // BRP Registration Requirements
-pub const BRP_REGISTRATION_REQUIREMENTS: &str = include_help_text!("tools/brp_registration_requirements.txt");
+pub const BRP_REGISTRATION_REQUIREMENTS: &str =
+    include_help_text!("tools/brp_registration_requirements.txt");
