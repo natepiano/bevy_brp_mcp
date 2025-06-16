@@ -177,7 +177,7 @@ List all registered components or components on a specific entity.
 ### Watch Methods (2 methods)
 
 #### 10. `bevy/get+watch`
-Watch component changes on an entity (returns changes since last call).
+Watch component changes on an entity.
 
 **Parameters:**
 - `entity` (number): The entity ID
