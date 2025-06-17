@@ -43,7 +43,6 @@ pub const JSON_FIELD_PARENT: &str = "parent";
 pub const JSON_FIELD_PATH: &str = "path";
 pub const JSON_FIELD_PORT: &str = "port";
 pub const JSON_FIELD_QUERY_PARAMS: &str = "query_params";
-pub const JSON_FIELD_REQUESTED_COMPONENTS: &str = "requested_components";
 pub const JSON_FIELD_RESOURCE: &str = "resource";
 pub const JSON_FIELD_RESOURCES: &str = "resources";
 pub const JSON_FIELD_SPAWNED_ENTITY: &str = "spawned_entity";

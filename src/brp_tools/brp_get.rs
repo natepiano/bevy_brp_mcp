@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 
 use super::constants::{
     BRP_METHOD_GET, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENTS, JSON_FIELD_DATA, JSON_FIELD_ENTITY,
-    JSON_FIELD_PORT, JSON_FIELD_STATUS, RESPONSE_STATUS_SUCCESS,
+    JSON_FIELD_MESSAGE, JSON_FIELD_PORT, JSON_FIELD_STATUS, RESPONSE_STATUS_SUCCESS,
 };
 use super::support::generic_handler::{
     BrpHandlerConfig, FormatterContext, FormatterFactory, PassthroughExtractor, handle_generic,
@@ -13,7 +13,6 @@ use super::support::generic_handler::{
 use super::support::response_processor::{BrpMetadata, BrpResponseFormatter};
 use super::support::serialization::json_tool_result;
 use crate::BrpMcpService;
-use crate::brp_tools::constants::JSON_FIELD_MESSAGE;
 use crate::constants::{DESC_BRP_GET, TOOL_BRP_GET};
 use crate::support::schema;
 
@@ -60,25 +59,13 @@ impl FormatterFactory for GetFormatterFactory {
             .and_then(|v| v.as_u64())
             .unwrap_or(0);
 
-        let requested_components = context
-            .params
-            .as_ref()
-            .and_then(|p| p.get(JSON_FIELD_COMPONENTS))
-            .and_then(|v| v.as_array())
-            .cloned()
-            .unwrap_or_default();
-
-        Box::new(GetFormatter {
-            entity_id,
-            requested_components,
-        })
+        Box::new(GetFormatter { entity_id })
     }
 }
 
 /// Formatter for bevy/get responses
 struct GetFormatter {
-    entity_id:            u64,
-    requested_components: Vec<Value>,
+    entity_id: u64,
 }
 
 impl BrpResponseFormatter for GetFormatter {

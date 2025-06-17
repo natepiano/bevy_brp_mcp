@@ -6,8 +6,7 @@ use serde_json::{Value, json};
 use super::constants::{
     BRP_METHOD_GET_RESOURCE, DEFAULT_BRP_PORT, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE,
     JSON_FIELD_MESSAGE, JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PORT,
-    JSON_FIELD_RESOURCE, JSON_FIELD_STATUS, RESPONSE_STATUS_ERROR,
-    RESPONSE_STATUS_SUCCESS,
+    JSON_FIELD_RESOURCE, JSON_FIELD_STATUS, RESPONSE_STATUS_ERROR, RESPONSE_STATUS_SUCCESS,
 };
 use super::support::generic_handler::{
     BrpHandlerConfig, FormatterContext, FormatterFactory, PassthroughExtractor, handle_generic,
