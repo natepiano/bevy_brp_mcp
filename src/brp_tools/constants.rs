@@ -19,6 +19,8 @@ pub const BRP_METHOD_REMOVE_RESOURCE: &str = "bevy/remove_resource";
 pub const BRP_METHOD_MUTATE_RESOURCE: &str = "bevy/mutate_resource";
 pub const BRP_METHOD_MUTATE_COMPONENT: &str = "bevy/mutate_component";
 pub const BRP_METHOD_REPARENT: &str = "bevy/reparent";
+pub const BRP_METHOD_REGISTRY_SCHEMA: &str = "bevy/registry/schema";
+pub const BRP_METHOD_RPC_DISCOVER: &str = "rpc.discover";
 
 // Response Status Constants
 pub const RESPONSE_STATUS_SUCCESS: &str = "success";

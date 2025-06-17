@@ -85,3 +85,38 @@ pub fn extract_any_value<'a>(
         .as_ref()
         .and_then(|args| args.get(param_name))
 }
+
+/// Extract an optional string array parameter from the request
+pub fn extract_optional_string_array(
+    request: &CallToolRequestParam,
+    param_name: &str,
+) -> Result<Option<Vec<String>>, McpError> {
+    match request
+        .arguments
+        .as_ref()
+        .and_then(|args| args.get(param_name))
+    {
+        Some(v) => {
+            if let Some(arr) = v.as_array() {
+                let mut result = Vec::new();
+                for item in arr {
+                    if let Some(s) = item.as_str() {
+                        result.push(s.to_string());
+                    } else {
+                        return Err(McpError::invalid_params(
+                            format!("All items in '{}' array must be strings", param_name),
+                            None,
+                        ));
+                    }
+                }
+                Ok(Some(result))
+            } else {
+                Err(McpError::invalid_params(
+                    format!("Parameter '{}' must be an array", param_name),
+                    None,
+                ))
+            }
+        }
+        None => Ok(None),
+    }
+}
