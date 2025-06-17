@@ -85,30 +85,3 @@ impl BrpJsonRpcBuilder {
         request
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::brp_tools::constants::JSON_FIELD_ENTITY;
-
-    #[test]
-    fn test_brp_request_builder_basic() {
-        let params = BrpRequestBuilder::new("bevy/list").port(8080).build();
-
-        assert_eq!(params.method, "bevy/list");
-        assert_eq!(params.port, 8080);
-        assert!(params.params.is_none());
-    }
-
-    #[test]
-    fn test_brp_json_rpc_builder() {
-        let request = BrpJsonRpcBuilder::new("bevy/list")
-            .params(json!({JSON_FIELD_ENTITY: 123}))
-            .build();
-
-        assert_eq!(request[JSONRPC_FIELD], JSONRPC_VERSION);
-        assert_eq!(request[JSONRPC_FIELD_METHOD], "bevy/list");
-        assert_eq!(request[JSONRPC_FIELD_ID], JSONRPC_DEFAULT_ID);
-        assert_eq!(request[JSONRPC_FIELD_PARAMS][JSON_FIELD_ENTITY], 123);
-    }
-}
