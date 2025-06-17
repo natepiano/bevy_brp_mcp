@@ -13,7 +13,7 @@ use super::support::generic_handler::{
 use super::support::response_processor::{BrpMetadata, BrpResponseFormatter};
 use super::support::serialization::json_tool_result;
 use crate::BrpMcpService;
-use crate::brp_tools::constants::JSON_FIELD_REQUESTED_COMPONENTS;
+use crate::brp_tools::constants::JSON_FIELD_MESSAGE;
 use crate::constants::{DESC_BRP_GET, TOOL_BRP_GET};
 use crate::support::schema;
 
