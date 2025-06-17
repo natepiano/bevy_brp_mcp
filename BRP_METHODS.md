@@ -251,10 +251,34 @@ List all registered resource types.
 Get JSON schema information for registered types.
 
 **Parameters:**
-- Query filter (optional)
+- Query filter (optional): Object with filtering options
+  - `without_crates`: Array of crate names to exclude
+  - `with_crates`: Array of crate names to include only
+  - `type_limit`: Object with trait-based filtering
+    - `without`: Array of reflect trait names to exclude
+    - `with`: Array of reflect trait names to include only
 
 **Returns:**
-- JSON schemas for types
+- JSON schemas for matching types, each containing:
+  - `shortPath`: Short type name
+  - `typePath`: Fully-qualified type path
+  - `modulePath`: Module containing the type
+  - `crateName`: Crate containing the type
+  - `reflectTypes`: Array of reflect traits
+  - `kind`: Type kind (Struct, Enum, etc.)
+  - `type`: JSON schema type information
+
+**Example:**
+```json
+{
+  "method": "bevy/registry/schema",
+  "params": {
+    "type_limit": {
+      "with": ["Component"]
+    }
+  }
+}
+```
 
 #### 18. `rpc.discover`
 Discover all available methods with their schemas.

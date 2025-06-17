@@ -6,8 +6,8 @@ use crate::BrpMcpService;
 use crate::app_tools::{launch_app, launch_example, list_apps, list_examples};
 use crate::brp_tools::{
     brp_destroy, brp_execute, brp_get, brp_get_resource, brp_insert, brp_insert_resource, brp_list,
-    brp_list_resources, brp_mutate_component, brp_mutate_resource, brp_query, brp_remove,
-    brp_remove_resource, brp_reparent, brp_spawn, brp_status,
+    brp_list_resources, brp_mutate_component, brp_mutate_resource, brp_query, brp_registry_schema,
+    brp_remove, brp_remove_resource, brp_reparent, brp_rpc_discover, brp_spawn, brp_status,
 };
 use crate::constants::*;
 use crate::log_tools::{cleanup_logs, list_logs, read_log};
@@ -33,6 +33,9 @@ pub async fn register_tools() -> ListToolsResult {
         brp_insert_resource::register_tool(),
         brp_remove_resource::register_tool(),
         brp_mutate_resource::register_tool(),
+        // Discovery/schema tools
+        brp_registry_schema::register_tool(),
+        brp_rpc_discover::register_tool(),
         // App management tools
         list_apps::register_tool(),
         list_examples::register_tool(),
@@ -77,6 +80,10 @@ pub async fn handle_tool_call(
         TOOL_BRP_INSERT_RESOURCE => brp_insert_resource::handle(service, request, context).await,
         TOOL_BRP_REMOVE_RESOURCE => brp_remove_resource::handle(service, request, context).await,
         TOOL_BRP_MUTATE_RESOURCE => brp_mutate_resource::handle(service, request, context).await,
+
+        // Discovery/schema tools
+        TOOL_BRP_REGISTRY_SCHEMA => brp_registry_schema::handle(service, request, context).await,
+        TOOL_BRP_RPC_DISCOVER => brp_rpc_discover::handle(service, request, context).await,
 
         // App management tools
         TOOL_LIST_BEVY_APPS => list_apps::handle(service, context).await,

@@ -48,6 +48,8 @@ pub const DESC_BRP_MUTATE_RESOURCE: &str = include_help_text!("brp_tools/brp_mut
 pub const DESC_BRP_MUTATE_COMPONENT: &str =
     include_help_text!("brp_tools/brp_mutate_component.txt");
 pub const DESC_BRP_REPARENT: &str = include_help_text!("brp_tools/brp_reparent.txt");
+pub const DESC_BRP_REGISTRY_SCHEMA: &str = include_help_text!("brp_tools/brp_registry_schema.txt");
+pub const DESC_BRP_RPC_DISCOVER: &str = include_help_text!("brp_tools/brp_rpc_discover.txt");
 
 // Log tool descriptions
 pub const DESC_LIST_LOGS: &str = include_help_text!("log_tools/list_logs.txt");
@@ -70,6 +72,8 @@ pub const TOOL_BRP_REMOVE_RESOURCE: &str = "bevy_remove_resource";
 pub const TOOL_BRP_MUTATE_RESOURCE: &str = "bevy_mutate_resource";
 pub const TOOL_BRP_MUTATE_COMPONENT: &str = "bevy_mutate_component";
 pub const TOOL_BRP_REPARENT: &str = "bevy_reparent";
+pub const TOOL_BRP_REGISTRY_SCHEMA: &str = "bevy_registry_schema";
+pub const TOOL_BRP_RPC_DISCOVER: &str = "bevy_rpc_discover";
 pub const TOOL_BRP_STATUS: &str = "brp_status";
 pub const TOOL_CLEANUP_LOGS: &str = "cleanup_logs";
 pub const TOOL_LIST_BEVY_APPS: &str = "list_bevy_apps";
