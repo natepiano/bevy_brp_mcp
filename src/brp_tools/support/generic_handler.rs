@@ -3,9 +3,8 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::Value;
 
-use super::builder::BrpRequestBuilder;
+use super::brp_client::execute_brp_method;
 use super::response_processor::{BrpMetadata, BrpResponseFormatter, process_brp_response};
-use super::serialization::to_execute_request;
 use crate::BrpMcpService;
 use crate::brp_tools::constants::{DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT};
 use crate::support::params::extract_optional_number;
@@ -45,23 +44,14 @@ pub struct FormatterContext {
 pub async fn handle_generic(
     _service: &BrpMcpService,
     request: rmcp::model::CallToolRequestParam,
-    context: RequestContext<RoleServer>,
+    _context: RequestContext<RoleServer>,
     config: &BrpHandlerConfig,
 ) -> Result<CallToolResult, McpError> {
     // Extract parameters using the configured extractor
     let (params, port) = config.param_extractor.extract(&request)?;
 
-    // Build BRP request
-    let mut brp_params = BrpRequestBuilder::new(config.method).port(port).build();
-
-    brp_params.params = params.clone();
-
-    // Convert to request format expected by brp_execute
-    let execute_request = to_execute_request(brp_params)?;
-
-    // Call brp_execute
-    let result =
-        crate::brp_tools::brp_execute::handle_brp_execute(execute_request, context).await?;
+    // Call BRP directly using the new client
+    let brp_result = execute_brp_method(config.method, params.clone(), Some(port)).await?;
 
     // Create formatter and metadata
     let formatter_context = FormatterContext {
@@ -70,8 +60,8 @@ pub async fn handle_generic(
     let formatter = config.formatter_factory.create(formatter_context);
     let metadata = BrpMetadata::new(config.method, port);
 
-    // Process response
-    process_brp_response(result, formatter, metadata)
+    // Process response using the new BrpResult directly
+    process_brp_response(brp_result, formatter, metadata)
 }
 
 /// Simple parameter extractor that just extracts port
