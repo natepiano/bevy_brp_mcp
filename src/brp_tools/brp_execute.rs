@@ -6,7 +6,10 @@ use rmcp::{Error as McpError, RoleServer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_CODE, JSON_FIELD_DATA};
+use super::constants::{
+    DEFAULT_BRP_PORT, JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_METHOD, JSON_FIELD_PARAMS,
+    JSON_FIELD_PORT,
+};
 use super::support::builder::BrpJsonRpcBuilder;
 use crate::constants::TOOL_BRP_EXECUTE;
 use crate::support::response::ResponseBuilder;
@@ -19,9 +22,9 @@ pub fn register_tool() -> Tool {
         name: TOOL_BRP_EXECUTE.into(),
         description: "Execute any Bevy Remote Protocol (BRP) method on a running Bevy app. This tool allows you to send arbitrary BRP commands and receive responses.".into(),
         input_schema: schema::SchemaBuilder::new()
-            .add_string_property("method", "The BRP method to execute (e.g., 'rpc.discover', 'bevy/get', 'bevy/query')", true)
-            .add_any_property("params", "Optional parameters for the method, as a JSON object or array", false)
-            .add_number_property("port", &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
+            .add_string_property(JSON_FIELD_METHOD, "The BRP method to execute (e.g., 'rpc.discover', 'bevy/get', 'bevy/query')", true)
+            .add_any_property(JSON_FIELD_PARAMS, "Optional parameters for the method, as a JSON object or array", false)
+            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
             .build(),
     }
 }

@@ -5,6 +5,8 @@ use std::time::SystemTime;
 use rmcp::Error as McpError;
 use serde_json::json;
 
+use crate::log_tools::constants::FILE_PATH;
+
 // Constants
 pub const LOG_PREFIX: &str = "bevy_brp_mcp_";
 pub const LOG_EXTENSION: &str = ".log";
@@ -109,7 +111,7 @@ impl LogFileEntry {
             "size_human": format_bytes(size),
             "last_modified": modified_str,
             "last_modified_timestamp": modified,
-            "path": self.path.display().to_string(),
+            FILE_PATH: self.path.display().to_string(),
         })
     }
 }

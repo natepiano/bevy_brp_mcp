@@ -1,0 +1,18 @@
+Get component data from a specific entity using the bevy/get BRP method. Retrieves the specified components from an entity and returns their current values.
+
+This is useful for:
+- Inspecting component values on specific entities
+- Debugging entity state
+- Retrieving data for external tools or UIs
+
+Parameters:
+- entity_id (required): The entity ID to get component data from
+- components (required): Array of component types to retrieve (fully-qualified type names)
+- port (optional): The BRP port (default: 15702)
+
+Example component types:
+- "bevy_transform::components::transform::Transform"
+- "bevy_sprite::sprite::Sprite"
+- "bevy_render::camera::camera::Camera"
+
+IMPORTANT: Components must be properly registered with BRP to be accessible.

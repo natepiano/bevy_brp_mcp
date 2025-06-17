@@ -10,6 +10,7 @@ use serde_json::json;
 use super::support::log_utils;
 use crate::BrpMcpService;
 use crate::constants::{DESC_READ_LOG, TOOL_READ_LOG};
+use crate::log_tools::constants::FILE_PATH;
 use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
@@ -72,7 +73,7 @@ pub async fn handle(
         format!("Successfully read log file: {}", filename),
         json!({
             "filename": filename,
-            "path": log_path.display().to_string(),
+            FILE_PATH: log_path.display().to_string(),
             "size_bytes": metadata.len(),
             "size_human": log_utils::format_bytes(metadata.len()),
             "lines_read": content.lines().count(),

@@ -1,0 +1,14 @@
+Destroy an entity using the bevy/destroy BRP method. Permanently removes an entity and all its components from the Bevy world.
+
+This is useful for:
+- Removing game objects that are no longer needed
+- Cleaning up temporary entities
+- Managing entity lifecycles in your Bevy app
+
+Parameters:
+- entity_id (required): The entity ID to destroy
+- port (optional): The BRP port (default: 15702)
+
+WARNING: This operation is permanent and cannot be undone. The entity and all its components will be removed from the world.
+
+Note: After destruction, the entity ID may be reused by the engine for new entities.

@@ -1,0 +1,35 @@
+Apply mutations to a resource using the bevy/mutate_resource BRP method. Modifies specific fields within a resource without replacing the entire resource.
+
+This is useful for:
+- Making targeted updates to resource fields
+- Avoiding race conditions when updating shared state
+- Incrementally modifying complex resources
+- Building fine-grained configuration tools
+
+Parameters:
+- resource (required): The fully-qualified type name of the resource to mutate
+- path (required): The path to the field within the resource (e.g., 'settings.volume')
+- value (required): The new value for the field
+- port (optional): The BRP port (default: 15702)
+
+Path syntax:
+- Use dots to access nested fields: "config.graphics.resolution"
+- Use brackets for array/vec indices: "items[0]"
+- Use quotes for map keys: "scores['player1']"
+
+Example usage:
+```json
+{
+  "resource": "my_game::config::GameConfig",
+  "path": "settings.sound.volume",
+  "value": 0.5
+}
+```
+
+Benefits over insert_resource:
+- Only modifies the specified field
+- Preserves other fields in the resource
+- More efficient for large resources
+- Safer for concurrent modifications
+
+IMPORTANT: The resource and field must support reflection for mutations to work.

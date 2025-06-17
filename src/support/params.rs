@@ -56,3 +56,32 @@ pub fn extract_optional_u32(
 ) -> Result<u32, McpError> {
     Ok(extract_optional_number(request, param_name, default as u64)? as u32)
 }
+
+/// Extract a required number parameter from the request
+pub fn extract_required_number(
+    request: &CallToolRequestParam,
+    param_name: &str,
+) -> Result<u64, McpError> {
+    request
+        .arguments
+        .as_ref()
+        .and_then(|args| args.get(param_name))
+        .and_then(|v| v.as_u64())
+        .ok_or_else(|| {
+            McpError::invalid_params(
+                format!("{} is required and must be a number", param_name),
+                None,
+            )
+        })
+}
+
+/// Extract any value parameter from the request (for generic JSON values)
+pub fn extract_any_value<'a>(
+    request: &'a CallToolRequestParam,
+    param_name: &str,
+) -> Option<&'a serde_json::Value> {
+    request
+        .arguments
+        .as_ref()
+        .and_then(|args| args.get(param_name))
+}

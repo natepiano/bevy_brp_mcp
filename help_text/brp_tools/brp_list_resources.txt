@@ -1,0 +1,17 @@
+List all resources in the Bevy app using the bevy/list_resources BRP method. Returns an array of all resource types currently registered in the application.
+
+This is useful for:
+- Discovering available resources in a Bevy app
+- Debugging resource registration issues
+- Building resource inspection tools
+- Understanding app architecture
+
+Parameters:
+- port (optional): The BRP port (default: 15702)
+
+Returns an array of fully-qualified resource type names, such as:
+- "bevy_time::time::Time"
+- "bevy_asset::assets::Assets<bevy_render::texture::image::Image>"
+- "bevy_window::window::Windows"
+
+Note: Only resources that have been registered with BRP will appear in this list. Resources must implement the necessary reflection traits to be accessible via BRP.
