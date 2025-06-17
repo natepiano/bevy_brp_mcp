@@ -33,14 +33,19 @@ impl SchemaBuilder {
     }
 
     /// Add a string array property to the schema
-    pub fn add_string_array_property(mut self, name: &str, description: &str, required: bool) -> Self {
+    pub fn add_string_array_property(
+        mut self,
+        name: &str,
+        description: &str,
+        required: bool,
+    ) -> Self {
         let mut prop = Map::new();
         prop.insert("type".to_string(), "array".into());
-        
+
         let mut items = Map::new();
         items.insert("type".to_string(), "string".into());
         prop.insert("items".to_string(), items.into());
-        
+
         prop.insert("description".to_string(), description.into());
         self.properties.insert(name.to_string(), prop.into());
 

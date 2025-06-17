@@ -1,5 +1,6 @@
 // Local support modules for brp_tools
 
+pub mod brp_client;
 pub mod builder;
 pub mod generic_handler;
 pub mod response_processor;

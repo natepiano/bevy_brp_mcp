@@ -1,16 +1,12 @@
-use std::time::Duration;
-
 use rmcp::model::{CallToolRequestParam, CallToolResult, Content, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use super::constants::{
     DEFAULT_BRP_PORT, JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_METHOD, JSON_FIELD_PARAMS,
     JSON_FIELD_PORT,
 };
-use super::support::builder::BrpJsonRpcBuilder;
+use super::support::brp_client::{BrpResult, execute_brp_method};
 use crate::constants::TOOL_BRP_EXECUTE;
 use crate::support::response::ResponseBuilder;
 use crate::support::schema;
@@ -29,24 +25,6 @@ pub fn register_tool() -> Tool {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct BrpResponse {
-    jsonrpc: String,
-    id:      u64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    result:  Option<Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error:   Option<BrpError>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct BrpError {
-    code:    i32,
-    message: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    data:    Option<Value>,
-}
-
 pub async fn handle_brp_execute(
     params: CallToolRequestParam,
     _context: RequestContext<RoleServer>,
@@ -61,88 +39,49 @@ pub async fn handle_brp_execute(
         ))
     })?;
 
-    // Create BRP request using builder
-    let mut builder = BrpJsonRpcBuilder::new(params.method.clone());
-    if let Some(p) = params.params {
-        builder = builder.params(p);
-    }
-    let request = builder.build();
+    // Use the new brp_client for BRP communication
+    let brp_result = execute_brp_method(&params.method, params.params, Some(params.port)).await?;
 
-    // Connect to BRP server
-    let url = format!("http://localhost:{}", params.port);
+    // Format the response using the same approach as before
+    match brp_result {
+        BrpResult::Success(data) => {
+            if let Some(result_data) = data {
+                let response = ResponseBuilder::success()
+                    .message(format!(
+                        "Successfully executed BRP method: {}",
+                        params.method
+                    ))
+                    .data(result_data)
+                    .build();
 
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()
-        .map_err(|e| {
-            McpError::from(rmcp::model::ErrorData::internal_error(
-                format!("Failed to create HTTP client: {}", e),
-                None,
-            ))
-        })?;
-
-    // Send request
-    let response = client
-        .post(&url)
-        .json(&request)
-        .send()
-        .await
-        .map_err(|e| {
-            if e.is_connect() {
-                McpError::from(rmcp::model::ErrorData::internal_error(
-                    format!("Failed to connect to BRP server on port {}. Make sure a Bevy app with RemotePlugin is running.", params.port),
-                    None
-                ))
+                Ok(CallToolResult::success(vec![Content::text(
+                    response.to_json(),
+                )]))
             } else {
-                McpError::from(rmcp::model::ErrorData::internal_error(
-                    format!("HTTP request failed: {}", e),
-                    None
-                ))
+                let response = ResponseBuilder::success()
+                    .message(format!(
+                        "BRP method {} executed successfully with no result",
+                        params.method
+                    ))
+                    .build();
+
+                Ok(CallToolResult::success(vec![Content::text(
+                    response.to_json(),
+                )]))
             }
-        })?;
+        }
+        BrpResult::Error(error_info) => {
+            let response = ResponseBuilder::error()
+                .message(format!("BRP error: {}", error_info.message))
+                .data(serde_json::json!({
+                    JSON_FIELD_CODE: error_info.code,
+                    JSON_FIELD_DATA: error_info.data
+                }))
+                .build();
 
-    let brp_response: BrpResponse = response.json().await.map_err(|e| {
-        McpError::from(rmcp::model::ErrorData::internal_error(
-            format!("Failed to parse BRP response: {}", e),
-            None,
-        ))
-    })?;
-
-    // Handle BRP response
-    if let Some(error) = brp_response.error {
-        let response = ResponseBuilder::error()
-            .message(format!("BRP error: {}", error.message))
-            .data(serde_json::json!({
-                JSON_FIELD_CODE: error.code,
-                JSON_FIELD_DATA: error.data
-            }))
-            .build();
-
-        Ok(CallToolResult::success(vec![Content::text(
-            response.to_json(),
-        )]))
-    } else if let Some(result) = brp_response.result {
-        let response = ResponseBuilder::success()
-            .message(format!(
-                "Successfully executed BRP method: {}",
-                params.method
-            ))
-            .data(result)
-            .build();
-
-        Ok(CallToolResult::success(vec![Content::text(
-            response.to_json(),
-        )]))
-    } else {
-        let response = ResponseBuilder::success()
-            .message(format!(
-                "BRP method {} executed successfully with no result",
-                params.method
-            ))
-            .build();
-
-        Ok(CallToolResult::success(vec![Content::text(
-            response.to_json(),
-        )]))
+            Ok(CallToolResult::success(vec![Content::text(
+                response.to_json(),
+            )]))
+        }
     }
 }

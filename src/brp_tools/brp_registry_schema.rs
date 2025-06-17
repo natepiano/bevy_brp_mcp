@@ -10,12 +10,14 @@ use super::constants::{
 use super::support::generic_handler::{
     BrpHandlerConfig, FormatterContext, FormatterFactory, ParamExtractor, handle_generic,
 };
-use super::support::response_processor::{BrpError, BrpMetadata, BrpResponseFormatter, format_error_default};
+use super::support::response_processor::{
+    BrpError, BrpMetadata, BrpResponseFormatter, format_error_default,
+};
 use super::support::serialization::json_tool_result;
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REGISTRY_SCHEMA, TOOL_BRP_REGISTRY_SCHEMA};
-use crate::support::schema;
 use crate::support::params::{extract_optional_number, extract_optional_string_array};
+use crate::support::schema;
 
 pub fn register_tool() -> Tool {
     Tool {
@@ -62,9 +64,9 @@ pub async fn handle(
 }
 
 /// Parameter extractor for registry/schema method
-/// 
+///
 /// Transforms individual filter parameters into the query structure expected by the BRP method:
-/// - with_crates: Include only types from specified crates  
+/// - with_crates: Include only types from specified crates
 /// - without_crates: Exclude types from specified crates
 /// - with_types: Include only types with specified reflect traits
 /// - without_types: Exclude types with specified reflect traits
@@ -77,19 +79,24 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
     ) -> Result<(Option<Value>, u16), McpError> {
         use serde_json::json;
 
-        let port = extract_optional_number(request, JSON_FIELD_PORT, DEFAULT_BRP_PORT as u64)? as u16;
-        
+        let port =
+            extract_optional_number(request, JSON_FIELD_PORT, DEFAULT_BRP_PORT as u64)? as u16;
+
         // Extract the individual filter parameters
         let with_crates = extract_optional_string_array(request, "with_crates")?;
         let without_crates = extract_optional_string_array(request, "without_crates")?;
         let with_types = extract_optional_string_array(request, "with_types")?;
         let without_types = extract_optional_string_array(request, "without_types")?;
-        
+
         // Build the query object if any filters are provided
         // The BRP method expects a JSON object with filter fields
-        let params = if with_crates.is_some() || without_crates.is_some() || with_types.is_some() || without_types.is_some() {
+        let params = if with_crates.is_some()
+            || without_crates.is_some()
+            || with_types.is_some()
+            || without_types.is_some()
+        {
             let mut query = serde_json::Map::new();
-            
+
             // Add crate filters
             if let Some(crates) = with_crates {
                 query.insert("with_crates".to_string(), json!(crates));
@@ -97,7 +104,7 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
             if let Some(crates) = without_crates {
                 query.insert("without_crates".to_string(), json!(crates));
             }
-            
+
             // Add reflect trait filters
             if let Some(types) = with_types {
                 query.insert("with_types".to_string(), json!(types));
@@ -105,14 +112,14 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
             if let Some(types) = without_types {
                 query.insert("without_types".to_string(), json!(types));
             }
-            
+
             // Return the query object directly as a Value::Object
             Some(Value::Object(query))
         } else {
             // No filters provided, return None to get all schemas
             None
         };
-        
+
         Ok((params, port))
     }
 }
@@ -129,7 +136,7 @@ impl FormatterFactory for RegistrySchemaFormatterFactory {
 }
 
 /// Formatter for bevy/registry/schema responses
-/// 
+///
 /// Provides detailed feedback about the number of schemas returned and any applied filters
 struct RegistrySchemaFormatter {
     filters_applied: bool,
@@ -153,9 +160,15 @@ impl BrpResponseFormatter for RegistrySchemaFormatter {
         };
 
         let message = if self.filters_applied {
-            format!("Retrieved schema information for {} filtered type(s)", schema_count)
+            format!(
+                "Retrieved schema information for {} filtered type(s)",
+                schema_count
+            )
         } else {
-            format!("Retrieved schema information for {} type(s) (all registered types)", schema_count)
+            format!(
+                "Retrieved schema information for {} type(s) (all registered types)",
+                schema_count
+            )
         };
 
         let formatted_data = json!({

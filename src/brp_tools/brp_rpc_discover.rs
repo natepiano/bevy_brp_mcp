@@ -10,7 +10,9 @@ use super::constants::{
 use super::support::generic_handler::{
     BrpHandlerConfig, FormatterContext, FormatterFactory, SimplePortExtractor, handle_generic,
 };
-use super::support::response_processor::{BrpError, BrpMetadata, BrpResponseFormatter, format_error_default};
+use super::support::response_processor::{
+    BrpError, BrpMetadata, BrpResponseFormatter, format_error_default,
+};
 use super::support::serialization::json_tool_result;
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_RPC_DISCOVER, TOOL_BRP_RPC_DISCOVER};
@@ -18,10 +20,14 @@ use crate::support::schema;
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: TOOL_BRP_RPC_DISCOVER.into(),
-        description: DESC_BRP_RPC_DISCOVER.into(),
+        name:         TOOL_BRP_RPC_DISCOVER.into(),
+        description:  DESC_BRP_RPC_DISCOVER.into(),
         input_schema: schema::SchemaBuilder::new()
-            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
+            .add_number_property(
+                JSON_FIELD_PORT,
+                &format!("The BRP port (default: {})", DEFAULT_BRP_PORT),
+                false,
+            )
             .build(),
     }
 }
