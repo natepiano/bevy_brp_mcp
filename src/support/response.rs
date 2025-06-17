@@ -19,26 +19,6 @@ pub enum ResponseStatus {
 }
 
 impl JsonResponse {
-    /// Create a successful response with optional data
-    #[cfg(test)]
-    pub fn success(message: impl Into<String>) -> Self {
-        Self {
-            status:  ResponseStatus::Success,
-            message: message.into(),
-            data:    None,
-        }
-    }
-
-    /// Create a successful response with data
-    #[cfg(test)]
-    pub fn success_with_data(message: impl Into<String>, data: impl Serialize) -> Self {
-        Self {
-            status:  ResponseStatus::Success,
-            message: message.into(),
-            data:    Some(serde_json::to_value(data).unwrap_or(Value::Null)),
-        }
-    }
-
     /// Convert to JSON string
     pub fn to_json(&self) -> String {
         serde_json::to_string_pretty(self).unwrap_or_else(|_| {
@@ -101,45 +81,4 @@ pub fn success_json_response(
         .build();
 
     rmcp::model::CallToolResult::success(vec![rmcp::model::Content::text(response.to_json())])
-}
-
-#[cfg(test)]
-mod tests {
-    use serde_json::json;
-
-    use super::*;
-
-    #[test]
-    fn test_success_response() {
-        let response = JsonResponse::success("Operation successful");
-        let json = serde_json::to_value(&response).unwrap();
-
-        assert_eq!(json["status"], "success");
-        assert_eq!(json["message"], "Operation successful");
-        assert!(json["data"].is_null());
-    }
-
-    #[test]
-    fn test_success_with_data() {
-        let data = json!({"key": "value"});
-        let response = JsonResponse::success_with_data("Data retrieved", data);
-        let json = serde_json::to_value(&response).unwrap();
-
-        assert_eq!(json["status"], "success");
-        assert_eq!(json["message"], "Data retrieved");
-        assert_eq!(json["data"]["key"], "value");
-    }
-
-    #[test]
-    fn test_response_builder() {
-        let response = ResponseBuilder::success()
-            .message("Custom message")
-            .data(json!({"count": 42}))
-            .build();
-
-        let json = serde_json::to_value(&response).unwrap();
-        assert_eq!(json["status"], "success");
-        assert_eq!(json["message"], "Custom message");
-        assert_eq!(json["data"]["count"], 42);
-    }
 }

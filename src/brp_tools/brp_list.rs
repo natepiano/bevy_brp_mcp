@@ -4,77 +4,67 @@ use rmcp::{Error as McpError, RoleServer};
 use serde_json::{Value, json};
 
 use super::constants::{
-    BRP_METHOD_LIST, DEFAULT_BRP_PORT, JSON_FIELD_COUNT, JSON_FIELD_DATA, JSON_FIELD_ENTITY,
-    JSON_FIELD_ENTITY_ID, JSON_FIELD_ERROR_CODE, JSON_FIELD_HINT, JSON_FIELD_MESSAGE,
-    JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PORT, JSON_FIELD_STATUS,
-    QUERY_FIELD_COMPONENTS, RESPONSE_STATUS_ERROR, RESPONSE_STATUS_SUCCESS,
+    BRP_METHOD_LIST, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENT_COUNT, JSON_FIELD_DATA,
+    JSON_FIELD_ENTITY, JSON_FIELD_MESSAGE, JSON_FIELD_PORT, JSON_FIELD_STATUS,
+    RESPONSE_STATUS_SUCCESS,
 };
-use super::support::builder::BrpRequestBuilder;
-use super::support::formatting::generate_empty_components_hint;
-use super::support::response_processor::{BrpMetadata, BrpResponseFormatter, process_brp_response};
+use super::support::generic_handler::{
+    BrpHandlerConfig, EntityParamExtractor, FormatterContext, FormatterFactory, handle_generic,
+};
+use super::support::response_processor::{
+    BrpError, BrpMetadata, BrpResponseFormatter, format_error_default,
+};
 use super::support::serialization::json_tool_result;
-use super::support::utils::to_execute_request;
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_LIST, TOOL_BRP_LIST};
 use crate::support::schema;
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: TOOL_BRP_LIST.into(),
-        description: DESC_BRP_LIST.into(),
+        name:         TOOL_BRP_LIST.into(),
+        description:  DESC_BRP_LIST.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_number_property(
-                "entity_id",
-                "Optional entity ID to list components for. If not provided, lists all registered \
-                 components in the app. Internally calls bevy/list with or without entity parameter.",
-                false
+                JSON_FIELD_ENTITY,
+                "Optional entity ID to list components for",
+                false,
             )
-            .add_number_property("port", &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
+            .add_number_property(
+                JSON_FIELD_PORT,
+                &format!("The BRP port (default: {})", DEFAULT_BRP_PORT),
+                false,
+            )
             .build(),
     }
 }
 
 pub async fn handle(
-    _service: &BrpMcpService,
+    service: &BrpMcpService,
     request: rmcp::model::CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    // Extract parameters
-    let entity_id = request
-        .arguments
-        .as_ref()
-        .and_then(|args| args.get("entity_id"))
-        .and_then(|v| v.as_u64());
+    let config = BrpHandlerConfig {
+        method:            BRP_METHOD_LIST,
+        param_extractor:   Box::new(EntityParamExtractor { required: false }),
+        formatter_factory: Box::new(ListFormatterFactory),
+    };
 
-    let port = request
-        .arguments
-        .as_ref()
-        .and_then(|args| args.get("port"))
-        .and_then(|v| v.as_u64())
-        .map(|v| v as u16)
-        .unwrap_or(DEFAULT_BRP_PORT);
+    handle_generic(service, request, context, &config).await
+}
 
-    // Build BRP request using the builder
-    let mut builder = BrpRequestBuilder::new(BRP_METHOD_LIST).port(port);
+/// Factory for creating ListFormatter
+struct ListFormatterFactory;
 
-    if let Some(entity) = entity_id {
-        builder = builder.entity(entity);
+impl FormatterFactory for ListFormatterFactory {
+    fn create(&self, context: FormatterContext) -> Box<dyn BrpResponseFormatter> {
+        let entity_id = context
+            .params
+            .as_ref()
+            .and_then(|p| p.get(JSON_FIELD_ENTITY))
+            .and_then(|v| v.as_u64());
+
+        Box::new(ListFormatter { entity_id })
     }
-
-    let brp_params = builder.build();
-
-    // Convert to request format expected by brp_execute
-    let execute_request = to_execute_request(brp_params)?;
-
-    // Call brp_execute
-    let result = super::brp_execute::handle_brp_execute(execute_request, context).await?;
-
-    // Create formatter and metadata
-    let formatter = ListFormatter::new(entity_id);
-    let metadata = BrpMetadata::new(BRP_METHOD_LIST, port);
-
-    // Use the response processor to handle the result
-    process_brp_response(result, formatter, metadata)
 }
 
 /// Formatter for bevy/list responses
@@ -82,74 +72,38 @@ struct ListFormatter {
     entity_id: Option<u64>,
 }
 
-impl ListFormatter {
-    fn new(entity_id: Option<u64>) -> Self {
-        Self { entity_id }
-    }
-}
-
 impl BrpResponseFormatter for ListFormatter {
     fn format_success(&self, data: Value, _metadata: BrpMetadata) -> CallToolResult {
-        // Extract the component list from the data field
-        let empty_vec = vec![];
-        let components = data.as_array().unwrap_or(&empty_vec);
+        let components = data.as_array().cloned().unwrap_or_default();
 
-        // Format the response based on entity_id
-        let formatted_data = if let Some(entity) = self.entity_id {
-            let mut response = json!({
-                JSON_FIELD_STATUS: RESPONSE_STATUS_SUCCESS,
-                JSON_FIELD_MESSAGE: format!("Found {} components on entity {}", components.len(), entity),
-                JSON_FIELD_DATA: {
-                    JSON_FIELD_ENTITY: entity,
-                    QUERY_FIELD_COMPONENTS: components,
-                    JSON_FIELD_COUNT: components.len()
-                }
-            });
-
-            // Add hint if no components found
-            if components.is_empty() {
-                response[JSON_FIELD_HINT] = json!(generate_empty_components_hint(Some(entity)));
-            }
-
-            response
+        let message = if let Some(entity_id) = self.entity_id {
+            format!(
+                "Found {} component(s) on entity {}",
+                components.len(),
+                entity_id
+            )
         } else {
-            let mut response = json!({
-                JSON_FIELD_STATUS: RESPONSE_STATUS_SUCCESS,
-                JSON_FIELD_MESSAGE: format!("Found {} registered component types", components.len()),
-                JSON_FIELD_DATA: {
-                    QUERY_FIELD_COMPONENTS: components,
-                    JSON_FIELD_COUNT: components.len()
-                }
-            });
-
-            // Add hint if no components found
-            if components.is_empty() {
-                response[JSON_FIELD_HINT] = json!(generate_empty_components_hint(None));
-            }
-
-            response
+            format!("Found {} registered component type(s)", components.len())
         };
 
-        json_tool_result(&formatted_data)
-    }
-
-    fn format_error(
-        &self,
-        error: super::support::response_processor::BrpError,
-        metadata: BrpMetadata,
-    ) -> CallToolResult {
-        let formatted_error = json!({
-            JSON_FIELD_STATUS: RESPONSE_STATUS_ERROR,
-            JSON_FIELD_MESSAGE: error.message,
-            JSON_FIELD_ERROR_CODE: error.code,
-            JSON_FIELD_DATA: error.data,
-            JSON_FIELD_METADATA: {
-                JSON_FIELD_METHOD: metadata.method,
-                JSON_FIELD_PORT: metadata.port,
-                JSON_FIELD_ENTITY_ID: self.entity_id
-            }
+        let mut result = json!({
+            JSON_FIELD_STATUS: RESPONSE_STATUS_SUCCESS,
+            JSON_FIELD_MESSAGE: message,
+            JSON_FIELD_DATA: components,
+            JSON_FIELD_COMPONENT_COUNT: components.len(),
         });
 
-        json_tool_result(&formatted_error)
+        if let Some(entity_id) = self.entity_id {
+            result
+                .as_object_mut()
+                .unwrap()
+                .insert(JSON_FIELD_ENTITY.to_string(), json!(entity_id));
+        }
+
+        json_tool_result(&result)
+    }
+
+    fn format_error(&self, error: BrpError, metadata: BrpMetadata) -> CallToolResult {
+        format_error_default(error, metadata)
     }
 }

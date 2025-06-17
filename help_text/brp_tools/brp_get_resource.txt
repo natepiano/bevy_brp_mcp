@@ -1,0 +1,24 @@
+Get data from a specific resource using the bevy/get_resource BRP method. Retrieves the current value of a resource from the Bevy app.
+
+This is useful for:
+- Inspecting global app state
+- Retrieving configuration values
+- Monitoring resource values for debugging
+- Building external monitoring tools
+
+Parameters:
+- resource_name (required): The fully-qualified type name of the resource to get
+- port (optional): The BRP port (default: 15702)
+
+Example resource names:
+- "bevy_time::time::Time"
+- "bevy_window::window::Windows"
+- "my_game::config::GameConfig"
+
+Returns the resource data in JSON format. The structure depends on the resource type.
+
+Error cases:
+- Resource not found: The resource type doesn't exist in the app
+- Resource not registered: The resource exists but isn't registered with BRP
+
+IMPORTANT: Resources must be properly registered with BRP and implement the necessary reflection traits.

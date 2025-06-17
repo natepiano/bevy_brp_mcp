@@ -1,8 +1,7 @@
 use serde_json::{Value, json};
 
 use crate::brp_tools::constants::{
-    DEFAULT_BRP_PORT, JSON_FIELD_DATA_LOWERCASE, JSON_FIELD_ENTITY, JSON_FIELD_FILTER,
-    JSON_FIELD_STRICT, JSONRPC_DEFAULT_ID, JSONRPC_FIELD, JSONRPC_FIELD_ID, JSONRPC_FIELD_METHOD,
+    DEFAULT_BRP_PORT, JSONRPC_DEFAULT_ID, JSONRPC_FIELD, JSONRPC_FIELD_ID, JSONRPC_FIELD_METHOD,
     JSONRPC_FIELD_PARAMS, JSONRPC_VERSION,
 };
 use crate::types::BrpExecuteParams;
@@ -27,38 +26,10 @@ impl BrpRequestBuilder {
         }
     }
 
-    /// Helper method to set a parameter value
-    fn set_param(mut self, key: &str, value: Value) -> Self {
-        let mut params = self.params.take().unwrap_or_else(|| json!({}));
-        params[key] = value;
-        self.params = Some(params);
-        self
-    }
-
     /// Set the port (default: 15702)
     pub fn port(mut self, port: u16) -> Self {
         self.port = port;
         self
-    }
-
-    /// Set an entity parameter
-    pub fn entity(self, entity_id: u64) -> Self {
-        self.set_param(JSON_FIELD_ENTITY, json!(entity_id))
-    }
-
-    /// Set strict parameter
-    pub fn strict(self, strict: bool) -> Self {
-        self.set_param(JSON_FIELD_STRICT, json!(strict))
-    }
-
-    /// Set data parameter for bevy/query
-    pub fn data(self, data: Value) -> Self {
-        self.set_param(JSON_FIELD_DATA_LOWERCASE, data)
-    }
-
-    /// Set filter parameter for bevy/query
-    pub fn filter(self, filter: Value) -> Self {
-        self.set_param(JSON_FIELD_FILTER, filter)
     }
 
     /// Build the final BrpExecuteParams
@@ -118,6 +89,7 @@ impl BrpJsonRpcBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::brp_tools::constants::JSON_FIELD_ENTITY;
 
     #[test]
     fn test_brp_request_builder_basic() {
@@ -126,14 +98,6 @@ mod tests {
         assert_eq!(params.method, "bevy/list");
         assert_eq!(params.port, 8080);
         assert!(params.params.is_none());
-    }
-
-    #[test]
-    fn test_brp_request_builder_with_entity() {
-        let params = BrpRequestBuilder::new("bevy/list").entity(123).build();
-
-        assert_eq!(params.method, "bevy/list");
-        assert_eq!(params.params, Some(json!({JSON_FIELD_ENTITY: 123})));
     }
 
     #[test]
