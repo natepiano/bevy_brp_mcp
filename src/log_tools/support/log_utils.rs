@@ -17,7 +17,7 @@ pub fn is_valid_log_filename(filename: &str) -> bool {
 }
 
 /// Parses a log filename into app name and timestamp components
-/// Returns Some((app_name, timestamp_str)) if valid, None otherwise
+/// Returns `Some((app_name, timestamp_str))` if valid, `None` otherwise
 pub fn parse_log_filename(filename: &str) -> Option<(String, String)> {
     if !is_valid_log_filename(filename) {
         return None;
@@ -41,6 +41,7 @@ pub fn parse_log_filename(filename: &str) -> Option<(String, String)> {
 }
 
 /// Formats bytes into human-readable string with appropriate unit
+#[allow(clippy::cast_precision_loss)]
 pub fn format_bytes(bytes: u64) -> String {
     const UNITS: &[&str] = &["B", "KB", "MB", "GB"];
     let mut size = bytes as f64;
@@ -87,19 +88,17 @@ impl LogFileEntry {
             .modified()
             .ok()
             .and_then(|t| t.duration_since(SystemTime::UNIX_EPOCH).ok())
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
+            .map_or(0, |d| d.as_secs());
 
         let modified_str = self
             .metadata
             .modified()
             .ok()
-            .map(|t| {
+            .map_or_else(|| "Unknown".to_string(), |t| {
                 chrono::DateTime::<chrono::Local>::from(t)
                     .format("%Y-%m-%d %H:%M:%S")
                     .to_string()
-            })
-            .unwrap_or_else(|| "Unknown".to_string());
+            });
 
         let timestamp_value = self.timestamp.parse::<u128>().unwrap_or(0);
 
@@ -117,7 +116,7 @@ impl LogFileEntry {
 }
 
 /// Iterates over log files in the temp directory with optional filtering
-/// The filter function receives a LogFileEntry and returns true to include it
+/// The filter function receives a `LogFileEntry` and returns true to include it
 pub fn iterate_log_files<F>(filter: F) -> Result<Vec<LogFileEntry>, McpError>
 where
     F: Fn(&LogFileEntry) -> bool,

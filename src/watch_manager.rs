@@ -10,8 +10,8 @@ use tokio::task::JoinHandle;
 use tracing::info;
 
 /// Global watch manager instance
-pub static WATCH_MANAGER: once_cell::sync::Lazy<Arc<Mutex<WatchManager>>> =
-    once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(WatchManager::new())));
+pub static WATCH_MANAGER: std::sync::LazyLock<Arc<Mutex<WatchManager>>> =
+    std::sync::LazyLock::new(|| Arc::new(Mutex::new(WatchManager::new())));
 
 /// Information about an active watch
 #[derive(Debug, Clone)]
@@ -46,7 +46,7 @@ impl WatchManager {
     }
 
     /// Stop a watch by ID
-    pub async fn stop_watch(&mut self, watch_id: u32) -> Result<(), String> {
+    pub fn stop_watch(&mut self, watch_id: u32) -> Result<(), String> {
         if let Some((info, handle)) = self.active_watches.remove(&watch_id) {
             info!("Stopping watch {} for entity {}", watch_id, info.entity_id);
             handle.abort();

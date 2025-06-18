@@ -10,10 +10,20 @@ use crate::brp_tools::{
     brp_mutate_component, brp_mutate_resource, brp_query, brp_registry_schema, brp_remove,
     brp_remove_resource, brp_reparent, brp_rpc_discover, brp_spawn, brp_status,
 };
-use crate::constants::*;
+use crate::constants::{
+    TOOL_BRP_EXECUTE, TOOL_BRP_STATUS, TOOL_BRP_LIST, TOOL_BRP_QUERY, TOOL_BRP_GET,
+    TOOL_BRP_DESTROY, TOOL_BRP_SPAWN, TOOL_BRP_INSERT, TOOL_BRP_REMOVE,
+    TOOL_BRP_MUTATE_COMPONENT, TOOL_BRP_REPARENT, TOOL_BRP_LIST_RESOURCES,
+    TOOL_BRP_GET_RESOURCE, TOOL_BRP_INSERT_RESOURCE, TOOL_BRP_REMOVE_RESOURCE,
+    TOOL_BRP_MUTATE_RESOURCE, TOOL_BRP_REGISTRY_SCHEMA, TOOL_BRP_RPC_DISCOVER,
+    TOOL_LIST_BEVY_APPS, TOOL_LIST_BEVY_EXAMPLES, TOOL_LAUNCH_BEVY_APP,
+    TOOL_LAUNCH_BEVY_EXAMPLE, TOOL_LIST_LOGS, TOOL_READ_LOG, TOOL_CLEANUP_LOGS,
+    TOOL_BRP_GET_WATCH, TOOL_BRP_LIST_WATCH, TOOL_BEVY_STOP_WATCH,
+    TOOL_BEVY_LIST_ACTIVE_WATCHES,
+};
 use crate::log_tools::{cleanup_logs, list_logs, read_log};
 
-pub async fn register_tools() -> ListToolsResult {
+pub fn register_tools() -> ListToolsResult {
     let tools = vec![
         // Core BRP tools
         brp_execute::register_tool(),
@@ -98,9 +108,9 @@ pub async fn handle_tool_call(
         TOOL_LAUNCH_BEVY_EXAMPLE => launch_example::handle(service, request, context).await,
 
         // Log management tools
-        TOOL_LIST_LOGS => list_logs::handle(service, request, context).await,
-        TOOL_READ_LOG => read_log::handle(service, request, context).await,
-        TOOL_CLEANUP_LOGS => cleanup_logs::handle(service, request, context).await,
+        TOOL_LIST_LOGS => list_logs::handle(service, &request, context),
+        TOOL_READ_LOG => read_log::handle(service, &request, context),
+        TOOL_CLEANUP_LOGS => cleanup_logs::handle(service, &request, context),
 
         // Streaming/watch tools
         TOOL_BRP_GET_WATCH => brp_get_watch::handle(service, request, context).await,

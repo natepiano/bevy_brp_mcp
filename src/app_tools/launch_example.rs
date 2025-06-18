@@ -42,10 +42,10 @@ pub async fn handle(
     let search_paths = service::fetch_roots_and_get_paths(service, context).await?;
 
     // Launch the example
-    launch_bevy_example(example_name, profile, &search_paths).await
+    launch_bevy_example(example_name, profile, &search_paths)
 }
 
-pub async fn launch_bevy_example(
+pub fn launch_bevy_example(
     example_name: &str,
     profile: &str,
     search_paths: &[PathBuf],

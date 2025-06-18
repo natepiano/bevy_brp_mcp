@@ -16,7 +16,9 @@ pub fn extract_required_u32(
             let msg = format!("{field_description} parameter is required and must be a number");
             McpError::invalid_params(msg, None)
         })
-        .map(|v| v as u32)
+        .and_then(|v| u32::try_from(v).map_err(|_| {
+            McpError::invalid_params(format!("{field_description} value too large for u32"), None)
+        }))
 }
 
 /// Extract a required u64 from a JSON value
@@ -35,7 +37,8 @@ pub fn extract_required_u64(
 pub fn extract_optional_u16(arguments: &Value, field_name: &str, default_value: u16) -> u16 {
     arguments[field_name]
         .as_u64()
-        .unwrap_or(default_value as u64) as u16
+        .and_then(|v| u16::try_from(v).ok())
+        .unwrap_or(default_value)
 }
 
 /// Extract an optional array of strings from a Value
@@ -84,16 +87,13 @@ pub fn extract_optional_number(
     param_name: &str,
     default: u64,
 ) -> Result<u64, McpError> {
-    match request
+    request
         .arguments
         .as_ref()
         .and_then(|args| args.get(param_name))
-    {
-        Some(v) => v.as_u64().ok_or_else(|| {
+        .map_or(Ok(default), |v| v.as_u64().ok_or_else(|| {
             McpError::invalid_params(format!("Parameter '{param_name}' must be a number"), None)
-        }),
-        None => Ok(default),
-    }
+        }))
 }
 
 /// Extract an optional u32 parameter from the request with a default value
@@ -102,7 +102,9 @@ pub fn extract_optional_u32(
     param_name: &str,
     default: u32,
 ) -> Result<u32, McpError> {
-    Ok(extract_optional_number(request, param_name, default as u64)? as u32)
+    let value = extract_optional_number(request, param_name, u64::from(default))?;
+    u32::try_from(value)
+        .map_err(|_| McpError::invalid_params(format!("{param_name} value too large for u32"), None))
 }
 
 /// Extract a required number parameter from the request
@@ -114,7 +116,7 @@ pub fn extract_required_number(
         .arguments
         .as_ref()
         .and_then(|args| args.get(param_name))
-        .and_then(|v| v.as_u64())
+        .and_then(serde_json::Value::as_u64)
         .ok_or_else(|| {
             McpError::invalid_params(
                 format!("{param_name} is required and must be a number"),

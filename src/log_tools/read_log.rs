@@ -37,15 +37,16 @@ pub fn register_tool() -> Tool {
     }
 }
 
-pub async fn handle(
+pub fn handle(
     _service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: &rmcp::model::CallToolRequestParam,
     _context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     // Extract parameters
-    let filename = params::extract_required_string(&request, "filename")?;
-    let keyword = params::extract_optional_string(&request, "keyword", "");
-    let tail_lines = params::extract_optional_number(&request, "tail_lines", 0)? as usize;
+    let filename = params::extract_required_string(request, "filename")?;
+    let keyword = params::extract_optional_string(request, "keyword", "");
+    let tail_lines = usize::try_from(params::extract_optional_number(request, "tail_lines", 0)?)
+        .map_err(|_| McpError::invalid_params("tail_lines value too large", None))?;
 
     // Validate filename format for security
     if !log_utils::is_valid_log_filename(filename) {

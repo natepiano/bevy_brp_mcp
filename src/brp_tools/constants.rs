@@ -39,7 +39,6 @@ pub const JSON_FIELD_ENTITY: &str = "entity";
 pub const JSON_FIELD_ENTITY_COUNT: &str = "entity_count";
 pub const JSON_FIELD_ERROR_CODE: &str = "error_code";
 pub const JSON_FIELD_LOG_PATH: &str = "log_path";
-// pub const JSON_FIELD_MESSAGE: &str = "message";
 pub const JSON_FIELD_METADATA: &str = "metadata";
 pub const JSON_FIELD_METHOD: &str = "method";
 pub const JSON_FIELD_PARAMS: &str = "params";
@@ -62,3 +61,6 @@ pub const JSONRPC_FIELD: &str = "jsonrpc";
 pub const JSONRPC_FIELD_ID: &str = "id";
 pub const JSONRPC_FIELD_METHOD: &str = "method";
 pub const JSONRPC_FIELD_PARAMS: &str = "params";
+
+// Documentation/Help Constants
+pub const MATH_TYPE_FORMAT_NOTE: &str = " Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.";

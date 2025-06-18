@@ -23,7 +23,7 @@ pub struct BufferedWatchLogger {
 
 impl BufferedWatchLogger {
     /// Create a new buffered logger and spawn the writer task
-    pub async fn new(log_path: PathBuf) -> std::io::Result<Self> {
+    pub fn new(log_path: PathBuf) -> Self {
         let (tx, rx) = mpsc::channel(1000); // Buffer up to 1000 messages
 
         // Spawn the writer task
@@ -33,7 +33,7 @@ impl BufferedWatchLogger {
             }
         });
 
-        Ok(Self { tx })
+        Self { tx }
     }
 
     /// Queue a log entry for writing (non-blocking)
