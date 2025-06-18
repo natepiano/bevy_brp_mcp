@@ -1,6 +1,7 @@
 // Module organization
 mod config;
 mod extractors;
+mod format_discovery;
 mod handler;
 mod traits;
 
@@ -10,4 +11,4 @@ pub use extractors::{
     BrpExecuteExtractor, EntityParamExtractor, PassthroughExtractor, SimplePortExtractor,
 };
 pub use handler::handle_brp_request;
-pub use traits::{ParamExtractor, ExtractedParams};
+pub use traits::{ExtractedParams, ParamExtractor};

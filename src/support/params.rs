@@ -16,9 +16,14 @@ pub fn extract_required_u32(
             let msg = format!("{field_description} parameter is required and must be a number");
             McpError::invalid_params(msg, None)
         })
-        .and_then(|v| u32::try_from(v).map_err(|_| {
-            McpError::invalid_params(format!("{field_description} value too large for u32"), None)
-        }))
+        .and_then(|v| {
+            u32::try_from(v).map_err(|_| {
+                McpError::invalid_params(
+                    format!("{field_description} value too large for u32"),
+                    None,
+                )
+            })
+        })
 }
 
 /// Extract a required u64 from a JSON value
@@ -91,9 +96,11 @@ pub fn extract_optional_number(
         .arguments
         .as_ref()
         .and_then(|args| args.get(param_name))
-        .map_or(Ok(default), |v| v.as_u64().ok_or_else(|| {
-            McpError::invalid_params(format!("Parameter '{param_name}' must be a number"), None)
-        }))
+        .map_or(Ok(default), |v| {
+            v.as_u64().ok_or_else(|| {
+                McpError::invalid_params(format!("Parameter '{param_name}' must be a number"), None)
+            })
+        })
 }
 
 /// Extract an optional u32 parameter from the request with a default value
@@ -103,8 +110,9 @@ pub fn extract_optional_u32(
     default: u32,
 ) -> Result<u32, McpError> {
     let value = extract_optional_number(request, param_name, u64::from(default))?;
-    u32::try_from(value)
-        .map_err(|_| McpError::invalid_params(format!("{param_name} value too large for u32"), None))
+    u32::try_from(value).map_err(|_| {
+        McpError::invalid_params(format!("{param_name} value too large for u32"), None)
+    })
 }
 
 /// Extract a required number parameter from the request

@@ -29,7 +29,11 @@ pub fn register_tool() -> Tool {
                 "The path to the field within the resource (e.g., 'settings.volume')",
                 true,
             )
-            .add_any_property("value", &format!("The new value for the field.{MATH_TYPE_FORMAT_NOTE}"), true)
+            .add_any_property(
+                "value",
+                &format!("The new value for the field.{MATH_TYPE_FORMAT_NOTE}"),
+                true,
+            )
             .add_number_property(
                 JSON_FIELD_PORT,
                 &format!("The BRP port (default: {DEFAULT_BRP_PORT})"),

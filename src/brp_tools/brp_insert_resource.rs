@@ -24,7 +24,11 @@ pub fn register_tool() -> Tool {
                 "The fully-qualified type name of the resource to insert or update",
                 true,
             )
-            .add_any_property("value", &format!("The resource value to insert.{MATH_TYPE_FORMAT_NOTE}"), true)
+            .add_any_property(
+                "value",
+                &format!("The resource value to insert.{MATH_TYPE_FORMAT_NOTE}"),
+                true,
+            )
             .add_number_property(
                 JSON_FIELD_PORT,
                 &format!("The BRP port (default: {DEFAULT_BRP_PORT})"),

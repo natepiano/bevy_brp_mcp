@@ -84,13 +84,13 @@ impl ServerHandler for BrpMcpService {
 
 impl BrpMcpService {
     /// Fetches search roots from the connected MCP client.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns an error if the MCP client cannot be contacted or if the `list_roots` call fails.
-    /// 
+    ///
     /// # Panics
-    /// 
+    ///
     /// Panics if the mutex lock on roots is poisoned.
     pub async fn fetch_roots_from_client(
         &self,
@@ -114,10 +114,13 @@ impl BrpMcpService {
                     .iter()
                     .filter_map(|root| {
                         // Parse the file:// URI
-                        root.uri.strip_prefix("file://").map_or_else(|| {
-                            tracing::warn!("Ignoring non-file URI: {}", root.uri);
-                            None
-                        }, |path| Some(PathBuf::from(path)))
+                        root.uri.strip_prefix("file://").map_or_else(
+                            || {
+                                tracing::warn!("Ignoring non-file URI: {}", root.uri);
+                                None
+                            },
+                            |path| Some(PathBuf::from(path)),
+                        )
                     })
                     .collect();
 
