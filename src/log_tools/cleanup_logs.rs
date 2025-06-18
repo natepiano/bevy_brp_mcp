@@ -42,7 +42,7 @@ pub async fn handle(
     let (deleted_count, deleted_files) = cleanup_log_files(app_name_filter, older_than_seconds)?;
 
     Ok(response::success_json_response(
-        format!("Deleted {} log files", deleted_count),
+        format!("Deleted {deleted_count} log files"),
         json!({
             "deleted_count": deleted_count,
             "deleted_files": deleted_files,

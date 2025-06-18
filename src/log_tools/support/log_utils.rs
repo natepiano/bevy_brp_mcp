@@ -11,7 +11,7 @@ use crate::log_tools::constants::FILE_PATH;
 pub const LOG_PREFIX: &str = "bevy_brp_mcp_";
 pub const LOG_EXTENSION: &str = ".log";
 
-/// Validates if a filename follows the bevy_brp_mcp log naming convention
+/// Validates if a filename follows the `bevy_brp_mcp` log naming convention
 pub fn is_valid_log_filename(filename: &str) -> bool {
     filename.starts_with(LOG_PREFIX) && filename.ends_with(LOG_EXTENSION)
 }
@@ -127,13 +127,13 @@ where
 
     // Read the temp directory
     let entries = fs::read_dir(&temp_dir).map_err(|e| {
-        McpError::internal_error(format!("Failed to read temp directory: {}", e), None)
+        McpError::internal_error(format!("Failed to read temp directory: {e}"), None)
     })?;
 
     // Process each entry
     for entry in entries {
         let entry = entry.map_err(|e| {
-            McpError::internal_error(format!("Failed to read directory entry: {}", e), None)
+            McpError::internal_error(format!("Failed to read directory entry: {e}"), None)
         })?;
 
         let path = entry.path();
@@ -143,7 +143,7 @@ where
         if let Some((app_name, timestamp)) = parse_log_filename(filename) {
             // Get file metadata
             let metadata = entry.metadata().map_err(|e| {
-                McpError::internal_error(format!("Failed to get file metadata: {}", e), None)
+                McpError::internal_error(format!("Failed to get file metadata: {e}"), None)
             })?;
 
             let log_entry = LogFileEntry {

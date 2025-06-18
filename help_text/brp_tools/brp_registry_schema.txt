@@ -7,6 +7,9 @@ This is useful for:
 - Generating documentation for available types
 - Creating external editors or inspectors for Bevy components
 
+⚠️  IMPORTANT: Response Size Limitations
+The response can be VERY large (200k+ tokens) when no filters are applied. ALWAYS use filtering parameters to avoid token limits. Start with specific crates or types rather than requesting all schemas.
+
 Parameters (all optional):
 - with_crates: Array of crate names to include (e.g., ["bevy_transform", "my_game"])
 - without_crates: Array of crate names to exclude (e.g., ["bevy_render", "bevy_pbr"])
@@ -14,12 +17,14 @@ Parameters (all optional):
 - without_types: Array of reflect traits to exclude (e.g., ["RenderResource"])
 - port: The BRP port (default: 15702)
 
-Filter Examples:
-1. Get all schemas: (no parameters)
-2. Get only Transform types: with_crates=["bevy_transform"]
-3. Get only Resources: with_types=["Resource"]  
-4. Get Components excluding render crates: with_types=["Component"], without_crates=["bevy_render", "bevy_pbr"]
-5. Get game-specific Components: with_crates=["my_game"], with_types=["Component"]
+Filter Examples (RECOMMENDED - always use filtering):
+1. Get only Transform types: with_crates=["bevy_transform"]
+2. Get only Resources: with_types=["Resource"]  
+3. Get Components excluding render crates: with_types=["Component"], without_crates=["bevy_render", "bevy_pbr"]
+4. Get game-specific Components: with_crates=["my_game"], with_types=["Component"]
+5. Get specific crate Components: with_crates=["bevy_ui"], with_types=["Component"]
+
+❌ AVOID: Get all schemas (no parameters) - This will likely exceed token limits!
 
 Common Crate Names:
 - bevy_transform: Transform, GlobalTransform

@@ -1,21 +1,18 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
-use serde_json::{Value, json};
 
 use super::constants::{
-    BRP_METHOD_MUTATE_RESOURCE, DEFAULT_BRP_PORT, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE,
-    JSON_FIELD_MESSAGE, JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PATH, JSON_FIELD_PORT,
-    JSON_FIELD_RESOURCE, JSON_FIELD_STATUS, RESPONSE_STATUS_ERROR, RESPONSE_STATUS_SUCCESS,
+    BRP_METHOD_MUTATE_RESOURCE, DEFAULT_BRP_PORT, JSON_FIELD_PATH, JSON_FIELD_PORT,
+    JSON_FIELD_RESOURCE,
 };
-use super::support::generic_handler::{
-    BrpHandlerConfig, FormatterContext, FormatterFactory, PassthroughExtractor, handle_generic,
+use super::support::{
+    BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory, extractors,
+    handle_request,
 };
-use super::support::response_processor::{BrpMetadata, BrpResponseFormatter};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_MUTATE_RESOURCE, TOOL_BRP_MUTATE_RESOURCE};
 use crate::support::schema;
-use crate::support::serialization::json_tool_result;
 
 pub fn register_tool() -> Tool {
     Tool {
@@ -35,7 +32,7 @@ pub fn register_tool() -> Tool {
             .add_any_property("value", "The new value for the field", true)
             .add_number_property(
                 JSON_FIELD_PORT,
-                &format!("The BRP port (default: {})", DEFAULT_BRP_PORT),
+                &format!("The BRP port (default: {DEFAULT_BRP_PORT})"),
                 false,
             )
             .build(),
@@ -44,82 +41,29 @@ pub fn register_tool() -> Tool {
 
 pub async fn handle(
     service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    let config = BrpHandlerConfig {
-        method:            BRP_METHOD_MUTATE_RESOURCE,
-        param_extractor:   Box::new(PassthroughExtractor),
-        formatter_factory: Box::new(MutateResourceFormatterFactory),
-    };
-
-    handle_generic(service, request, context, &config).await
-}
-
-/// Factory for creating MutateResourceFormatter
-struct MutateResourceFormatterFactory;
-
-impl FormatterFactory for MutateResourceFormatterFactory {
-    fn create(&self, context: FormatterContext) -> Box<dyn BrpResponseFormatter> {
-        // Extract resource and path from the context params
-        let resource = context
-            .params
-            .as_ref()
-            .and_then(|p| p.get(JSON_FIELD_RESOURCE))
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or("")
-            .to_string();
-
-        let path = context
+    // Custom extractor for path
+    let path_extractor: FieldExtractor = |_data, context| {
+        context
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_PATH))
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or("")
-            .to_string();
+            .cloned()
+            .unwrap_or(serde_json::Value::Null)
+    };
 
-        Box::new(MutateResourceFormatter { resource, path })
-    }
-}
+    let config = BrpHandlerConfig {
+        method:            BRP_METHOD_MUTATE_RESOURCE,
+        param_extractor:   Box::new(PassthroughExtractor),
+        formatter_factory: ResponseFormatterFactory::resource_operation(JSON_FIELD_RESOURCE)
+            .with_template("Successfully mutated field '{path}' in resource '{resource}'")
+            .with_response_field(JSON_FIELD_RESOURCE, extractors::resource_from_params)
+            .with_response_field(JSON_FIELD_PATH, path_extractor)
+            .with_error_metadata_field(JSON_FIELD_PATH, path_extractor)
+            .build(),
+    };
 
-/// Formatter for bevy/mutate_resource responses
-struct MutateResourceFormatter {
-    resource: String,
-    path:     String,
-}
-
-impl BrpResponseFormatter for MutateResourceFormatter {
-    fn format_success(&self, _data: Value, _metadata: BrpMetadata) -> CallToolResult {
-        let formatted_data = json!({
-            JSON_FIELD_STATUS: RESPONSE_STATUS_SUCCESS,
-            JSON_FIELD_MESSAGE: format!("Successfully mutated field '{}' in resource '{}'", self.path, self.resource),
-            JSON_FIELD_DATA: {
-                JSON_FIELD_RESOURCE: self.resource,
-                JSON_FIELD_PATH: self.path
-            }
-        });
-
-        json_tool_result(&formatted_data)
-    }
-
-    fn format_error(
-        &self,
-        error: super::support::response_processor::BrpError,
-        metadata: BrpMetadata,
-    ) -> CallToolResult {
-        let formatted_error = json!({
-            JSON_FIELD_STATUS: RESPONSE_STATUS_ERROR,
-            JSON_FIELD_MESSAGE: error.message,
-            JSON_FIELD_ERROR_CODE: error.code,
-            JSON_FIELD_DATA: error.data,
-            JSON_FIELD_METADATA: {
-                JSON_FIELD_METHOD: metadata.method,
-                JSON_FIELD_PORT: metadata.port,
-                JSON_FIELD_RESOURCE: self.resource,
-                JSON_FIELD_PATH: self.path
-            }
-        });
-
-        json_tool_result(&formatted_error)
-    }
+    handle_request(service, request, context, &config).await
 }

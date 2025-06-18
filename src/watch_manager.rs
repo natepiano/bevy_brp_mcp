@@ -52,7 +52,7 @@ impl WatchManager {
             handle.abort();
             Ok(())
         } else {
-            Err(format!("Watch {} not found", watch_id))
+            Err(format!("Watch {watch_id} not found"))
         }
     }
 
