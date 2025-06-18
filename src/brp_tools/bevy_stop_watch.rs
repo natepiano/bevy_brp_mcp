@@ -36,8 +36,10 @@ pub async fn handle(
     // Extract watch ID
     let watch_id = params::extract_required_u32(&arguments, JSON_FIELD_WATCH_ID, "watch_id")?;
 
-    // Stop the watch
-    let mut manager = WATCH_MANAGER.lock().await;
-    let result = manager.stop_watch(watch_id).await;
+    // Stop the watch and release lock immediately
+    let result = {
+        let mut manager = WATCH_MANAGER.lock().await;
+        manager.stop_watch(watch_id).await
+    };
     Ok(watch_response::format_watch_stop_response(result, watch_id))
 }

@@ -64,12 +64,11 @@ pub async fn launch_bevy_example(
         example_name, example.package_name
     );
     eprintln!("Working directory: {}", manifest_dir.display());
-    eprintln!("Profile: {}", profile);
+    eprintln!("Profile: {profile}");
 
     // Create log file for example output (examples use cargo run, so we pass the command string)
     let cargo_command = format!(
-        "cargo run --example {} {}",
-        example_name,
+        "cargo run --example {example_name} {}",
         if profile == PROFILE_RELEASE {
             "--release"
         } else {
@@ -109,10 +108,7 @@ pub async fn launch_bevy_example(
         process::launch_detached_process(cmd, manifest_dir, log_file_for_redirect, example_name)?;
 
     Ok(response::success_json_response(
-        format!(
-            "Successfully launched example '{}' (PID: {})",
-            example_name, pid
-        ),
+        format!("Successfully launched example '{example_name}' (PID: {pid})"),
         json!({
             "example_name": example_name,
             "pid": pid,

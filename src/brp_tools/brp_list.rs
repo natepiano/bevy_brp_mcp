@@ -61,7 +61,7 @@ impl FormatterFactory for ListFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_ENTITY))
-            .and_then(|v| v.as_u64());
+            .and_then(serde_json::Value::as_u64);
 
         Box::new(ListFormatter { entity_id })
     }

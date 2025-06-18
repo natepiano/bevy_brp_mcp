@@ -26,9 +26,11 @@ pub async fn handle(
     _request: CallToolRequestParam,
     _context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    // Get active watches from manager
-    let manager = WATCH_MANAGER.lock().await;
-    let active_watches = manager.list_active_watches();
+    // Get active watches from manager and release lock immediately
+    let active_watches = {
+        let manager = WATCH_MANAGER.lock().await;
+        manager.list_active_watches()
+    };
 
     // Convert to JSON format
     let watches_json: Vec<Value> = active_watches

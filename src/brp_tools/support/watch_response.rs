@@ -15,8 +15,7 @@ pub fn format_watch_start_response(
         Ok((watch_id, log_path)) => {
             let response = ResponseBuilder::success()
                 .message(format!(
-                    "Started {} {} for entity {}",
-                    operation_name, watch_id, entity_id
+                    "Started {operation_name} {watch_id} for entity {entity_id}"
                 ))
                 .add_field(JSON_FIELD_WATCH_ID, watch_id)
                 .add_field(JSON_FIELD_LOG_PATH, log_path.to_string_lossy())
@@ -25,7 +24,7 @@ pub fn format_watch_start_response(
         }
         Err(e) => {
             let response = ResponseBuilder::error()
-                .message(format!("Failed to start {}: {}", operation_name, e))
+                .message(format!("Failed to start {operation_name}: {e}"))
                 .build();
             json_response_to_result(response)
         }
@@ -36,13 +35,13 @@ pub fn format_watch_stop_response(result: Result<(), String>, watch_id: u32) -> 
     match result {
         Ok(()) => {
             let response = ResponseBuilder::success()
-                .message(format!("Stopped watch {}", watch_id))
+                .message(format!("Stopped watch {watch_id}"))
                 .build();
             json_response_to_result(response)
         }
         Err(e) => {
             let response = ResponseBuilder::error()
-                .message(format!("Failed to stop watch: {}", e))
+                .message(format!("Failed to stop watch: {e}"))
                 .build();
             json_response_to_result(response)
         }

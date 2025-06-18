@@ -72,14 +72,14 @@ impl FormatterFactory for MutateComponentFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_ENTITY))
-            .and_then(|v| v.as_u64())
+            .and_then(serde_json::Value::as_u64)
             .unwrap_or(0);
 
         let component = context
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_COMPONENT))
-            .and_then(|v| v.as_str())
+            .and_then(serde_json::Value::as_str)
             .unwrap_or("")
             .to_string();
 
@@ -87,7 +87,7 @@ impl FormatterFactory for MutateComponentFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_PATH))
-            .and_then(|v| v.as_str())
+            .and_then(serde_json::Value::as_str)
             .unwrap_or("")
             .to_string();
 

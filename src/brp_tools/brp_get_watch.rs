@@ -24,7 +24,7 @@ pub fn register_tool() -> Tool {
                 "Required array of component types to watch. Must contain at least one component. Without this, the watch will not detect any changes.",
                 true
             )
-            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
+            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {DEFAULT_BRP_PORT})"), false)
             .build()
     }
 }

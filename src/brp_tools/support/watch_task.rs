@@ -96,7 +96,7 @@ async fn run_watch_connection(
     );
 
     // Create HTTP client for streaming
-    let url = format!("http://localhost:{}/jsonrpc", port);
+    let url = format!("http://localhost:{port}/jsonrpc");
     let client = reqwest::Client::new();
 
     // Build JSON-RPC request for watching
@@ -144,12 +144,14 @@ async fn run_watch_connection(
         .await;
 
     // Remove this watch from the active watches
-    let mut manager = WATCH_MANAGER.lock().await;
-    if manager.active_watches.remove(&watch_id).is_some() {
-        info!(
-            "Watch {} for entity {} automatically cleaned up after connection ended",
-            watch_id, entity_id
-        );
+    {
+        let mut manager = WATCH_MANAGER.lock().await;
+        if manager.active_watches.remove(&watch_id).is_some() {
+            info!(
+                "Watch {} for entity {} automatically cleaned up after connection ended",
+                watch_id, entity_id
+            );
+        }
     }
 }
 
@@ -161,10 +163,11 @@ async fn start_watch_task_generic(
     params: Value,
     port: u16,
 ) -> Result<(u32, PathBuf), String> {
-    // Get watch_id first from manager
-    let manager = WATCH_MANAGER.lock().await;
-    let watch_id = manager.next_id();
-    drop(manager); // Release lock early
+    // Get watch_id first from manager and release lock immediately
+    let watch_id = {
+        let manager = WATCH_MANAGER.lock().await;
+        manager.next_id()
+    };
 
     // Now create log path with proper watch_id
     let log_path = watch_logger::get_watch_log_path(watch_id, entity_id, watch_type);
@@ -172,7 +175,7 @@ async fn start_watch_task_generic(
     // Create buffered logger
     let logger = BufferedWatchLogger::new(log_path.clone())
         .await
-        .map_err(|e| format!("Failed to create logger: {}", e))?;
+        .map_err(|e| format!("Failed to create logger: {e}"))?;
 
     // Create initial log entry
     let log_data = match params.clone() {
@@ -194,7 +197,7 @@ async fn start_watch_task_generic(
     logger
         .write_update("WATCH_STARTED", log_data)
         .await
-        .map_err(|e| format!("Failed to write initial log: {}", e))?;
+        .map_err(|e| format!("Failed to write initial log: {e}"))?;
 
     let watch_type_owned = watch_type.to_string();
     let brp_method_owned = brp_method.to_string();
@@ -210,20 +213,22 @@ async fn start_watch_task_generic(
     ));
 
     // Register with watch manager (with actual registration this time)
-    let mut manager = WATCH_MANAGER.lock().await;
-    manager.active_watches.insert(
-        watch_id,
-        (
-            WatchInfo {
-                watch_id,
-                entity_id,
-                watch_type: watch_type.to_string(),
-                log_path: log_path.clone(),
-                port,
-            },
-            handle,
-        ),
-    );
+    {
+        let mut manager = WATCH_MANAGER.lock().await;
+        manager.active_watches.insert(
+            watch_id,
+            (
+                WatchInfo {
+                    watch_id,
+                    entity_id,
+                    watch_type: watch_type.to_string(),
+                    log_path: log_path.clone(),
+                    port,
+                },
+                handle,
+            ),
+        );
+    }
 
     Ok((watch_id, log_path))
 }

@@ -57,11 +57,11 @@ pub const DESC_READ_LOG: &str = include_help_text!("log_tools/read_log.txt");
 pub const DESC_CLEANUP_LOGS: &str = include_help_text!("log_tools/cleanup_logs.txt");
 
 // Watch tool descriptions
-pub const DESC_BRP_GET_WATCH: &str = include_help_text!("brp_tools/brp_get_watch.md");
-pub const DESC_BRP_LIST_WATCH: &str = include_help_text!("brp_tools/brp_list_watch.md");
-pub const DESC_BEVY_STOP_WATCH: &str = include_help_text!("brp_tools/bevy_stop_watch.md");
+pub const DESC_BRP_GET_WATCH: &str = include_help_text!("brp_tools/brp_get_watch.txt");
+pub const DESC_BRP_LIST_WATCH: &str = include_help_text!("brp_tools/brp_list_watch.txt");
+pub const DESC_BEVY_STOP_WATCH: &str = include_help_text!("brp_tools/bevy_stop_watch.txt");
 pub const DESC_BEVY_LIST_ACTIVE_WATCHES: &str =
-    include_help_text!("brp_tools/bevy_list_active_watches.md");
+    include_help_text!("brp_tools/bevy_list_active_watches.txt");
 
 // Tool name constants
 pub const TOOL_BRP_EXECUTE: &str = "brp_execute";

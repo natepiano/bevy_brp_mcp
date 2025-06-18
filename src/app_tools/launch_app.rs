@@ -96,7 +96,7 @@ pub async fn launch_bevy_app(
     let pid = process::launch_detached_process(cmd, manifest_dir, log_file_for_redirect, app_name)?;
 
     Ok(response::success_json_response(
-        format!("Successfully launched '{}' (PID: {})", app_name, pid),
+        format!("Successfully launched '{app_name}' (PID: {pid})"),
         json!({
             "app_name": app_name,
             "pid": pid,

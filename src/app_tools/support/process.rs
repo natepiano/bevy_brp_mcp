@@ -13,7 +13,7 @@ pub fn launch_detached_process(
 ) -> Result<u32, McpError> {
     // Clone the log file handle for stderr
     let log_file_for_stderr = log_file.try_clone().map_err(|e| {
-        McpError::internal_error(format!("Failed to clone log file handle: {}", e), None)
+        McpError::internal_error(format!("Failed to clone log file handle: {e}"), None)
     })?;
 
     // Set up the command
@@ -30,7 +30,7 @@ pub fn launch_detached_process(
             Ok(child.id())
         }
         Err(e) => Err(McpError::invalid_params(
-            format!("Failed to launch '{}': {}", process_name, e),
+            format!("Failed to launch '{process_name}': {e}"),
             None,
         )),
     }

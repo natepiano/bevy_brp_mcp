@@ -20,7 +20,7 @@ pub fn register_tool() -> Tool {
         input_schema: schema::SchemaBuilder::new()
             .add_string_property(JSON_FIELD_METHOD, "The BRP method to execute (e.g., 'rpc.discover', 'bevy/get', 'bevy/query')", true)
             .add_any_property(JSON_FIELD_PARAMS, "Optional parameters for the method, as a JSON object or array", false)
-            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
+            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {DEFAULT_BRP_PORT})"), false)
             .build(),
     }
 }
@@ -34,7 +34,7 @@ pub async fn handle_brp_execute(
     ))
     .map_err(|e| {
         McpError::from(rmcp::model::ErrorData::invalid_params(
-            format!("Invalid parameters: {}", e),
+            format!("Invalid parameters: {e}"),
             None,
         ))
     })?;
