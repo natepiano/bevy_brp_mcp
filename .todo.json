@@ -1,0 +1,149 @@
+[
+  {
+    "id": "meta_todo",
+    "content": "Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl_1",
+    "content": "Create format_discovery.rs module with core types and function signatures",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_1_build",
+    "content": "Build and fix any compile errors and warnings for format_discovery.rs module",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_2",
+    "content": "Implement is_component_format_error function to detect format errors",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_2_build",
+    "content": "Build and fix any compile errors and warnings for error detection function",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_3",
+    "content": "Implement format alternative generation logic (try_component_format_alternatives)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_3_build",
+    "content": "Build and fix any compile errors and warnings for format alternatives",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_4",
+    "content": "Implement attempt_format_discovery function with retry logic",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_4_build",
+    "content": "Build and fix any compile errors and warnings for discovery function",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_5",
+    "content": "Implement execute_brp_method_with_format_discovery main entry point",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_5_build",
+    "content": "Build and fix any compile errors and warnings for main entry point",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_6",
+    "content": "Update handler.rs to use execute_brp_method_with_format_discovery instead of execute_brp_method",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl_6_build",
+    "content": "Build and fix any compile errors and warnings for handler.rs integration",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "clippy_1",
+    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "clippy_2",
+    "content": "Fix any clippy issues (remove unused code, don't use underscore prefixes)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "format_1",
+    "content": "Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "test_1",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "test_2",
+    "content": "If there are test issues, STOP and review them with the user",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "review_1",
+    "content": "Subagent should STOP work here and return control to you",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "review_2",
+    "content": "Task a new subagent to do a code review of the changes in the worktree - tell it to focus on identifying duplication and complexity. Emphasize that it should only read and analyze, not modify anything",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "review_3",
+    "content": "When the new subagent returns, STOP and review the suggested changes with the user",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  }
+]
