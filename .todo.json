@@ -1,133 +1,182 @@
 [
   {
-    "id": "impl_1",
-    "content": "Add error pattern matching infrastructure - create struct/enum for known error patterns",
+    "id": "refactor_vec_1",
+    "content": "Create generic convert_to_array_format function for vector conversions",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_1_build",
-    "content": "Build and fix any compile errors and any compile warnings",
+    "id": "refactor_vec_1_build",
+    "content": "Build and fix any compile errors and warnings after vector conversion refactor",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_2",
-    "content": "Add registry checking function for serialization validation using bevy_registry_schema",
+    "id": "refactor_vec_2",
+    "content": "Update all vector conversion call sites to use the new generic function",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_2_build",
-    "content": "Build and fix any compile errors and any compile warnings",
+    "id": "refactor_vec_2_build",
+    "content": "Build and fix any compile errors and warnings after updating call sites",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_3",
-    "content": "Add specific conversion functions for known patterns (Transform, Name, Vec3/Quat)",
+    "id": "refactor_vec_3",
+    "content": "Remove old vector conversion functions (convert_to_vec2_array, vec3, vec4, quat)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_3_build",
-    "content": "Build and fix any compile errors and any compile warnings",
+    "id": "refactor_vec_3_build",
+    "content": "Build and fix any compile errors and warnings after removing old functions",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_4",
-    "content": "Create tiered dispatcher function to replace try_component_format_alternatives",
+    "id": "refactor_func_1",
+    "content": "Extract parameter validation logic from attempt_components_format_discovery",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_4_build",
-    "content": "Build and fix any compile errors and any compile warnings",
+    "id": "refactor_func_1_build",
+    "content": "Build and fix any compile errors and warnings",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_5",
-    "content": "Replace calls to try_component_format_alternatives with new tiered dispatcher",
+    "id": "refactor_func_2",
+    "content": "Extract single component processing logic into process_single_component function",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_5_build",
-    "content": "Build and fix any compile errors and any compile warnings",
+    "id": "refactor_func_2_build",
+    "content": "Build and fix any compile errors and warnings",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_6",
-    "content": "Enhance debug_info reporting to show which tier was used and specific actions taken",
+    "id": "refactor_func_3",
+    "content": "Extract correction collection logic into collect_corrections function",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl_6_build",
-    "content": "Build and fix any compile errors and any compile warnings",
+    "id": "refactor_func_3_build",
+    "content": "Build and fix any compile errors and warnings",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "clippy_1",
-    "content": "Run cargo clippy with strict warnings and fix any issues",
+    "id": "refactor_func_4",
+    "content": "Extract retry logic into apply_corrections_and_retry function",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "clippy_2",
-    "content": "Fix clippy issues - remove dead code, remove unused variables/arguments, do not use _ prefixes or allow attributes",
+    "id": "refactor_func_4_build",
+    "content": "Build and fix any compile errors and warnings",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "format_1",
+    "id": "refactor_alt_1",
+    "content": "Consolidate alternative format functions into unified transformation framework",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "refactor_alt_1_build",
+    "content": "Build and fix any compile errors and warnings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "refactor_clean_1",
+    "content": "Remove emoji debug strings throughout the codebase",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "refactor_clean_2",
+    "content": "Create constants for tier numbers (1, 2, 3) instead of magic numbers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "refactor_clean_build",
+    "content": "Build and fix any compile errors and warnings after cleanup",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "refactor_clippy_1",
+    "content": "Run cargo clippy with strict warnings and fix all issues",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "refactor_clippy_2",
+    "content": "Fix clippy issues - remove dead code, unused variables, no underscores",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "refactor_fmt",
     "content": "Run cargo +nightly fmt to format code",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "test_1",
-    "content": "Run cargo nextest run to test changes",
+    "id": "refactor_test",
+    "content": "Run cargo nextest run to verify all tests pass",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "test_2",
-    "content": "If there are test issues, STOP and review them with the user",
+    "id": "refactor_test_review",
+    "content": "If test issues, STOP and review with user",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "review_1",
-    "content": "Task subagent to do code review focusing on duplication and complexity - read and analyze only, no modifications",
+    "id": "refactor_review_1",
+    "content": "Task subagent for final code review focusing on duplication and complexity",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "review_2",
-    "content": "STOP and review suggested changes with user when subagent returns",
+    "id": "refactor_review_2",
+    "content": "STOP and review code review findings with user",
     "status": "pending",
     "priority": "high",
     "notes": ""
