@@ -1,0 +1,24 @@
+Start watching an entity for component changes with file-based logging.
+
+This is useful for:
+- Monitoring component value changes on specific entities
+- Debugging entity state over time
+- Tracking component additions/removals
+
+Parameters:
+- entity (required): The entity ID to watch for component changes
+- components (required): Array of component types to watch (must contain at least one)
+- port (optional): BRP port to connect to (default: 15702)
+
+Returns:
+- status: "success" if watch started successfully
+- watch_id: Unique identifier (use with bevy_stop_watch)
+- log_path: Path to log file where updates are written
+
+Watch behavior:
+- Creates log file at: /tmp/bevy_brp_mcp_watch_*
+- Logs COMPONENT_UPDATE entries when watched components change
+- Runs in background until stopped with bevy_stop_watch
+- Use read_log to view updates, cleanup_logs to remove old logs
+
+IMPORTANT: Only monitors components specified in the components array. Watches consume resources - always stop when done.

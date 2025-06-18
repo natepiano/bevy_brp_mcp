@@ -25,7 +25,7 @@ pub fn register_tool() -> Tool {
             .add_number_property(JSON_FIELD_ENTITY, "The entity ID to destroy", true)
             .add_number_property(
                 JSON_FIELD_PORT,
-                &format!("The BRP port (default: {})", DEFAULT_BRP_PORT),
+                &format!("The BRP port (default: {DEFAULT_BRP_PORT})"),
                 false,
             )
             .build(),
@@ -46,7 +46,7 @@ pub async fn handle(
     handle_generic(service, request, context, &config).await
 }
 
-/// Factory for creating DestroyFormatter
+/// Factory for creating `DestroyFormatter`
 struct DestroyFormatterFactory;
 
 impl FormatterFactory for DestroyFormatterFactory {
@@ -56,14 +56,14 @@ impl FormatterFactory for DestroyFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_ENTITY))
-            .and_then(|v| v.as_u64())
+            .and_then(serde_json::Value::as_u64)
             .unwrap_or(0);
 
         Box::new(DestroyFormatter { entity_id })
     }
 }
 
-/// Formatter for bevy/destroy responses
+/// Formatter for `bevy/destroy` responses
 struct DestroyFormatter {
     entity_id: u64,
 }

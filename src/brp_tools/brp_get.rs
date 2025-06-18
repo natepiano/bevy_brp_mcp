@@ -27,7 +27,7 @@ pub fn register_tool() -> Tool {
                 "Array of component types to retrieve. Each component must be a fully-qualified type name",
                 true
             )
-            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
+            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {DEFAULT_BRP_PORT})"), false)
             .build(),
     }
 }
@@ -46,7 +46,7 @@ pub async fn handle(
     handle_generic(service, request, context, &config).await
 }
 
-/// Factory for creating GetFormatter
+/// Factory for creating `GetFormatter`
 struct GetFormatterFactory;
 
 impl FormatterFactory for GetFormatterFactory {
@@ -56,14 +56,14 @@ impl FormatterFactory for GetFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_ENTITY))
-            .and_then(|v| v.as_u64())
+            .and_then(serde_json::Value::as_u64)
             .unwrap_or(0);
 
         Box::new(GetFormatter { entity_id })
     }
 }
 
-/// Formatter for bevy/get responses
+/// Formatter for `bevy/get` responses
 struct GetFormatter {
     entity_id: u64,
 }

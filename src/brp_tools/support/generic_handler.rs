@@ -117,7 +117,7 @@ impl ParamExtractor for EntityParamExtractor {
         } else {
             // For optional entity (like in list)
             extract_any_value(request, JSON_FIELD_ENTITY)
-                .and_then(|v| v.as_u64())
+                .and_then(serde_json::Value::as_u64)
                 .map(|id| json!({ JSON_FIELD_ENTITY: id }))
         };
 

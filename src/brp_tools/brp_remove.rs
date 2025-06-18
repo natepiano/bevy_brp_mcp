@@ -65,14 +65,14 @@ impl FormatterFactory for RemoveFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_ENTITY))
-            .and_then(|v| v.as_u64())
+            .and_then(serde_json::Value::as_u64)
             .unwrap_or(0);
 
         let components = context
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_COMPONENTS))
-            .and_then(|v| v.as_array())
+            .and_then(serde_json::Value::as_array)
             .cloned()
             .unwrap_or_default();
 

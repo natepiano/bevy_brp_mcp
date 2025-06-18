@@ -62,7 +62,7 @@ impl FormatterFactory for ReparentFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_ENTITIES))
-            .and_then(|v| v.as_array())
+            .and_then(serde_json::Value::as_array)
             .map(|arr| arr.len())
             .unwrap_or(0);
 
@@ -70,7 +70,7 @@ impl FormatterFactory for ReparentFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_PARENT))
-            .and_then(|v| v.as_u64());
+            .and_then(serde_json::Value::as_u64);
 
         Box::new(ReparentFormatter {
             entity_count: entities,

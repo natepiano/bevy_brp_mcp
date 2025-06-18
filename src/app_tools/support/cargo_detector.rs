@@ -1,4 +1,4 @@
-//! Simple cargo detector based on bevy_brp_tool
+//! Simple cargo detector based on `bevy_brp_tool`
 
 use std::path::{Path, PathBuf};
 
@@ -64,7 +64,7 @@ impl CargoDetector {
             }
 
             // Check if this package depends on bevy
-            if !self.package_depends_on_bevy(package) {
+            if !Self::package_depends_on_bevy(package) {
                 continue;
             }
 
@@ -94,7 +94,7 @@ impl CargoDetector {
             }
 
             // Check if this package depends on bevy
-            if !self.package_depends_on_bevy(package) {
+            if !Self::package_depends_on_bevy(package) {
                 continue;
             }
 
@@ -113,7 +113,7 @@ impl CargoDetector {
         examples
     }
 
-    fn package_depends_on_bevy(&self, package: &Package) -> bool {
+    fn package_depends_on_bevy(package: &Package) -> bool {
         // Check direct dependencies (including workspace dependencies)
         package.dependencies.iter().any(|dep| dep.name == "bevy")
     }

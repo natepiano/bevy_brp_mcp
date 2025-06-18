@@ -6,9 +6,7 @@ use super::cargo_detector::{BinaryInfo, ExampleInfo};
 
 /// Iterator over all valid Cargo project paths found in the given search paths
 /// Yields paths to directories containing Cargo.toml files
-pub fn iter_cargo_project_paths<'a>(
-    search_paths: &'a [PathBuf],
-) -> impl Iterator<Item = PathBuf> + 'a {
+pub fn iter_cargo_project_paths(search_paths: &[PathBuf]) -> impl Iterator<Item = PathBuf> + '_ {
     search_paths.iter().flat_map(|root| {
         let mut paths = Vec::new();
 
@@ -77,7 +75,7 @@ pub fn find_example_by_name(
 pub fn find_required_app(app_name: &str, search_paths: &[PathBuf]) -> Result<BinaryInfo, McpError> {
     find_app_by_name(app_name, search_paths).ok_or_else(|| {
         McpError::invalid_params(
-            format!("Bevy app '{}' not found in any search path", app_name),
+            format!("Bevy app '{app_name}' not found in any search path"),
             None,
         )
     })
@@ -91,10 +89,7 @@ pub fn find_required_example(
 ) -> Result<ExampleInfo, McpError> {
     find_example_by_name(example_name, search_paths).ok_or_else(|| {
         McpError::invalid_params(
-            format!(
-                "Bevy example '{}' not found in any search path",
-                example_name
-            ),
+            format!("Bevy example '{example_name}' not found in any search path"),
             None,
         )
     })

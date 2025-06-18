@@ -29,7 +29,7 @@ pub fn register_tool() -> Tool {
             )
             .add_number_property(
                 JSON_FIELD_PORT,
-                &format!("The BRP port (default: {})", DEFAULT_BRP_PORT),
+                &format!("The BRP port (default: {DEFAULT_BRP_PORT})"),
                 false,
             )
             .build(),
@@ -50,7 +50,7 @@ pub async fn handle(
     handle_generic(service, request, context, &config).await
 }
 
-/// Factory for creating GetResourceFormatter
+/// Factory for creating `GetResourceFormatter`
 struct GetResourceFormatterFactory;
 
 impl FormatterFactory for GetResourceFormatterFactory {
@@ -60,7 +60,7 @@ impl FormatterFactory for GetResourceFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_RESOURCE))
-            .and_then(|v| v.as_str())
+            .and_then(serde_json::Value::as_str)
             .unwrap_or("")
             .to_string();
 
@@ -68,7 +68,7 @@ impl FormatterFactory for GetResourceFormatterFactory {
     }
 }
 
-/// Formatter for bevy/get_resource responses
+/// Formatter for `bevy/get_resource` responses
 struct GetResourceFormatter {
     resource: String,
 }

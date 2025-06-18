@@ -61,7 +61,7 @@ impl FormatterFactory for InsertResourceFormatterFactory {
             .params
             .as_ref()
             .and_then(|p| p.get(JSON_FIELD_RESOURCE))
-            .and_then(|v| v.as_str())
+            .and_then(serde_json::Value::as_str)
             .unwrap_or("")
             .to_string();
 
