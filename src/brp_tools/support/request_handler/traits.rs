@@ -8,7 +8,7 @@ pub struct ExtractedParams {
     /// The extracted parameters
     pub params: Option<Value>,
     /// The BRP port to use
-    pub port: u16,
+    pub port:   u16,
 }
 
 /// Unified trait for extracting parameters from a request

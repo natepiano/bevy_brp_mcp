@@ -431,6 +431,7 @@ dependencies = [
  "cargo_metadata",
  "chrono",
  "futures",
+ "regex",
  "reqwest",
  "rmcp",
  "serde",

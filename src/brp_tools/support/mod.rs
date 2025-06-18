@@ -7,7 +7,6 @@ mod response_formatter;
 mod watch_logger;
 mod watch_response;
 mod watch_task;
-
 pub use json_rpc_builder::BrpJsonRpcBuilder;
 pub use request_handler::{
     BrpExecuteExtractor, BrpHandlerConfig, EntityParamExtractor, ExtractedParams, ParamExtractor,

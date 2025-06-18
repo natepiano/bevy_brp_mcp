@@ -7,7 +7,8 @@ use super::constants::{
     BRP_METHOD_REGISTRY_SCHEMA, DEFAULT_BRP_PORT, JSON_FIELD_DATA, JSON_FIELD_PORT,
 };
 use super::support::{
-    BrpHandlerConfig, ExtractedParams, ParamExtractor, ResponseFormatterFactory, extractors, handle_brp_request,
+    BrpHandlerConfig, ExtractedParams, ParamExtractor, ResponseFormatterFactory, extractors,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REGISTRY_SCHEMA, TOOL_BRP_REGISTRY_SCHEMA};

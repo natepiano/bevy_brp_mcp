@@ -13,9 +13,7 @@ fn extract_port(request: &rmcp::model::CallToolRequestParam) -> Result<u16, McpE
         JSON_FIELD_PORT,
         u64::from(DEFAULT_BRP_PORT),
     )?)
-    .map_err(|_| {
-        McpError::invalid_params("Port number must be a valid u16".to_string(), None)
-    })
+    .map_err(|_| McpError::invalid_params("Port number must be a valid u16".to_string(), None))
 }
 
 /// Simple parameter extractor that just extracts port
@@ -105,7 +103,7 @@ impl ParamExtractor for BrpExecuteExtractor {
         Ok(ExtractedParams {
             method: Some(params.method),
             params: params.params,
-            port: params.port,
+            port:   params.port,
         })
     }
 }

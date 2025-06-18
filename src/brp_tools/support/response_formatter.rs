@@ -23,15 +23,17 @@ impl BrpMetadata {
 }
 
 use crate::brp_tools::constants::{
-    JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA, JSON_FIELD_METHOD,
-    JSON_FIELD_PORT,
+    JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA,
+    JSON_FIELD_METHOD, JSON_FIELD_PORT,
 };
 
 /// Default error formatter implementation
 pub fn format_error_default(mut error: BrpError, metadata: &BrpMetadata) -> CallToolResult {
     // Enhance error messages for common format issues
     if error.code == -23402 && error.message.contains("expected a sequence of") {
-        error.message.push_str("\nHint: Math types like Vec3 use array format [x,y,z], not objects {x:1,y:2,z:3}");
+        error.message.push_str(
+            "\nHint: Math types like Vec3 use array format [x,y,z], not objects {x:1,y:2,z:3}",
+        );
     }
 
     let response = ResponseBuilder::error()
@@ -92,15 +94,32 @@ impl ResponseFormatter {
             builder = builder.add_field(field_name, value);
         }
 
+        // IMPORTANT: Always preserve debug_info and format_corrections from the input data
+        // These are added by the handler when format discovery makes corrections
+        if let Value::Object(data_map) = data {
+            if let Some(debug_info) = data_map.get("debug_info") {
+                if !debug_info.is_null() && (debug_info.is_array() || debug_info.is_string()) {
+                    builder = builder.add_field("debug_info", debug_info);
+                }
+            }
+            if let Some(format_corrections) = data_map.get("format_corrections") {
+                if !format_corrections.is_null() && format_corrections.is_array() {
+                    builder = builder.add_field("format_corrections", format_corrections);
+                }
+            }
+        }
+
         json_response_to_result(&builder.build())
     }
 
     pub fn format_error(&self, mut error: BrpError, metadata: &BrpMetadata) -> CallToolResult {
         // Enhance error messages for common format issues
         if error.code == -23402 && error.message.contains("expected a sequence of") {
-            error.message.push_str("\nHint: Math types like Vec3 use array format [x,y,z], not objects {x:1,y:2,z:3}");
+            error.message.push_str(
+                "\nHint: Math types like Vec3 use array format [x,y,z], not objects {x:1,y:2,z:3}",
+            );
         }
-        
+
         if self.config.use_default_error {
             format_error_default(error, metadata)
         } else {

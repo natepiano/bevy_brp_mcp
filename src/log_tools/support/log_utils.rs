@@ -90,15 +90,14 @@ impl LogFileEntry {
             .and_then(|t| t.duration_since(SystemTime::UNIX_EPOCH).ok())
             .map_or(0, |d| d.as_secs());
 
-        let modified_str = self
-            .metadata
-            .modified()
-            .ok()
-            .map_or_else(|| "Unknown".to_string(), |t| {
+        let modified_str = self.metadata.modified().ok().map_or_else(
+            || "Unknown".to_string(),
+            |t| {
                 chrono::DateTime::<chrono::Local>::from(t)
                     .format("%Y-%m-%d %H:%M:%S")
                     .to_string()
-            });
+            },
+        );
 
         let timestamp_value = self.timestamp.parse::<u128>().unwrap_or(0);
 
