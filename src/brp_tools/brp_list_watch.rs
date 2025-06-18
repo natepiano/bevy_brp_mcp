@@ -23,7 +23,7 @@ pub fn register_tool() -> Tool {
             )
             .add_number_property(
                 JSON_FIELD_PORT,
-                &format!("The BRP port (default: {})", DEFAULT_BRP_PORT),
+                &format!("The BRP port (default: {DEFAULT_BRP_PORT})"),
                 false,
             )
             .build(),

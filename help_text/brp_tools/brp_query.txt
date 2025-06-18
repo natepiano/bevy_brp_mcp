@@ -7,7 +7,7 @@ This is useful for:
 - Debugging entity-component relationships in your Bevy app
 
 Parameters:
-- data (object): Specifies what component data to retrieve
+- data (object, required): Specifies what component data to retrieve
   - components: Array of component types to include in results
   - option: Array of optional components (won't fail if missing)
   - has: Array of components that must exist (but aren't returned)

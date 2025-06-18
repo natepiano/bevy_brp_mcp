@@ -66,7 +66,7 @@ pub async fn handle_tool_call(
 ) -> Result<CallToolResult, McpError> {
     match request.name.as_ref() {
         // Core BRP tools
-        TOOL_BRP_EXECUTE => brp_execute::handle_brp_execute(request, context).await,
+        TOOL_BRP_EXECUTE => brp_execute::handle(service, request, context).await,
         TOOL_BRP_STATUS => brp_status::handle(service, request, context).await,
 
         // Entity component tools

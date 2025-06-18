@@ -20,7 +20,7 @@ impl BrpMetadata {
     }
 }
 
-/// Re-export BrpErrorInfo for compatibility
+/// Re-export `BrpErrorInfo` for compatibility
 pub use super::brp_client::BrpErrorInfo as BrpError;
 
 /// Trait for formatting BRP responses in method-specific ways

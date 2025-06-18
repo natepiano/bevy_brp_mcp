@@ -14,8 +14,7 @@ pub fn extract_required_u32(
         .as_u64()
         .ok_or_else(|| {
             let msg = format!(
-                "{} parameter is required and must be a number",
-                field_description
+                "{field_description} parameter is required and must be a number"
             );
             McpError::invalid_params(msg, None)
         })
@@ -30,8 +29,7 @@ pub fn extract_required_u64(
 ) -> Result<u64, McpError> {
     arguments[field_name].as_u64().ok_or_else(|| {
         let msg = format!(
-            "{} parameter is required and must be a number",
-            field_description
+            "{field_description} parameter is required and must be a number"
         );
         McpError::invalid_params(msg, None)
     })
@@ -66,7 +64,7 @@ pub fn extract_required_string<'a>(
         .and_then(|args| args.get(param_name))
         .and_then(|v| v.as_str())
         .ok_or_else(|| {
-            McpError::invalid_params(format!("Missing required parameter: {}", param_name), None)
+            McpError::invalid_params(format!("Missing required parameter: {param_name}"), None)
         })
 }
 
@@ -96,7 +94,7 @@ pub fn extract_optional_number(
         .and_then(|args| args.get(param_name))
     {
         Some(v) => v.as_u64().ok_or_else(|| {
-            McpError::invalid_params(format!("Parameter '{}' must be a number", param_name), None)
+            McpError::invalid_params(format!("Parameter '{param_name}' must be a number"), None)
         }),
         None => Ok(default),
     }
@@ -123,7 +121,7 @@ pub fn extract_required_number(
         .and_then(|v| v.as_u64())
         .ok_or_else(|| {
             McpError::invalid_params(
-                format!("{} is required and must be a number", param_name),
+                format!("{param_name} is required and must be a number"),
                 None,
             )
         })
@@ -158,7 +156,7 @@ pub fn extract_optional_string_array_from_request(
                         result.push(s.to_string());
                     } else {
                         return Err(McpError::invalid_params(
-                            format!("All items in '{}' array must be strings", param_name),
+                            format!("All items in '{param_name}' array must be strings"),
                             None,
                         ));
                     }
@@ -166,7 +164,7 @@ pub fn extract_optional_string_array_from_request(
                 Ok(Some(result))
             } else {
                 Err(McpError::invalid_params(
-                    format!("Parameter '{}' must be an array", param_name),
+                    format!("Parameter '{param_name}' must be an array"),
                     None,
                 ))
             }
