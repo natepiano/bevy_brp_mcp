@@ -4,4 +4,6 @@ pub mod brp_client;
 pub mod builder;
 pub mod generic_handler;
 pub mod response_processor;
-pub mod serialization;
+pub mod watch_logger;
+pub mod watch_response;
+pub mod watch_task;

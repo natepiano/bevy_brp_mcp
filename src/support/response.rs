@@ -61,6 +61,24 @@ impl ResponseBuilder {
         self
     }
 
+    /// Add a field to the data object. Creates a new object if data is None.
+    pub fn add_field(mut self, key: &str, value: impl Serialize) -> Self {
+        let value_json = serde_json::to_value(value).unwrap_or(Value::Null);
+
+        match &mut self.data {
+            Some(Value::Object(map)) => {
+                map.insert(key.to_string(), value_json);
+            }
+            _ => {
+                let mut map = serde_json::Map::new();
+                map.insert(key.to_string(), value_json);
+                self.data = Some(Value::Object(map));
+            }
+        }
+
+        self
+    }
+
     pub fn build(self) -> JsonResponse {
         JsonResponse {
             status:  self.status,

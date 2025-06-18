@@ -56,6 +56,13 @@ pub const DESC_LIST_LOGS: &str = include_help_text!("log_tools/list_logs.txt");
 pub const DESC_READ_LOG: &str = include_help_text!("log_tools/read_log.txt");
 pub const DESC_CLEANUP_LOGS: &str = include_help_text!("log_tools/cleanup_logs.txt");
 
+// Watch tool descriptions
+pub const DESC_BRP_GET_WATCH: &str = include_help_text!("brp_tools/brp_get_watch.md");
+pub const DESC_BRP_LIST_WATCH: &str = include_help_text!("brp_tools/brp_list_watch.md");
+pub const DESC_BEVY_STOP_WATCH: &str = include_help_text!("brp_tools/bevy_stop_watch.md");
+pub const DESC_BEVY_LIST_ACTIVE_WATCHES: &str =
+    include_help_text!("brp_tools/bevy_list_active_watches.md");
+
 // Tool name constants
 pub const TOOL_BRP_EXECUTE: &str = "brp_execute";
 pub const TOOL_BRP_LIST: &str = "bevy_list";
@@ -82,3 +89,9 @@ pub const TOOL_LAUNCH_BEVY_APP: &str = "launch_bevy_app";
 pub const TOOL_LAUNCH_BEVY_EXAMPLE: &str = "launch_bevy_example";
 pub const TOOL_LIST_LOGS: &str = "list_logs";
 pub const TOOL_READ_LOG: &str = "read_log";
+
+// Streaming/watch tool names
+pub const TOOL_BRP_GET_WATCH: &str = "brp_get_watch";
+pub const TOOL_BRP_LIST_WATCH: &str = "brp_list_watch";
+pub const TOOL_BEVY_STOP_WATCH: &str = "bevy_stop_watch";
+pub const TOOL_BEVY_LIST_ACTIVE_WATCHES: &str = "bevy_list_active_watches";

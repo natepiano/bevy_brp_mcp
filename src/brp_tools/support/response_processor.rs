@@ -36,24 +36,27 @@ pub trait BrpResponseFormatter {
 pub fn format_error_default(error: BrpError, metadata: BrpMetadata) -> CallToolResult {
     use serde_json::json;
 
-    use super::serialization::json_tool_result;
     use crate::brp_tools::constants::{
-        JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_MESSAGE, JSON_FIELD_METADATA,
-        JSON_FIELD_METHOD, JSON_FIELD_PORT, JSON_FIELD_STATUS, RESPONSE_STATUS_ERROR,
+        JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA, JSON_FIELD_METHOD,
+        JSON_FIELD_PORT,
     };
+    use crate::support::response::ResponseBuilder;
+    use crate::support::serialization::json_response_to_result;
 
-    let formatted_error = json!({
-        JSON_FIELD_STATUS: RESPONSE_STATUS_ERROR,
-        JSON_FIELD_MESSAGE: error.message,
-        JSON_FIELD_ERROR_CODE: error.code,
-        JSON_FIELD_DATA: error.data,
-        JSON_FIELD_METADATA: {
-            JSON_FIELD_METHOD: metadata.method,
-            JSON_FIELD_PORT: metadata.port
-        }
-    });
+    let response = ResponseBuilder::error()
+        .message(&error.message)
+        .add_field(JSON_FIELD_ERROR_CODE, error.code)
+        .add_field(JSON_FIELD_DATA, error.data)
+        .add_field(
+            JSON_FIELD_METADATA,
+            json!({
+                JSON_FIELD_METHOD: metadata.method,
+                JSON_FIELD_PORT: metadata.port
+            }),
+        )
+        .build();
 
-    json_tool_result(&formatted_error)
+    json_response_to_result(response)
 }
 
 /// Generic function to process BRP responses using a formatter

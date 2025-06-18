@@ -13,11 +13,11 @@ use super::support::generic_handler::{
 use super::support::response_processor::{
     BrpError, BrpMetadata, BrpResponseFormatter, format_error_default,
 };
-use super::support::serialization::json_tool_result;
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REGISTRY_SCHEMA, TOOL_BRP_REGISTRY_SCHEMA};
-use crate::support::params::{extract_optional_number, extract_optional_string_array};
+use crate::support::params::{extract_optional_number, extract_optional_string_array_from_request};
 use crate::support::schema;
+use crate::support::serialization::json_tool_result;
 
 pub fn register_tool() -> Tool {
     Tool {
@@ -83,10 +83,10 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
             extract_optional_number(request, JSON_FIELD_PORT, DEFAULT_BRP_PORT as u64)? as u16;
 
         // Extract the individual filter parameters
-        let with_crates = extract_optional_string_array(request, "with_crates")?;
-        let without_crates = extract_optional_string_array(request, "without_crates")?;
-        let with_types = extract_optional_string_array(request, "with_types")?;
-        let without_types = extract_optional_string_array(request, "without_types")?;
+        let with_crates = extract_optional_string_array_from_request(request, "with_crates")?;
+        let without_crates = extract_optional_string_array_from_request(request, "without_crates")?;
+        let with_types = extract_optional_string_array_from_request(request, "with_types")?;
+        let without_types = extract_optional_string_array_from_request(request, "without_types")?;
 
         // Build the query object if any filters are provided
         // The BRP method expects a JSON object with filter fields
