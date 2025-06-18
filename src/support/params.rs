@@ -1,5 +1,59 @@
 use rmcp::Error as McpError;
 use rmcp::model::CallToolRequestParam;
+use serde_json::Value;
+
+// Value-based extraction functions (lower-level)
+
+/// Extract a required u32 from a JSON value
+pub fn extract_required_u32(
+    arguments: &Value,
+    field_name: &str,
+    field_description: &str,
+) -> Result<u32, McpError> {
+    arguments[field_name]
+        .as_u64()
+        .ok_or_else(|| {
+            let msg = format!(
+                "{} parameter is required and must be a number",
+                field_description
+            );
+            McpError::invalid_params(msg, None)
+        })
+        .map(|v| v as u32)
+}
+
+/// Extract a required u64 from a JSON value
+pub fn extract_required_u64(
+    arguments: &Value,
+    field_name: &str,
+    field_description: &str,
+) -> Result<u64, McpError> {
+    arguments[field_name].as_u64().ok_or_else(|| {
+        let msg = format!(
+            "{} parameter is required and must be a number",
+            field_description
+        );
+        McpError::invalid_params(msg, None)
+    })
+}
+
+/// Extract an optional u16 with a default value
+pub fn extract_optional_u16(arguments: &Value, field_name: &str, default_value: u16) -> u16 {
+    arguments[field_name]
+        .as_u64()
+        .unwrap_or(default_value as u64) as u16
+}
+
+/// Extract an optional array of strings from a Value
+pub fn extract_optional_string_array(arguments: &Value, field_name: &str) -> Option<Vec<String>> {
+    arguments[field_name].as_array().map(|arr| {
+        arr.iter()
+            .filter_map(|v| v.as_str().map(String::from))
+            .collect::<Vec<String>>()
+    })
+}
+
+// CallToolRequestParam-based extraction functions (higher-level)
 
 /// Extract a required string parameter from the request
 pub fn extract_required_string<'a>(
@@ -87,7 +141,7 @@ pub fn extract_any_value<'a>(
 }
 
 /// Extract an optional string array parameter from the request
-pub fn extract_optional_string_array(
+pub fn extract_optional_string_array_from_request(
     request: &CallToolRequestParam,
     param_name: &str,
 ) -> Result<Option<Vec<String>>, McpError> {

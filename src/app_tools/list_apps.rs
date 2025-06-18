@@ -39,7 +39,9 @@ fn collect_all_apps(search_paths: &[std::path::PathBuf]) -> Vec<serde_json::Valu
 
     // Use the iterator to find all cargo projects
     for path in scanning::iter_cargo_project_paths(search_paths) {
-        if let Ok(detector) = crate::cargo_detector::CargoDetector::from_path(&path) {
+        if let Ok(detector) =
+            crate::app_tools::support::cargo_detector::CargoDetector::from_path(&path)
+        {
             let apps = detector.find_bevy_apps();
             for app in apps {
                 let mut builds = json!({});

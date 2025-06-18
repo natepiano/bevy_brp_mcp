@@ -5,9 +5,10 @@ use rmcp::{Error as McpError, RoleServer};
 use crate::BrpMcpService;
 use crate::app_tools::{launch_app, launch_example, list_apps, list_examples};
 use crate::brp_tools::{
-    brp_destroy, brp_execute, brp_get, brp_get_resource, brp_insert, brp_insert_resource, brp_list,
-    brp_list_resources, brp_mutate_component, brp_mutate_resource, brp_query, brp_registry_schema,
-    brp_remove, brp_remove_resource, brp_reparent, brp_rpc_discover, brp_spawn, brp_status,
+    bevy_list_active_watches, bevy_stop_watch, brp_destroy, brp_execute, brp_get, brp_get_resource,
+    brp_get_watch, brp_insert, brp_insert_resource, brp_list, brp_list_resources, brp_list_watch,
+    brp_mutate_component, brp_mutate_resource, brp_query, brp_registry_schema, brp_remove,
+    brp_remove_resource, brp_reparent, brp_rpc_discover, brp_spawn, brp_status,
 };
 use crate::constants::*;
 use crate::log_tools::{cleanup_logs, list_logs, read_log};
@@ -45,6 +46,11 @@ pub async fn register_tools() -> ListToolsResult {
         list_logs::register_tool(),
         read_log::register_tool(),
         cleanup_logs::register_tool(),
+        // Streaming/watch tools
+        brp_get_watch::register_tool(),
+        brp_list_watch::register_tool(),
+        bevy_stop_watch::register_tool(),
+        bevy_list_active_watches::register_tool(),
     ];
 
     ListToolsResult {
@@ -95,6 +101,14 @@ pub async fn handle_tool_call(
         TOOL_LIST_LOGS => list_logs::handle(service, request, context).await,
         TOOL_READ_LOG => read_log::handle(service, request, context).await,
         TOOL_CLEANUP_LOGS => cleanup_logs::handle(service, request, context).await,
+
+        // Streaming/watch tools
+        TOOL_BRP_GET_WATCH => brp_get_watch::handle(service, request, context).await,
+        TOOL_BRP_LIST_WATCH => brp_list_watch::handle(service, request, context).await,
+        TOOL_BEVY_STOP_WATCH => bevy_stop_watch::handle(service, request, context).await,
+        TOOL_BEVY_LIST_ACTIVE_WATCHES => {
+            bevy_list_active_watches::handle(service, request, context).await
+        }
 
         _ => Err(McpError::from(rmcp::model::ErrorData::invalid_params(
             format!("Unknown tool: {}", request.name),
