@@ -27,5 +27,15 @@ Example usage patterns:
 
 IMPORTANT: Components must be properly registered with BRP to be accessible.
 
+WARNING: This tool can return very large responses when querying many entities. If you encounter token limit errors:
+- Consider adding more specific filters to reduce the number of matching entities
+- Query for fewer components at once
+- Use more restrictive "with" filters to narrow down entities
+- Be aware that querying common components like Transform may return thousands of entities
+
+Example of a more focused query:
+- Instead of querying all entities with Transform, add additional filters like:
+  {"with": ["bevy_transform::components::transform::Transform", "bevy_render::camera::camera::Camera"]}
+
 Note: When strict=true and invalid components are encountered, the response will have status="error"
 with error_code=-23402 (COMPONENT_ERROR), indicating unknown or unregistered component types.
