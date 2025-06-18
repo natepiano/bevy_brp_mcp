@@ -13,9 +13,9 @@ pub async fn fetch_roots_and_get_paths(
     context: RequestContext<RoleServer>,
 ) -> Result<Vec<PathBuf>, McpError> {
     // Fetch current roots from client
-    eprintln!("Fetching current roots from client...");
+    tracing::debug!("Fetching current roots from client...");
     if let Err(e) = service.fetch_roots_from_client(context.peer.clone()).await {
-        eprintln!("Failed to fetch roots: {}", e);
+        tracing::debug!("Failed to fetch roots: {}", e);
     }
 
     Ok(service.roots.lock().unwrap().clone())

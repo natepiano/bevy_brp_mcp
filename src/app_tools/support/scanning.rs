@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use rmcp::Error as McpError;
 
-use crate::cargo_detector::{BinaryInfo, ExampleInfo};
+use super::cargo_detector::{BinaryInfo, ExampleInfo};
 
 /// Iterator over all valid Cargo project paths found in the given search paths
 /// Yields paths to directories containing Cargo.toml files
@@ -42,10 +42,10 @@ pub fn iter_cargo_project_paths<'a>(
 pub fn find_app_by_name(
     app_name: &str,
     search_paths: &[PathBuf],
-) -> Option<crate::cargo_detector::BinaryInfo> {
+) -> Option<super::cargo_detector::BinaryInfo> {
     // Use the generic iterator to find all cargo projects
     for path in iter_cargo_project_paths(search_paths) {
-        if let Ok(detector) = crate::cargo_detector::CargoDetector::from_path(&path) {
+        if let Ok(detector) = super::cargo_detector::CargoDetector::from_path(&path) {
             let apps = detector.find_bevy_apps();
             if let Some(app) = apps.into_iter().find(|a| a.name == app_name) {
                 return Some(app);
@@ -59,10 +59,10 @@ pub fn find_app_by_name(
 pub fn find_example_by_name(
     example_name: &str,
     search_paths: &[PathBuf],
-) -> Option<crate::cargo_detector::ExampleInfo> {
+) -> Option<super::cargo_detector::ExampleInfo> {
     // Use the generic iterator to find all cargo projects
     for path in iter_cargo_project_paths(search_paths) {
-        if let Ok(detector) = crate::cargo_detector::CargoDetector::from_path(&path) {
+        if let Ok(detector) = super::cargo_detector::CargoDetector::from_path(&path) {
             let examples = detector.find_bevy_examples();
             if let Some(example) = examples.into_iter().find(|e| e.name == example_name) {
                 return Some(example);

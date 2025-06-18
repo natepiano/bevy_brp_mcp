@@ -12,10 +12,10 @@ use super::support::generic_handler::{
     BrpHandlerConfig, FormatterContext, FormatterFactory, PassthroughExtractor, handle_generic,
 };
 use super::support::response_processor::{BrpMetadata, BrpResponseFormatter};
-use super::support::serialization::json_tool_result;
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REMOVE, TOOL_BRP_REMOVE};
 use crate::support::schema;
+use crate::support::serialization::json_tool_result;
 
 pub fn register_tool() -> Tool {
     Tool {
