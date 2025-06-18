@@ -7,7 +7,7 @@
   },
   {
     "id": "2",
-    "content": "Delete the BrpResponseFormatter trait from response_processor.rs",
+    "content": "Fix error naming in brp_client.rs: rename BrpError to JsonRpcError (private struct for wire format)",
     "status": "pending",
     "priority": "high"
   },
@@ -31,7 +31,7 @@
   },
   {
     "id": "6",
-    "content": "Update ConfigurableFormatter to remove trait implementation",
+    "content": "Rename BrpErrorInfo to BrpError in brp_client.rs (this becomes our main error type)",
     "status": "pending",
     "priority": "high"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "10",
-    "content": "Update generic_handler.rs to use ConfigurableFormatter directly instead of Box<dyn BrpResponseFormatter>",
+    "content": "Move BrpMetadata from response_processor.rs to configurable_formatter.rs",
     "status": "pending",
     "priority": "high"
   },
@@ -79,7 +79,7 @@
   },
   {
     "id": "14",
-    "content": "Update FormatterFactory trait to return ConfigurableFormatter instead of boxed trait object",
+    "content": "Move format_error_default function from response_processor.rs to configurable_formatter.rs",
     "status": "pending",
     "priority": "high"
   },
@@ -103,7 +103,7 @@
   },
   {
     "id": "18",
-    "content": "Update process_brp_response() to take ConfigurableFormatter directly",
+    "content": "Remove the confusing type alias 'pub use super::brp_client::BrpErrorInfo as BrpError' from response_processor.rs",
     "status": "pending",
     "priority": "high"
   },
@@ -127,7 +127,7 @@
   },
   {
     "id": "22",
-    "content": "Rename ConfigurableFormatter to ResponseFormatter",
+    "content": "Delete response_processor.rs file entirely (should be empty after moves)",
     "status": "pending",
     "priority": "high"
   },
@@ -151,7 +151,7 @@
   },
   {
     "id": "26",
-    "content": "Rename FormatterFactory to ResponseFormatterFactory",
+    "content": "Update mod.rs to remove response_processor module reference",
     "status": "pending",
     "priority": "high"
   },
@@ -175,7 +175,7 @@
   },
   {
     "id": "30",
-    "content": "Rename ConfigurableFormatterBuilder to ResponseFormatterBuilder",
+    "content": "Update all imports in configurable_formatter.rs and generic_handler.rs to reference moved types",
     "status": "pending",
     "priority": "high"
   },
