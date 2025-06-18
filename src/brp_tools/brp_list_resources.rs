@@ -7,7 +7,7 @@ use super::constants::{
     JSON_FIELD_RESOURCES,
 };
 use super::support::{
-    BrpHandlerConfig, ResponseFormatterFactory, SimplePortExtractor, extractors, handle_request,
+    BrpHandlerConfig, ResponseFormatterFactory, SimplePortExtractor, extractors, handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_LIST_RESOURCES, TOOL_BRP_LIST_RESOURCES};
@@ -35,7 +35,7 @@ pub async fn handle(
     // Use common array_count extractor for resource count
 
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_LIST_RESOURCES,
+        method:            Some(BRP_METHOD_LIST_RESOURCES),
         param_extractor:   Box::new(SimplePortExtractor),
         formatter_factory: ResponseFormatterFactory::list_operation()
             .with_template("Listed resources")
@@ -45,5 +45,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

@@ -40,13 +40,13 @@ pub async fn handle(
             let profile = params::extract_optional_string(&req, PARAM_PROFILE, DEFAULT_PROFILE);
 
             // Launch the app
-            launch_bevy_app(app_name, profile, &search_paths).await
+            launch_bevy_app(app_name, profile, &search_paths)
         },
     )
     .await
 }
 
-pub async fn launch_bevy_app(
+pub fn launch_bevy_app(
     app_name: &str,
     profile: &str,
     search_paths: &[PathBuf],

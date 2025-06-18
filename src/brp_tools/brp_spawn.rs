@@ -4,11 +4,11 @@ use rmcp::{Error as McpError, RoleServer};
 
 use super::constants::{
     BRP_METHOD_SPAWN, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENTS, JSON_FIELD_PORT,
-    JSON_FIELD_SPAWNED_ENTITY,
+    JSON_FIELD_SPAWNED_ENTITY, MATH_TYPE_FORMAT_NOTE,
 };
 use super::support::{
     BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory,
-    handle_request,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_SPAWN, TOOL_BRP_SPAWN};
@@ -21,7 +21,7 @@ pub fn register_tool() -> Tool {
         input_schema: schema::SchemaBuilder::new()
             .add_any_property(
                 JSON_FIELD_COMPONENTS,
-                "Object containing component data to spawn with. Keys are component types, values are component data",
+                &format!("Object containing component data to spawn with. Keys are component types, values are component data.{MATH_TYPE_FORMAT_NOTE}"),
                 false
             )
             .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {DEFAULT_BRP_PORT})" ), false)
@@ -38,7 +38,7 @@ pub async fn handle(
     let spawned_entity_extractor: FieldExtractor = |data, _context| {
         data.get("entity")
             .cloned()
-            .unwrap_or(serde_json::Value::Number(serde_json::Number::from(0)))
+            .unwrap_or_else(|| serde_json::Value::Number(serde_json::Number::from(0)))
     };
 
     // Custom extractor for components
@@ -46,7 +46,7 @@ pub async fn handle(
         |_data, context| context.params.clone().unwrap_or(serde_json::Value::Null);
 
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_SPAWN,
+        method:            Some(BRP_METHOD_SPAWN),
         param_extractor:   Box::new(PassthroughExtractor),
         formatter_factory: ResponseFormatterFactory::entity_operation(JSON_FIELD_SPAWNED_ENTITY)
             .with_template("Successfully spawned entity")
@@ -56,5 +56,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

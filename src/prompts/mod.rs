@@ -31,20 +31,17 @@ impl PromptRegistry {
     }
 
     /// List all available prompts
-    pub async fn list_prompts(
+    #[allow(clippy::unnecessary_wraps)]
+    pub fn list_prompts(
         &self,
         _request: PaginatedRequestParam,
         _context: RequestContext<RoleServer>,
     ) -> Result<ListPromptsResult, McpError> {
-        let prompts: Vec<Prompt> = self
-            .prompts
-            .iter()
-            .map(|handler| handler.get_prompt_info())
-            .collect();
-
         Ok(ListPromptsResult {
-            prompts:     prompts
-                .into_iter()
+            prompts:     self
+                .prompts
+                .iter()
+                .map(|handler| handler.get_prompt_info())
                 .map(|p| rmcp::model::Prompt {
                     name:        p.name,
                     description: Some(p.description),
@@ -64,7 +61,7 @@ impl PromptRegistry {
     }
 
     /// Get a specific prompt by name
-    pub async fn get_prompt(
+    pub fn get_prompt(
         &self,
         name: &str,
         _context: RequestContext<RoleServer>,

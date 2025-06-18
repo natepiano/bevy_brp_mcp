@@ -2,6 +2,7 @@
 
 use std::path::PathBuf;
 
+use futures::StreamExt;
 use serde_json::Value;
 use tracing::{debug, error, info};
 
@@ -27,7 +28,6 @@ async fn process_watch_stream(
 
     // Read the streaming response
     let mut stream = response.bytes_stream();
-    use futures::StreamExt;
 
     while let Some(chunk) = stream.next().await {
         match chunk {
@@ -173,9 +173,7 @@ async fn start_watch_task(
     let log_path = watch_logger::get_watch_log_path(watch_id, entity_id, watch_type);
 
     // Create buffered logger
-    let logger = BufferedWatchLogger::new(log_path.clone())
-        .await
-        .map_err(|e| format!("Failed to create logger: {e}"))?;
+    let logger = BufferedWatchLogger::new(log_path.clone());
 
     // Create initial log entry
     let log_data = match params.clone() {

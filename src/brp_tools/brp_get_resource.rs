@@ -6,7 +6,8 @@ use super::constants::{
     BRP_METHOD_GET_RESOURCE, DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_RESOURCE,
 };
 use super::support::{
-    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors, handle_request,
+    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_GET_RESOURCE, TOOL_BRP_GET_RESOURCE};
@@ -37,7 +38,7 @@ pub async fn handle(
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_GET_RESOURCE,
+        method:            Some(BRP_METHOD_GET_RESOURCE),
         param_extractor:   Box::new(PassthroughExtractor),
         formatter_factory: ResponseFormatterFactory::resource_operation(JSON_FIELD_RESOURCE)
             .with_template("Successfully retrieved resource '{resource}'")
@@ -45,5 +46,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

@@ -7,7 +7,7 @@ use super::constants::{
     BRP_METHOD_REGISTRY_SCHEMA, DEFAULT_BRP_PORT, JSON_FIELD_DATA, JSON_FIELD_PORT,
 };
 use super::support::{
-    BrpHandlerConfig, ParamExtractor, ResponseFormatterFactory, extractors, handle_request,
+    BrpHandlerConfig, ExtractedParams, ParamExtractor, ResponseFormatterFactory, extractors, handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REGISTRY_SCHEMA, TOOL_BRP_REGISTRY_SCHEMA};
@@ -50,7 +50,7 @@ pub async fn handle(
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_REGISTRY_SCHEMA,
+        method:            Some(BRP_METHOD_REGISTRY_SCHEMA),
         param_extractor:   Box::new(RegistrySchemaParamExtractor),
         formatter_factory: ResponseFormatterFactory::pass_through()
             .with_template("Retrieved schema information")
@@ -59,7 +59,7 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }
 
 /// Parameter extractor for registry/schema method
@@ -75,7 +75,7 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
     fn extract(
         &self,
         request: &rmcp::model::CallToolRequestParam,
-    ) -> Result<(Option<Value>, u16), McpError> {
+    ) -> Result<ExtractedParams, McpError> {
         use serde_json::json;
 
         let port = u16::try_from(extract_optional_number(
@@ -125,6 +125,10 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
             None
         };
 
-        Ok((params, port))
+        Ok(ExtractedParams {
+            method: None,
+            params,
+            port,
+        })
     }
 }

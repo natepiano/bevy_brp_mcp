@@ -22,13 +22,13 @@ pub fn register_tool() -> Tool {
     }
 }
 
-pub async fn handle(
+pub fn handle(
     _service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: &rmcp::model::CallToolRequestParam,
     _context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     // Extract optional app name filter
-    let app_name_filter = params::extract_optional_string(&request, "app_name", "");
+    let app_name_filter = params::extract_optional_string(request, "app_name", "");
 
     let logs = list_log_files(app_name_filter)?;
 

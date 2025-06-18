@@ -8,7 +8,7 @@ use super::constants::{
 };
 use super::support::{
     BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory, extractors,
-    handle_request,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_QUERY, TOOL_BRP_QUERY};
@@ -48,16 +48,13 @@ pub async fn handle(
 
     // Custom extractor for total component count
     let component_count_extractor: FieldExtractor = |data, _context| {
-        let total = data
-            .as_array()
-            .map(|entities| {
-                entities
-                    .iter()
-                    .filter_map(|e| e.as_object())
-                    .map(|obj| obj.len())
-                    .sum::<usize>()
-            })
-            .unwrap_or(0);
+        let total = data.as_array().map_or(0, |entities| {
+            entities
+                .iter()
+                .filter_map(|e| e.as_object())
+                .map(serde_json::Map::len)
+                .sum::<usize>()
+        });
         serde_json::Value::Number(serde_json::Number::from(total))
     };
 
@@ -66,7 +63,7 @@ pub async fn handle(
         |_data, context| context.params.clone().unwrap_or(serde_json::Value::Null);
 
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_QUERY,
+        method:            Some(BRP_METHOD_QUERY),
         param_extractor:   Box::new(PassthroughExtractor),
         formatter_factory: ResponseFormatterFactory::pass_through()
             .with_template("Query completed successfully")
@@ -78,5 +75,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }
