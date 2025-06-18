@@ -38,7 +38,9 @@ fn collect_all_examples(search_paths: &[std::path::PathBuf]) -> Vec<serde_json::
 
     // Use the iterator to find all cargo projects
     for path in scanning::iter_cargo_project_paths(search_paths) {
-        if let Ok(detector) = crate::cargo_detector::CargoDetector::from_path(&path) {
+        if let Ok(detector) =
+            crate::app_tools::support::cargo_detector::CargoDetector::from_path(&path)
+        {
             let examples = detector.find_bevy_examples();
             for example in examples {
                 all_examples.push(json!({

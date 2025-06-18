@@ -31,12 +31,14 @@ pub const JSON_FIELD_CODE: &str = "code";
 pub const JSON_FIELD_COMPONENT: &str = "component";
 pub const JSON_FIELD_COMPONENTS: &str = "components";
 pub const JSON_FIELD_COMPONENT_COUNT: &str = "count";
+pub const JSON_FIELD_COUNT: &str = "count";
 pub const JSON_FIELD_DATA: &str = "data";
 pub const JSON_FIELD_DESTROYED_ENTITY: &str = "destroyed_entity";
 pub const JSON_FIELD_ENTITIES: &str = "entities";
 pub const JSON_FIELD_ENTITY: &str = "entity";
 pub const JSON_FIELD_ENTITY_COUNT: &str = "entity_count";
 pub const JSON_FIELD_ERROR_CODE: &str = "error_code";
+pub const JSON_FIELD_LOG_PATH: &str = "log_path";
 pub const JSON_FIELD_MESSAGE: &str = "message";
 pub const JSON_FIELD_METADATA: &str = "metadata";
 pub const JSON_FIELD_METHOD: &str = "method";
@@ -50,6 +52,8 @@ pub const JSON_FIELD_RESOURCES: &str = "resources";
 pub const JSON_FIELD_SPAWNED_ENTITY: &str = "spawned_entity";
 pub const JSON_FIELD_STATUS: &str = "status";
 pub const JSON_FIELD_STRICT: &str = "strict";
+pub const JSON_FIELD_WATCH_ID: &str = "watch_id";
+pub const JSON_FIELD_WATCHES: &str = "watches";
 
 // JSON-RPC Constants
 pub const JSONRPC_VERSION: &str = "2.0";
@@ -58,6 +62,3 @@ pub const JSONRPC_FIELD: &str = "jsonrpc";
 pub const JSONRPC_FIELD_ID: &str = "id";
 pub const JSONRPC_FIELD_METHOD: &str = "method";
 pub const JSONRPC_FIELD_PARAMS: &str = "params";
-
-// Error Handling Constants
-pub const FALLBACK_JSON: &str = "{}";

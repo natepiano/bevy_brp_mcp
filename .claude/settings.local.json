@@ -7,7 +7,9 @@
       "mcp__brp__bevy_list",
       "mcp__brp__brp_status",
       "mcp__brp__list_logs",
-      "mcp__brp__list_bevy_examples"
+      "mcp__brp__list_bevy_examples",
+      "Bash(mv:*)",
+      "Bash(cargo check:*)"
     ],
     "deny": []
   }

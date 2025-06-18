@@ -12,13 +12,13 @@ use rmcp::{Error as McpError, RoleServer, ServerHandler, ServiceExt};
 
 mod app_tools;
 mod brp_tools;
-mod cargo_detector;
 mod constants;
 mod log_tools;
 mod prompts;
 mod registry;
 mod support;
 mod types;
+mod watch_manager;
 
 use constants::BEVY_BRP_MCP_INFO;
 
@@ -92,9 +92,9 @@ impl BrpMcpService {
         // Use the peer extension method to list roots
         match peer.list_roots().await {
             Ok(result) => {
-                eprintln!("Received {} roots from client", result.roots.len());
+                tracing::debug!("Received {} roots from client", result.roots.len());
                 for (i, root) in result.roots.iter().enumerate() {
-                    eprintln!(
+                    tracing::debug!(
                         "  Root {}: {} ({})",
                         i + 1,
                         root.uri,
@@ -110,7 +110,7 @@ impl BrpMcpService {
                         if let Some(path) = root.uri.strip_prefix("file://") {
                             Some(PathBuf::from(path))
                         } else {
-                            eprintln!("Warning: Ignoring non-file URI: {}", root.uri);
+                            tracing::warn!("Ignoring non-file URI: {}", root.uri);
                             None
                         }
                     })
@@ -119,10 +119,10 @@ impl BrpMcpService {
                 // Update our roots
                 let mut roots = self.roots.lock().unwrap();
                 *roots = paths;
-                eprintln!("Processed roots: {:?}", *roots);
+                tracing::debug!("Processed roots: {:?}", *roots);
             }
             Err(e) => {
-                eprintln!("Failed to send roots/list request: {}", e);
+                tracing::error!("Failed to send roots/list request: {}", e);
             }
         }
 
@@ -132,8 +132,47 @@ impl BrpMcpService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    // Initialize logging to both stderr and a file
+    use tracing_subscriber::layer::SubscriberExt;
+    use tracing_subscriber::util::SubscriberInitExt;
+
+    let log_file_name = "mcp_server_debug.log";
+
+    // Create file appender
+    let file_appender = tracing_appender::rolling::never("/tmp", log_file_name);
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+
+    // Create layers
+    let file_layer = tracing_subscriber::fmt::layer()
+        .with_writer(non_blocking)
+        .with_ansi(false);
+
+    let stderr_layer = tracing_subscriber::fmt::layer().with_writer(std::io::stderr);
+
+    // Use RUST_LOG if set, otherwise default to debug level for bevy_brp_mcp
+    let env_filter = if std::env::var("RUST_LOG").is_ok() {
+        tracing_subscriber::EnvFilter::from_default_env()
+    } else {
+        tracing_subscriber::EnvFilter::new("bevy_brp_mcp=debug,info")
+    };
+
+    // Combine layers
+    tracing_subscriber::registry()
+        .with(env_filter)
+        .with(file_layer)
+        .with(stderr_layer)
+        .init();
+
+    tracing::debug!("MCP Server starting with logging enabled");
+
+    // Initialize the watch manager
+    watch_manager::initialize_watch_manager().await;
+
     let service = BrpMcpService::new();
+
+    tracing::info!("Starting stdio server");
     let server = service.serve(stdio()).await?;
     server.waiting().await?;
+
     Ok(())
 }
