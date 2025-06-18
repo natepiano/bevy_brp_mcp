@@ -11,7 +11,7 @@ use rmcp::Error as McpError;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::builder::BrpJsonRpcBuilder;
+use super::BrpJsonRpcBuilder;
 use crate::brp_tools::constants::DEFAULT_BRP_PORT;
 
 /// Result of a BRP operation
@@ -20,12 +20,12 @@ pub enum BrpResult {
     /// Successful operation with optional data
     Success(Option<Value>),
     /// Error with code, message and optional data
-    Error(BrpErrorInfo),
+    Error(BrpError),
 }
 
 /// Error information from BRP operations
 #[derive(Debug, Clone)]
-pub struct BrpErrorInfo {
+pub struct BrpError {
     pub code:    i32,
     pub message: String,
     pub data:    Option<Value>,
@@ -39,12 +39,12 @@ struct BrpResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     result:  Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    error:   Option<BrpError>,
+    error:   Option<JsonRpcError>,
 }
 
 /// Raw BRP error structure from JSON-RPC response
 #[derive(Debug, Serialize, Deserialize)]
-struct BrpError {
+struct JsonRpcError {
     code:    i32,
     message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -108,7 +108,7 @@ pub async fn execute_brp_method(
 
     // Convert to structured result
     if let Some(error) = brp_response.error {
-        Ok(BrpResult::Error(BrpErrorInfo {
+        Ok(BrpResult::Error(BrpError {
             code:    error.code,
             message: error.message,
             data:    error.data,
@@ -123,8 +123,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_brp_error_info_creation() {
-        let error = BrpErrorInfo {
+    fn test_brp_error_creation() {
+        let error = BrpError {
             code:    -32600,
             message: "Invalid Request".to_string(),
             data:    None,
@@ -142,7 +142,7 @@ mod tests {
 
     #[test]
     fn test_brp_result_error() {
-        let error = BrpErrorInfo {
+        let error = BrpError {
             code:    -1,
             message: "Test error".to_string(),
             data:    None,

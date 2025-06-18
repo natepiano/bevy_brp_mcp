@@ -1,12 +1,11 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
-use super::constants::{
-    DEFAULT_BRP_PORT, JSON_FIELD_METHOD, JSON_FIELD_PARAMS, JSON_FIELD_PORT,
+use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_METHOD, JSON_FIELD_PARAMS, JSON_FIELD_PORT};
+use super::support::{
+    BrpExecuteExtractor, DynamicBrpHandlerConfig, ResponseFormatterFactory, handle_dynamic,
 };
-use super::support::configurable_formatter::ConfigurableFormatterFactory;
-use super::support::generic_handler::{DynamicBrpHandlerConfig, BrpExecuteExtractor, handle_dynamic};
 use crate::BrpMcpService;
 use crate::constants::TOOL_BRP_EXECUTE;
 use crate::support::schema;
@@ -26,13 +25,12 @@ pub fn register_tool() -> Tool {
 
 pub async fn handle(
     service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     let config = DynamicBrpHandlerConfig {
         param_extractor:   Box::new(BrpExecuteExtractor),
-        formatter_factory: ConfigurableFormatterFactory::method_execution()
-            .build(),
+        formatter_factory: ResponseFormatterFactory::method_execution().build(),
     };
 
     handle_dynamic(service, request, context, &config).await

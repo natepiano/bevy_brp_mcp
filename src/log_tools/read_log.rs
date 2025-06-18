@@ -90,9 +90,8 @@ fn read_log_file(
     tail_lines: usize,
 ) -> Result<(String, std::fs::Metadata), McpError> {
     // Get file metadata
-    let metadata = std::fs::metadata(path).map_err(|e| {
-        McpError::internal_error(format!("Failed to get file metadata: {e}"), None)
-    })?;
+    let metadata = std::fs::metadata(path)
+        .map_err(|e| McpError::internal_error(format!("Failed to get file metadata: {e}"), None))?;
 
     // Open the file
     let file = File::open(path)

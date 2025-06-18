@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use serde_json::Value;
 use tracing::{debug, error, info};
 
-use crate::brp_tools::support::builder::BrpJsonRpcBuilder;
+use crate::brp_tools::support::json_rpc_builder::BrpJsonRpcBuilder;
 use crate::brp_tools::support::watch_logger::{self, BufferedWatchLogger};
 use crate::watch_manager::{WATCH_MANAGER, WatchInfo};
 
@@ -156,7 +156,7 @@ async fn run_watch_connection(
 }
 
 /// Generic function to start a watch task
-async fn start_watch_task_generic(
+async fn start_watch_task(
     entity_id: u64,
     watch_type: &str,
     brp_method: &str,
@@ -257,7 +257,7 @@ pub async fn start_entity_watch_task(
         "components": components
     });
 
-    start_watch_task_generic(entity_id, "get", "bevy/get+watch", params, port).await
+    start_watch_task(entity_id, "get", "bevy/get+watch", params, port).await
 }
 
 /// Start a background task for entity list watching
@@ -266,5 +266,5 @@ pub async fn start_list_watch_task(entity_id: u64, port: u16) -> Result<(u32, Pa
         "entity": entity_id
     });
 
-    start_watch_task_generic(entity_id, "list", "bevy/list+watch", params, port).await
+    start_watch_task(entity_id, "list", "bevy/list+watch", params, port).await
 }

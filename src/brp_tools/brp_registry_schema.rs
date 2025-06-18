@@ -1,4 +1,4 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::Value;
@@ -6,8 +6,9 @@ use serde_json::Value;
 use super::constants::{
     BRP_METHOD_REGISTRY_SCHEMA, DEFAULT_BRP_PORT, JSON_FIELD_DATA, JSON_FIELD_PORT,
 };
-use super::support::configurable_formatter::{ConfigurableFormatterFactory, extractors};
-use super::support::generic_handler::{BrpHandlerConfig, ParamExtractor, handle_generic};
+use super::support::{
+    BrpHandlerConfig, ParamExtractor, ResponseFormatterFactory, extractors, handle_request,
+};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REGISTRY_SCHEMA, TOOL_BRP_REGISTRY_SCHEMA};
 use crate::support::params::{extract_optional_number, extract_optional_string_array_from_request};
@@ -45,20 +46,20 @@ pub fn register_tool() -> Tool {
 
 pub async fn handle(
     service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     let config = BrpHandlerConfig {
         method:            BRP_METHOD_REGISTRY_SCHEMA,
         param_extractor:   Box::new(RegistrySchemaParamExtractor),
-        formatter_factory: ConfigurableFormatterFactory::pass_through()
+        formatter_factory: ResponseFormatterFactory::pass_through()
             .with_template("Retrieved schema information")
             .with_response_field(JSON_FIELD_DATA, extractors::pass_through_data)
             .with_default_error()
             .build(),
     };
 
-    handle_generic(service, request, context, &config).await
+    handle_request(service, request, context, &config).await
 }
 
 /// Parameter extractor for registry/schema method
@@ -77,9 +78,14 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
     ) -> Result<(Option<Value>, u16), McpError> {
         use serde_json::json;
 
-        let port =
-            u16::try_from(extract_optional_number(request, JSON_FIELD_PORT, u64::from(DEFAULT_BRP_PORT))?)
-                .map_err(|_| McpError::invalid_params("Port number must be a valid u16".to_string(), None))?;
+        let port = u16::try_from(extract_optional_number(
+            request,
+            JSON_FIELD_PORT,
+            u64::from(DEFAULT_BRP_PORT),
+        )?)
+        .map_err(|_| {
+            McpError::invalid_params("Port number must be a valid u16".to_string(), None)
+        })?;
 
         // Extract the individual filter parameters
         let with_crates = extract_optional_string_array_from_request(request, "with_crates")?;

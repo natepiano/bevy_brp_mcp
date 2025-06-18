@@ -13,9 +13,7 @@ pub fn extract_required_u32(
     arguments[field_name]
         .as_u64()
         .ok_or_else(|| {
-            let msg = format!(
-                "{field_description} parameter is required and must be a number"
-            );
+            let msg = format!("{field_description} parameter is required and must be a number");
             McpError::invalid_params(msg, None)
         })
         .map(|v| v as u32)
@@ -28,9 +26,7 @@ pub fn extract_required_u64(
     field_description: &str,
 ) -> Result<u64, McpError> {
     arguments[field_name].as_u64().ok_or_else(|| {
-        let msg = format!(
-            "{field_description} parameter is required and must be a number"
-        );
+        let msg = format!("{field_description} parameter is required and must be a number");
         McpError::invalid_params(msg, None)
     })
 }

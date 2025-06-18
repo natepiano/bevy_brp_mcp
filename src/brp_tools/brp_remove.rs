@@ -1,12 +1,13 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
 use super::constants::{
     BRP_METHOD_REMOVE, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITY, JSON_FIELD_PORT,
 };
-use super::support::configurable_formatter::{ConfigurableFormatterFactory, extractors};
-use super::support::generic_handler::{BrpHandlerConfig, PassthroughExtractor, handle_generic};
+use super::support::{
+    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors, handle_request,
+};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REMOVE, TOOL_BRP_REMOVE};
 use crate::support::schema;
@@ -37,7 +38,7 @@ pub fn register_tool() -> Tool {
 
 pub async fn handle(
     service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     // Use common components_from_params extractor
@@ -45,7 +46,7 @@ pub async fn handle(
     let config = BrpHandlerConfig {
         method:            BRP_METHOD_REMOVE,
         param_extractor:   Box::new(PassthroughExtractor),
-        formatter_factory: ConfigurableFormatterFactory::entity_operation(JSON_FIELD_ENTITY)
+        formatter_factory: ResponseFormatterFactory::entity_operation(JSON_FIELD_ENTITY)
             .with_template("Successfully removed components from entity {entity}")
             .with_response_field(JSON_FIELD_ENTITY, extractors::entity_from_params)
             .with_response_field("removed_components", extractors::components_from_params)
@@ -53,5 +54,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_generic(service, request, context, &config).await
+    handle_request(service, request, context, &config).await
 }

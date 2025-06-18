@@ -6,8 +6,10 @@ use super::constants::{
     BRP_METHOD_SPAWN, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENTS, JSON_FIELD_PORT,
     JSON_FIELD_SPAWNED_ENTITY,
 };
-use super::support::configurable_formatter::{ConfigurableFormatterFactory, FieldExtractor};
-use super::support::generic_handler::{BrpHandlerConfig, PassthroughExtractor, handle_generic};
+use super::support::{
+    BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory,
+    handle_request,
+};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_SPAWN, TOOL_BRP_SPAWN};
 use crate::support::schema;
@@ -46,15 +48,13 @@ pub async fn handle(
     let config = BrpHandlerConfig {
         method:            BRP_METHOD_SPAWN,
         param_extractor:   Box::new(PassthroughExtractor),
-        formatter_factory: ConfigurableFormatterFactory::entity_operation(
-            JSON_FIELD_SPAWNED_ENTITY,
-        )
-        .with_template("Successfully spawned entity")
-        .with_response_field(JSON_FIELD_SPAWNED_ENTITY, spawned_entity_extractor)
-        .with_response_field(JSON_FIELD_COMPONENTS, components_extractor)
-        .with_error_metadata_field("requested_components", components_extractor)
-        .build(),
+        formatter_factory: ResponseFormatterFactory::entity_operation(JSON_FIELD_SPAWNED_ENTITY)
+            .with_template("Successfully spawned entity")
+            .with_response_field(JSON_FIELD_SPAWNED_ENTITY, spawned_entity_extractor)
+            .with_response_field(JSON_FIELD_COMPONENTS, components_extractor)
+            .with_error_metadata_field("requested_components", components_extractor)
+            .build(),
     };
 
-    handle_generic(service, request, context, &config).await
+    handle_request(service, request, context, &config).await
 }

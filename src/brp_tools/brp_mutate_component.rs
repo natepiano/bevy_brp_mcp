@@ -1,4 +1,4 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
@@ -6,10 +6,10 @@ use super::constants::{
     BRP_METHOD_MUTATE_COMPONENT, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENT, JSON_FIELD_ENTITY,
     JSON_FIELD_PATH, JSON_FIELD_PORT,
 };
-use super::support::configurable_formatter::{
-    ConfigurableFormatterFactory, FieldExtractor, extractors,
+use super::support::{
+    BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory, extractors,
+    handle_request,
 };
-use super::support::generic_handler::{BrpHandlerConfig, PassthroughExtractor, handle_generic};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_MUTATE_COMPONENT, TOOL_BRP_MUTATE_COMPONENT};
 use crate::support::schema;
@@ -46,7 +46,7 @@ pub fn register_tool() -> Tool {
 
 pub async fn handle(
     service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     // Custom extractors for component and path
@@ -71,7 +71,7 @@ pub async fn handle(
     let config = BrpHandlerConfig {
         method:            BRP_METHOD_MUTATE_COMPONENT,
         param_extractor:   Box::new(PassthroughExtractor),
-        formatter_factory: ConfigurableFormatterFactory::entity_operation(JSON_FIELD_ENTITY)
+        formatter_factory: ResponseFormatterFactory::entity_operation(JSON_FIELD_ENTITY)
             .with_template(
                 "Successfully mutated field '{path}' in component '{component}' on entity {entity}",
             )
@@ -83,5 +83,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_generic(service, request, context, &config).await
+    handle_request(service, request, context, &config).await
 }

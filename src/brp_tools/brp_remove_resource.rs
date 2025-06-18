@@ -1,12 +1,13 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
 use super::constants::{
     BRP_METHOD_REMOVE_RESOURCE, DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_RESOURCE,
 };
-use super::support::configurable_formatter::{ConfigurableFormatterFactory, extractors};
-use super::support::generic_handler::{BrpHandlerConfig, PassthroughExtractor, handle_generic};
+use super::support::{
+    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors, handle_request,
+};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REMOVE_RESOURCE, TOOL_BRP_REMOVE_RESOURCE};
 use crate::support::schema;
@@ -32,17 +33,17 @@ pub fn register_tool() -> Tool {
 
 pub async fn handle(
     service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     let config = BrpHandlerConfig {
         method:            BRP_METHOD_REMOVE_RESOURCE,
         param_extractor:   Box::new(PassthroughExtractor),
-        formatter_factory: ConfigurableFormatterFactory::resource_operation(JSON_FIELD_RESOURCE)
+        formatter_factory: ResponseFormatterFactory::resource_operation(JSON_FIELD_RESOURCE)
             .with_template("Successfully removed resource '{resource}'")
             .with_response_field(JSON_FIELD_RESOURCE, extractors::resource_from_params)
             .build(),
     };
 
-    handle_generic(service, request, context, &config).await
+    handle_request(service, request, context, &config).await
 }

@@ -9,7 +9,7 @@ use crate::BrpMcpService;
 use crate::brp_tools::constants::{
     DEFAULT_BRP_PORT, JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITY, JSON_FIELD_PORT,
 };
-use crate::brp_tools::support::{watch_response, watch_task};
+use crate::brp_tools::support;
 use crate::constants::{DESC_BRP_GET_WATCH, TOOL_BRP_GET_WATCH};
 use crate::support::{params, schema};
 
@@ -42,8 +42,8 @@ pub async fn handle(
     let port = params::extract_optional_u16(&arguments, JSON_FIELD_PORT, DEFAULT_BRP_PORT);
 
     // Start the watch task
-    let result = watch_task::start_entity_watch_task(entity_id, components, port).await;
-    Ok(watch_response::format_watch_start_response(
+    let result = support::start_entity_watch_task(entity_id, components, port).await;
+    Ok(support::format_watch_start_response(
         result,
         "entity watch",
         entity_id,
