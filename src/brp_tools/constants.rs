@@ -23,8 +23,8 @@ pub const BRP_METHOD_REGISTRY_SCHEMA: &str = "bevy/registry/schema";
 pub const BRP_METHOD_RPC_DISCOVER: &str = "rpc.discover";
 
 // Response Status Constants
-pub const RESPONSE_STATUS_SUCCESS: &str = "success";
-pub const RESPONSE_STATUS_ERROR: &str = "error";
+// pub const RESPONSE_STATUS_SUCCESS: &str = "success";
+// pub const RESPONSE_STATUS_ERROR: &str = "error";
 
 // JSON Field Name Constants
 pub const JSON_FIELD_CODE: &str = "code";
@@ -39,7 +39,7 @@ pub const JSON_FIELD_ENTITY: &str = "entity";
 pub const JSON_FIELD_ENTITY_COUNT: &str = "entity_count";
 pub const JSON_FIELD_ERROR_CODE: &str = "error_code";
 pub const JSON_FIELD_LOG_PATH: &str = "log_path";
-pub const JSON_FIELD_MESSAGE: &str = "message";
+// pub const JSON_FIELD_MESSAGE: &str = "message";
 pub const JSON_FIELD_METADATA: &str = "metadata";
 pub const JSON_FIELD_METHOD: &str = "method";
 pub const JSON_FIELD_PARAMS: &str = "params";

@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use std::time::Duration;
 
 use rmcp::model::{CallToolResult, Tool};
@@ -9,63 +8,53 @@ use sysinfo::System;
 use tokio::time::timeout;
 
 use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_STATUS};
-use super::support::builder::BrpJsonRpcBuilder;
+use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
-use crate::app_tools::support::scanning;
-use crate::constants::{DEFAULT_PROFILE, PARAM_APP_NAME, PARAM_PORT, TOOL_BRP_STATUS};
-use crate::support::{params, response, schema, service};
+use crate::constants::{PARAM_APP_NAME, PARAM_PORT, TOOL_BRP_STATUS};
+use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
     Tool {
         name: TOOL_BRP_STATUS.into(),
-        description: "Check if a specific Bevy app is running and has BRP (Bevy Remote Protocol) enabled. This tool helps diagnose whether your app is running and properly configured with RemotePlugin.".into(),
+        description: "Check if a process is running with BRP (Bevy Remote Protocol) enabled. This tool helps diagnose whether a process is running and properly configured with RemotePlugin.".into(),
         input_schema: schema::SchemaBuilder::new()
-            .add_string_property(PARAM_APP_NAME, "Name of the Bevy app to check", true)
-            .add_number_property(PARAM_PORT, &format!("Port to check for BRP (default: {})", DEFAULT_BRP_PORT), false)
+            .add_string_property(PARAM_APP_NAME, "Name of the process to check for", true)
+            .add_number_property(PARAM_PORT, &format!("Port to check for BRP (default: {DEFAULT_BRP_PORT})"), false)
             .build(),
     }
 }
 
 pub async fn handle(
-    service: &BrpMcpService,
+    _service: &BrpMcpService,
     request: rmcp::model::CallToolRequestParam,
-    context: RequestContext<RoleServer>,
+    _context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    service::handle_with_request_and_paths(
-        service,
-        request,
-        context,
-        |req, search_paths| async move {
-            // Get parameters
-            let app_name = params::extract_required_string(&req, PARAM_APP_NAME)?;
-            let port = params::extract_optional_number(&req, PARAM_PORT, DEFAULT_BRP_PORT as u64)?;
+    // Get parameters
+    let app_name = params::extract_required_string(&request, PARAM_APP_NAME)?;
+    let port = params::extract_optional_number(&request, PARAM_PORT, u64::from(DEFAULT_BRP_PORT))?;
 
-            // Check the app
-            check_brp_for_app(app_name, port as u16, &search_paths).await
-        },
+    // Check the app
+    check_brp_for_app(
+        app_name,
+        u16::try_from(port).map_err(|_| {
+            McpError::invalid_params("Port number must be a valid u16".to_string(), None)
+        })?,
     )
     .await
 }
 
-async fn check_brp_for_app(
-    app_name: &str,
-    port: u16,
-    search_paths: &[PathBuf],
-) -> Result<CallToolResult, McpError> {
-    // Find the app info
-    let app = scanning::find_required_app(app_name, search_paths)?;
-
-    // Get the binary path for the default profile
-    let binary_path = app.get_binary_path(DEFAULT_PROFILE);
-
-    // Check if this specific app is running using sysinfo
+async fn check_brp_for_app(app_name: &str, port: u16) -> Result<CallToolResult, McpError> {
+    // Check if a process with this name is running using sysinfo
     let mut system = System::new_all();
     system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
 
-    let running_process = system
-        .processes()
-        .values()
-        .find(|process| process.exe().map(|p| p.to_path_buf()).unwrap_or_default() == binary_path);
+    let running_process = system.processes().values().find(|process| {
+        let process_name = process.name().to_string_lossy();
+        // Match exact name or with common variations (.exe suffix, etc.)
+        process_name == app_name
+            || process_name == format!("{app_name}.exe")
+            || process_name.strip_suffix(".exe").unwrap_or(&process_name) == app_name
+    });
 
     // Check BRP connectivity
     let brp_responsive = check_brp_on_port(port).await?;
@@ -77,8 +66,7 @@ async fn check_brp_for_app(
             (
                 "running_with_brp",
                 format!(
-                    "App '{}' (PID: {}) is running with BRP enabled on port {}",
-                    app_name, pid, port
+                    "Process '{app_name}' (PID: {pid}) is running with BRP enabled on port {port}"
                 ),
                 true,
                 Some(pid),
@@ -89,21 +77,18 @@ async fn check_brp_for_app(
             (
                 "running_no_brp",
                 format!(
-                    "App '{}' (PID: {}) is running but not responding to BRP on port {}. Make sure RemotePlugin is added to your Bevy app.",
-                    app_name, pid, port
+                    "Process '{app_name}' (PID: {pid}) is running but not responding to BRP on port {port}. Make sure RemotePlugin is added to your Bevy app."
                 ),
                 true,
                 Some(pid),
             )
         }
         (None, true) => {
-            // BRP is responding but our specific app isn't found - might be running with different
-            // profile
+            // BRP is responding but our specific process isn't found
             (
-                "brp_found_app_not_detected",
+                "brp_found_process_not_detected",
                 format!(
-                    "BRP is responding on port {} but app '{}' process not detected. It may be running with a different build profile.",
-                    port, app_name
+                    "BRP is responding on port {port} but process '{app_name}' not detected. Another process may be using BRP."
                 ),
                 false,
                 None,
@@ -111,7 +96,7 @@ async fn check_brp_for_app(
         }
         (None, false) => (
             "not_running",
-            format!("App '{}' is not currently running", app_name),
+            format!("Process '{app_name}' is not currently running"),
             false,
             None,
         ),
@@ -134,7 +119,7 @@ async fn check_brp_for_app(
 async fn check_brp_on_port(port: u16) -> Result<bool, McpError> {
     // Try a simple BRP request to check connectivity
     let client = reqwest::Client::new();
-    let url = format!("http://localhost:{}", port);
+    let url = format!("http://localhost:{port}");
 
     // Use bevy/list as a lightweight command using the builder
     let request_body = BrpJsonRpcBuilder::new("bevy/list").build();

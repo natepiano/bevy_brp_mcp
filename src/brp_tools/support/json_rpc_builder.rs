@@ -8,7 +8,7 @@ use crate::brp_tools::constants::{
 /// Builder for constructing raw JSON-RPC 2.0 requests
 ///
 /// This builder is used for direct HTTP communication with BRP,
-/// primarily by the check_brp tool.
+/// primarily by the `check_brp` tool.
 pub struct BrpJsonRpcBuilder {
     method: String,
     params: Option<Value>,

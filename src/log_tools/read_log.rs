@@ -61,7 +61,7 @@ pub async fn handle(
     // Check if file exists
     if !log_path.exists() {
         return Err(McpError::invalid_params(
-            format!("Log file not found: {}", filename),
+            format!("Log file not found: {filename}"),
             None,
         ));
     }
@@ -70,7 +70,7 @@ pub async fn handle(
     let (content, metadata) = read_log_file(&log_path, keyword, tail_lines)?;
 
     Ok(response::success_json_response(
-        format!("Successfully read log file: {}", filename),
+        format!("Successfully read log file: {filename}"),
         json!({
             "filename": filename,
             FILE_PATH: log_path.display().to_string(),
@@ -90,13 +90,12 @@ fn read_log_file(
     tail_lines: usize,
 ) -> Result<(String, std::fs::Metadata), McpError> {
     // Get file metadata
-    let metadata = std::fs::metadata(path).map_err(|e| {
-        McpError::internal_error(format!("Failed to get file metadata: {}", e), None)
-    })?;
+    let metadata = std::fs::metadata(path)
+        .map_err(|e| McpError::internal_error(format!("Failed to get file metadata: {e}"), None))?;
 
     // Open the file
     let file = File::open(path)
-        .map_err(|e| McpError::internal_error(format!("Failed to open log file: {}", e), None))?;
+        .map_err(|e| McpError::internal_error(format!("Failed to open log file: {e}"), None))?;
 
     let reader = BufReader::new(file);
     let mut lines: Vec<String> = Vec::new();
@@ -104,7 +103,7 @@ fn read_log_file(
     // Read lines with optional keyword filtering
     for line_result in reader.lines() {
         let line = line_result
-            .map_err(|e| McpError::internal_error(format!("Failed to read line: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Failed to read line: {e}"), None))?;
 
         // Apply keyword filter if provided
         if keyword.is_empty() || line.to_lowercase().contains(&keyword.to_lowercase()) {
