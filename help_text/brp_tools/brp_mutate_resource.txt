@@ -16,6 +16,17 @@ Path syntax:
 - Use dots to access nested fields: "config.graphics.resolution"
 - Use brackets for array/vec indices: "items[0]"
 - Use quotes for map keys: "scores['player1']"
+- Tuple structs/variants: Use numeric indices like ".0", ".1", etc.
+- Enum variants: Access tuple variant contents with ".0", ".1" after the variant
+- Leading dot: Paths should start with a dot (e.g., ".settings.volume" not "settings.volume")
+
+Path examples for different structures:
+- Struct field: ".settings.volume"
+- Tuple struct: ".0" (first element)
+- Enum with tuple variant containing struct: ".0.0.fieldname"
+- Array element: ".items[2]"
+- Map access: ".scores['player1']"
+- Nested combination: ".0.config.graphics.resolution"
 
 Example usage:
 ```json
