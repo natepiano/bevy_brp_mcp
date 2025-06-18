@@ -52,6 +52,6 @@ pub struct BrpExecuteParams {
     pub port:   u16,
 }
 
-fn default_port() -> u16 {
+const fn default_port() -> u16 {
     DEFAULT_BRP_PORT
 }

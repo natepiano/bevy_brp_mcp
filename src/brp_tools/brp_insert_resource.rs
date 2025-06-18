@@ -4,9 +4,11 @@ use rmcp::{Error as McpError, RoleServer};
 
 use super::constants::{
     BRP_METHOD_INSERT_RESOURCE, DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_RESOURCE,
+    MATH_TYPE_FORMAT_NOTE,
 };
 use super::support::{
-    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors, handle_request,
+    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_INSERT_RESOURCE, TOOL_BRP_INSERT_RESOURCE};
@@ -22,7 +24,11 @@ pub fn register_tool() -> Tool {
                 "The fully-qualified type name of the resource to insert or update",
                 true,
             )
-            .add_any_property("value", "The resource value to insert", true)
+            .add_any_property(
+                "value",
+                &format!("The resource value to insert.{MATH_TYPE_FORMAT_NOTE}"),
+                true,
+            )
             .add_number_property(
                 JSON_FIELD_PORT,
                 &format!("The BRP port (default: {DEFAULT_BRP_PORT})"),
@@ -38,7 +44,7 @@ pub async fn handle(
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_INSERT_RESOURCE,
+        method:            Some(BRP_METHOD_INSERT_RESOURCE),
         param_extractor:   Box::new(PassthroughExtractor),
         formatter_factory: ResponseFormatterFactory::resource_operation(JSON_FIELD_RESOURCE)
             .with_template("Successfully inserted/updated resource '{resource}'")
@@ -46,5 +52,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

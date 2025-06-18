@@ -35,7 +35,7 @@ pub struct ResponseBuilder {
 }
 
 impl ResponseBuilder {
-    pub fn success() -> Self {
+    pub const fn success() -> Self {
         Self {
             status:  ResponseStatus::Success,
             message: String::new(),
@@ -43,7 +43,7 @@ impl ResponseBuilder {
         }
     }
 
-    pub fn error() -> Self {
+    pub const fn error() -> Self {
         Self {
             status:  ResponseStatus::Error,
             message: String::new(),
@@ -65,15 +65,12 @@ impl ResponseBuilder {
     pub fn add_field(mut self, key: &str, value: impl Serialize) -> Self {
         let value_json = serde_json::to_value(value).unwrap_or(Value::Null);
 
-        match &mut self.data {
-            Some(Value::Object(map)) => {
-                map.insert(key.to_string(), value_json);
-            }
-            _ => {
-                let mut map = serde_json::Map::new();
-                map.insert(key.to_string(), value_json);
-                self.data = Some(Value::Object(map));
-            }
+        if let Some(Value::Object(map)) = &mut self.data {
+            map.insert(key.to_string(), value_json);
+        } else {
+            let mut map = serde_json::Map::new();
+            map.insert(key.to_string(), value_json);
+            self.data = Some(Value::Object(map));
         }
 
         self
@@ -88,7 +85,7 @@ impl ResponseBuilder {
     }
 }
 
-/// Helper function to create a successful CallToolResult with JSON response
+/// Helper function to create a successful `CallToolResult` with JSON response
 pub fn success_json_response(
     message: impl Into<String>,
     data: impl Serialize,

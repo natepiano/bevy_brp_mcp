@@ -7,7 +7,7 @@ use super::constants::{
 };
 use super::support::{
     BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory,
-    handle_request,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REPARENT, TOOL_BRP_REPARENT};
@@ -58,7 +58,7 @@ pub async fn handle(
     };
 
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_REPARENT,
+        method:            Some(BRP_METHOD_REPARENT),
         param_extractor:   Box::new(PassthroughExtractor),
         formatter_factory: ResponseFormatterFactory::pass_through()
             .with_template("Successfully reparented entities")
@@ -69,5 +69,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

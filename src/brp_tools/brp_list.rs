@@ -7,7 +7,8 @@ use super::constants::{
     JSON_FIELD_ENTITY, JSON_FIELD_PORT,
 };
 use super::support::{
-    BrpHandlerConfig, EntityParamExtractor, ResponseFormatterFactory, extractors, handle_request,
+    BrpHandlerConfig, EntityParamExtractor, ResponseFormatterFactory, extractors,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_LIST, TOOL_BRP_LIST};
@@ -40,7 +41,7 @@ pub async fn handle(
     // Use common array_count extractor for component count
 
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_LIST,
+        method:            Some(BRP_METHOD_LIST),
         param_extractor:   Box::new(EntityParamExtractor { required: false }),
         formatter_factory: ResponseFormatterFactory::list_operation()
             .with_template("Listed components")
@@ -51,5 +52,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

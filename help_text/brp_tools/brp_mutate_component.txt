@@ -17,6 +17,16 @@ Path syntax:
 - Use dots to access nested fields: "transform.translation.x"
 - Use brackets for array/vec indices: "points[2]"
 - Complex paths are supported: "mesh.vertices[0].position.y"
+- Tuple structs/variants: Use numeric indices like ".0", ".1", etc.
+- Enum variants: Access tuple variant contents with ".0", ".1" after the variant
+- Leading dot: Paths should start with a dot (e.g., ".translation.x" not "translation.x")
+
+Path examples for different structures:
+- Struct field: ".position.x"
+- Tuple struct: ".0" (first element)
+- Enum with tuple variant containing struct: ".0.0.fieldname"
+- Array element: ".items[2]"
+- Nested combination: ".0.transform.translation.x"
 
 Example usage:
 ```json

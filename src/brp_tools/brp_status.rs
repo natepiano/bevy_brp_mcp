@@ -134,12 +134,9 @@ async fn check_brp_on_port(port: u16) -> Result<bool, McpError> {
     match response {
         Ok(Ok(resp)) => {
             // Check if we got a valid JSON-RPC response
-            if let Ok(json) = resp.json::<serde_json::Value>().await {
-                // A valid BRP response should have jsonrpc field
-                Ok(json.get("jsonrpc").is_some())
-            } else {
-                Ok(false)
-            }
+            resp.json::<serde_json::Value>()
+                .await
+                .map_or(Ok(false), |json| Ok(json.get("jsonrpc").is_some()))
         }
         _ => Ok(false),
     }

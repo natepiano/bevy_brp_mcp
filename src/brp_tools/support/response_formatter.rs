@@ -22,12 +22,19 @@ impl BrpMetadata {
     }
 }
 
+use crate::brp_tools::constants::{
+    JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA,
+    JSON_FIELD_METHOD, JSON_FIELD_PORT,
+};
+
 /// Default error formatter implementation
-pub fn format_error_default(error: BrpError, metadata: BrpMetadata) -> CallToolResult {
-    use crate::brp_tools::constants::{
-        JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA, JSON_FIELD_METHOD,
-        JSON_FIELD_PORT,
-    };
+pub fn format_error_default(mut error: BrpError, metadata: &BrpMetadata) -> CallToolResult {
+    // Enhance error messages for common format issues
+    if error.code == -23402 && error.message.contains("expected a sequence of") {
+        error.message.push_str(
+            "\nHint: Math types like Vec3 use array format [x,y,z], not objects {x:1,y:2,z:3}",
+        );
+    }
 
     let response = ResponseBuilder::error()
         .message(&error.message)
@@ -42,7 +49,7 @@ pub fn format_error_default(error: BrpError, metadata: BrpMetadata) -> CallToolR
         )
         .build();
 
-    json_response_to_result(response)
+    json_response_to_result(&response)
 }
 
 /// A configurable formatter that can handle various BRP response formatting needs
@@ -68,37 +75,54 @@ pub struct FormatterConfig {
 pub type FieldExtractor = fn(&Value, &FormatterContext) -> Value;
 
 impl ResponseFormatter {
-    pub fn new(config: FormatterConfig, context: FormatterContext) -> Self {
+    pub const fn new(config: FormatterConfig, context: FormatterContext) -> Self {
         Self { config, context }
     }
 
-    pub fn format_success(&self, data: Value, _metadata: BrpMetadata) -> CallToolResult {
+    pub fn format_success(&self, data: &Value, _metadata: BrpMetadata) -> CallToolResult {
         let mut builder = ResponseBuilder::success();
 
         // Apply success template if provided
         if let Some(template) = &self.config.success_template {
-            let message = substitute_template(template, &self.context.params);
+            let message = substitute_template(template, self.context.params.as_ref());
             builder = builder.message(message);
         }
 
         // Add configured fields
         for (field_name, extractor) in &self.config.success_fields {
-            let value = extractor(&data, &self.context);
+            let value = extractor(data, &self.context);
             builder = builder.add_field(field_name, value);
         }
 
-        json_response_to_result(builder.build())
+        // IMPORTANT: Always preserve debug_info and format_corrections from the input data
+        // These are added by the handler when format discovery makes corrections
+        if let Value::Object(data_map) = data {
+            if let Some(debug_info) = data_map.get("debug_info") {
+                if !debug_info.is_null() && (debug_info.is_array() || debug_info.is_string()) {
+                    builder = builder.add_field("debug_info", debug_info);
+                }
+            }
+            if let Some(format_corrections) = data_map.get("format_corrections") {
+                if !format_corrections.is_null() && format_corrections.is_array() {
+                    builder = builder.add_field("format_corrections", format_corrections);
+                }
+            }
+        }
+
+        json_response_to_result(&builder.build())
     }
 
-    pub fn format_error(&self, error: BrpError, metadata: BrpMetadata) -> CallToolResult {
+    pub fn format_error(&self, mut error: BrpError, metadata: &BrpMetadata) -> CallToolResult {
+        // Enhance error messages for common format issues
+        if error.code == -23402 && error.message.contains("expected a sequence of") {
+            error.message.push_str(
+                "\nHint: Math types like Vec3 use array format [x,y,z], not objects {x:1,y:2,z:3}",
+            );
+        }
+
         if self.config.use_default_error {
             format_error_default(error, metadata)
         } else {
-            use crate::brp_tools::constants::{
-                JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA,
-                JSON_FIELD_METHOD, JSON_FIELD_PORT,
-            };
-
             let mut metadata_obj = json!({
                 JSON_FIELD_METHOD: metadata.method,
                 JSON_FIELD_PORT: metadata.port,
@@ -125,7 +149,7 @@ impl ResponseFormatter {
                     .add_field(JSON_FIELD_METADATA, metadata_obj);
             }
 
-            json_response_to_result(builder.build())
+            json_response_to_result(&builder.build())
         }
     }
 }
@@ -260,7 +284,7 @@ impl ResponseFormatterBuilder {
     }
 
     /// Use default error formatting
-    pub fn with_default_error(mut self) -> Self {
+    pub const fn with_default_error(mut self) -> Self {
         self.config.use_default_error = true;
         self
     }
@@ -274,7 +298,7 @@ impl ResponseFormatterBuilder {
 }
 
 /// Substitute placeholders in a template string with values from params
-fn substitute_template(template: &str, params: &Option<Value>) -> String {
+fn substitute_template(template: &str, params: Option<&Value>) -> String {
     let mut result = template.to_string();
 
     if let Some(Value::Object(map)) = params {
@@ -297,7 +321,7 @@ fn substitute_template(template: &str, params: &Option<Value>) -> String {
 
 // Helper functions for common field extractors
 pub mod extractors {
-    use super::*;
+    use super::{FormatterContext, Value};
     use crate::brp_tools::constants::{JSON_FIELD_ENTITY, JSON_FIELD_RESOURCE};
 
     /// Extract entity ID from context params
@@ -327,7 +351,7 @@ pub mod extractors {
 
     /// Count elements in an array from the response data
     pub fn array_count(data: &Value, _context: &FormatterContext) -> Value {
-        data.as_array().map(|arr| arr.len()).unwrap_or(0).into()
+        data.as_array().map_or(0, std::vec::Vec::len).into()
     }
 
     /// Create a field extractor that gets components from params
@@ -363,13 +387,13 @@ mod tests {
             "name": "test_resource"
         }));
 
-        let result = substitute_template("Entity {entity} with name {name}", &params);
+        let result = substitute_template("Entity {entity} with name {name}", params.as_ref());
         assert_eq!(result, "Entity 123 with name test_resource");
 
-        let result = substitute_template("No substitutions", &params);
+        let result = substitute_template("No substitutions", params.as_ref());
         assert_eq!(result, "No substitutions");
 
-        let result = substitute_template("Missing {missing} placeholder", &params);
+        let result = substitute_template("Missing {missing} placeholder", params.as_ref());
         assert_eq!(result, "Missing {missing} placeholder");
     }
 
@@ -393,7 +417,7 @@ mod tests {
 
         let formatter = ResponseFormatter::new(config, context);
         let metadata = BrpMetadata::new("bevy/destroy", 15702);
-        let result = formatter.format_success(Value::Null, metadata);
+        let result = formatter.format_success(&Value::Null, metadata);
 
         // Verify result has content
         assert_eq!(result.content.len(), 1);
@@ -427,7 +451,7 @@ mod tests {
             data:    None,
         };
 
-        let result = formatter.format_error(error, metadata);
+        let result = formatter.format_error(error, &metadata);
 
         // Verify result has content
         assert_eq!(result.content.len(), 1);
@@ -453,7 +477,7 @@ mod tests {
             data:    Some(json!({"detail": "extra info"})),
         };
 
-        let result = formatter.format_error(error, metadata);
+        let result = formatter.format_error(error, &metadata);
 
         // Verify result has content
         assert_eq!(result.content.len(), 1);
@@ -475,7 +499,7 @@ mod tests {
 
         let formatter = factory.create(context);
         let metadata = BrpMetadata::new("bevy/destroy", 15702);
-        let result = formatter.format_success(Value::Null, metadata);
+        let result = formatter.format_success(&Value::Null, metadata);
 
         // Verify result has content
         assert_eq!(result.content.len(), 1);
@@ -491,7 +515,7 @@ mod tests {
         let formatter = factory.create(context);
         let metadata = BrpMetadata::new("bevy/query", 15702);
         let data = json!([{"entity": 1}, {"entity": 2}]);
-        let result = formatter.format_success(data, metadata);
+        let result = formatter.format_success(&data, metadata);
 
         // Verify result has content
         assert_eq!(result.content.len(), 1);

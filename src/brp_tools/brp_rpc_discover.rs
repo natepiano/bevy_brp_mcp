@@ -6,7 +6,7 @@ use super::constants::{
     BRP_METHOD_RPC_DISCOVER, DEFAULT_BRP_PORT, JSON_FIELD_DATA, JSON_FIELD_PORT,
 };
 use super::support::{
-    BrpHandlerConfig, ResponseFormatterFactory, SimplePortExtractor, extractors, handle_request,
+    BrpHandlerConfig, ResponseFormatterFactory, SimplePortExtractor, extractors, handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_RPC_DISCOVER, TOOL_BRP_RPC_DISCOVER};
@@ -32,7 +32,7 @@ pub async fn handle(
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_RPC_DISCOVER,
+        method:            Some(BRP_METHOD_RPC_DISCOVER),
         param_extractor:   Box::new(SimplePortExtractor),
         formatter_factory: ResponseFormatterFactory::pass_through()
             .with_template("Discovered BRP methods")
@@ -41,5 +41,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

@@ -6,7 +6,8 @@ use super::constants::{
     BRP_METHOD_REMOVE, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITY, JSON_FIELD_PORT,
 };
 use super::support::{
-    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors, handle_request,
+    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REMOVE, TOOL_BRP_REMOVE};
@@ -44,7 +45,7 @@ pub async fn handle(
     // Use common components_from_params extractor
 
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_REMOVE,
+        method:            Some(BRP_METHOD_REMOVE),
         param_extractor:   Box::new(PassthroughExtractor),
         formatter_factory: ResponseFormatterFactory::entity_operation(JSON_FIELD_ENTITY)
             .with_template("Successfully removed components from entity {entity}")
@@ -54,5 +55,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

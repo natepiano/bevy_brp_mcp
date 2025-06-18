@@ -16,7 +16,7 @@ use crate::support::response::JsonResponse;
 //     CallToolResult::success(vec![Content::text(serialize_with_fallback(value))])
 // }
 
-/// Creates a CallToolResult from a JsonResponse
-pub fn json_response_to_result(response: JsonResponse) -> CallToolResult {
+/// Creates a `CallToolResult` from a `JsonResponse`
+pub fn json_response_to_result(response: &JsonResponse) -> CallToolResult {
     CallToolResult::success(vec![Content::text(response.to_json())])
 }

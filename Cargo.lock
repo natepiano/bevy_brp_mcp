@@ -431,7 +431,7 @@ dependencies = [
  "cargo_metadata",
  "chrono",
  "futures",
- "once_cell",
+ "regex",
  "reqwest",
  "rmcp",
  "serde",

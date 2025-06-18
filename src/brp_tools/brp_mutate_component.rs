@@ -4,11 +4,11 @@ use rmcp::{Error as McpError, RoleServer};
 
 use super::constants::{
     BRP_METHOD_MUTATE_COMPONENT, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENT, JSON_FIELD_ENTITY,
-    JSON_FIELD_PATH, JSON_FIELD_PORT,
+    JSON_FIELD_PATH, JSON_FIELD_PORT, MATH_TYPE_FORMAT_NOTE,
 };
 use super::support::{
     BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory, extractors,
-    handle_request,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_MUTATE_COMPONENT, TOOL_BRP_MUTATE_COMPONENT};
@@ -34,7 +34,11 @@ pub fn register_tool() -> Tool {
                 "The path to the field within the component (e.g., 'translation.x')",
                 true,
             )
-            .add_any_property("value", "The new value for the field", true)
+            .add_any_property(
+                "value",
+                &format!("The new value for the field.{MATH_TYPE_FORMAT_NOTE}"),
+                true,
+            )
             .add_number_property(
                 JSON_FIELD_PORT,
                 &format!("The BRP port (default: {DEFAULT_BRP_PORT})"),
@@ -69,7 +73,7 @@ pub async fn handle(
     };
 
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_MUTATE_COMPONENT,
+        method:            Some(BRP_METHOD_MUTATE_COMPONENT),
         param_extractor:   Box::new(PassthroughExtractor),
         formatter_factory: ResponseFormatterFactory::entity_operation(JSON_FIELD_ENTITY)
             .with_template(
@@ -83,5 +87,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

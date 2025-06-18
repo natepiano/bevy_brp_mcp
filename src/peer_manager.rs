@@ -5,8 +5,8 @@ use tokio::sync::Mutex;
 use rmcp::{RoleServer, service::Peer};
 
 /// Global storage for the current peer connection
-static PEER_INSTANCE: once_cell::sync::Lazy<Arc<Mutex<Option<Peer<RoleServer>>>>> =
-    once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(None)));
+static PEER_INSTANCE: std::sync::LazyLock<Arc<Mutex<Option<Peer<RoleServer>>>>> =
+    std::sync::LazyLock::new(|| Arc::new(Mutex::new(None)));
 
 /// Set the global peer instance
 pub async fn set_peer(peer: Peer<RoleServer>) {
