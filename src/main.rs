@@ -54,7 +54,7 @@ impl ServerHandler for BrpMcpService {
         _request: PaginatedRequestParam,
         _context: RequestContext<RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
-        Ok(registry::register_tools().await)
+        Ok(registry::register_tools())
     }
 
     async fn call_tool(
@@ -70,7 +70,7 @@ impl ServerHandler for BrpMcpService {
         request: PaginatedRequestParam,
         context: RequestContext<RoleServer>,
     ) -> Result<ListPromptsResult, McpError> {
-        self.prompt_registry.list_prompts(request, context).await
+        self.prompt_registry.list_prompts(request, context)
     }
 
     async fn get_prompt(
@@ -78,13 +78,20 @@ impl ServerHandler for BrpMcpService {
         request: GetPromptRequestParam,
         context: RequestContext<RoleServer>,
     ) -> Result<GetPromptResult, McpError> {
-        self.prompt_registry
-            .get_prompt(&request.name, context)
-            .await
+        self.prompt_registry.get_prompt(&request.name, context)
     }
 }
 
 impl BrpMcpService {
+    /// Fetches search roots from the connected MCP client.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the MCP client cannot be contacted or if the `list_roots` call fails.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the mutex lock on roots is poisoned.
     pub async fn fetch_roots_from_client(
         &self,
         peer: rmcp::service::Peer<RoleServer>,
@@ -107,12 +114,13 @@ impl BrpMcpService {
                     .iter()
                     .filter_map(|root| {
                         // Parse the file:// URI
-                        if let Some(path) = root.uri.strip_prefix("file://") {
-                            Some(PathBuf::from(path))
-                        } else {
-                            tracing::warn!("Ignoring non-file URI: {}", root.uri);
-                            None
-                        }
+                        root.uri.strip_prefix("file://").map_or_else(
+                            || {
+                                tracing::warn!("Ignoring non-file URI: {}", root.uri);
+                                None
+                            },
+                            |path| Some(PathBuf::from(path)),
+                        )
                     })
                     .collect();
 

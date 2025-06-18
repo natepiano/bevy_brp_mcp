@@ -4,7 +4,7 @@ use rmcp::{Error as McpError, RoleServer};
 
 use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_METHOD, JSON_FIELD_PARAMS, JSON_FIELD_PORT};
 use super::support::{
-    BrpExecuteExtractor, DynamicBrpHandlerConfig, ResponseFormatterFactory, handle_dynamic,
+    BrpExecuteExtractor, BrpHandlerConfig, ResponseFormatterFactory, handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::TOOL_BRP_EXECUTE;
@@ -28,10 +28,11 @@ pub async fn handle(
     request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
-    let config = DynamicBrpHandlerConfig {
+    let config = BrpHandlerConfig {
+        method:            None, // Dynamic method
         param_extractor:   Box::new(BrpExecuteExtractor),
         formatter_factory: ResponseFormatterFactory::method_execution().build(),
     };
 
-    handle_dynamic(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

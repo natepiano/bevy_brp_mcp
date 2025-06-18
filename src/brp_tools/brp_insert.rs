@@ -4,9 +4,11 @@ use rmcp::{Error as McpError, RoleServer};
 
 use super::constants::{
     BRP_METHOD_INSERT, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITY, JSON_FIELD_PORT,
+    MATH_TYPE_FORMAT_NOTE,
 };
 use super::support::{
-    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors, handle_request,
+    BrpHandlerConfig, PassthroughExtractor, ResponseFormatterFactory, extractors,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_INSERT, TOOL_BRP_INSERT};
@@ -20,7 +22,7 @@ pub fn register_tool() -> Tool {
             .add_number_property(JSON_FIELD_ENTITY, "The entity ID to insert components into", true)
             .add_any_property(
                 JSON_FIELD_COMPONENTS,
-                "Object containing component data to insert. Keys are component types, values are component data",
+                &format!("Object containing component data to insert. Keys are component types, values are component data.{MATH_TYPE_FORMAT_NOTE}" ),
                 true
             )
             .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {DEFAULT_BRP_PORT})" ), false)
@@ -36,7 +38,7 @@ pub async fn handle(
     // Use common components_from_params extractor
 
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_INSERT,
+        method:            Some(BRP_METHOD_INSERT),
         param_extractor:   Box::new(PassthroughExtractor),
         formatter_factory: ResponseFormatterFactory::entity_operation(JSON_FIELD_ENTITY)
             .with_template("Successfully inserted components into entity {entity}")
@@ -46,5 +48,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

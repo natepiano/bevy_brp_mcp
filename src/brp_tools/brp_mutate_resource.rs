@@ -4,11 +4,11 @@ use rmcp::{Error as McpError, RoleServer};
 
 use super::constants::{
     BRP_METHOD_MUTATE_RESOURCE, DEFAULT_BRP_PORT, JSON_FIELD_PATH, JSON_FIELD_PORT,
-    JSON_FIELD_RESOURCE,
+    JSON_FIELD_RESOURCE, MATH_TYPE_FORMAT_NOTE,
 };
 use super::support::{
     BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory, extractors,
-    handle_request,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_MUTATE_RESOURCE, TOOL_BRP_MUTATE_RESOURCE};
@@ -29,7 +29,11 @@ pub fn register_tool() -> Tool {
                 "The path to the field within the resource (e.g., 'settings.volume')",
                 true,
             )
-            .add_any_property("value", "The new value for the field", true)
+            .add_any_property(
+                "value",
+                &format!("The new value for the field.{MATH_TYPE_FORMAT_NOTE}"),
+                true,
+            )
             .add_number_property(
                 JSON_FIELD_PORT,
                 &format!("The BRP port (default: {DEFAULT_BRP_PORT})"),
@@ -55,7 +59,7 @@ pub async fn handle(
     };
 
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_MUTATE_RESOURCE,
+        method:            Some(BRP_METHOD_MUTATE_RESOURCE),
         param_extractor:   Box::new(PassthroughExtractor),
         formatter_factory: ResponseFormatterFactory::resource_operation(JSON_FIELD_RESOURCE)
             .with_template("Successfully mutated field '{path}' in resource '{resource}'")
@@ -65,5 +69,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }

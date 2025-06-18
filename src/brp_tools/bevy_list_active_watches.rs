@@ -52,5 +52,5 @@ pub async fn handle(
         .add_field(JSON_FIELD_COUNT, watches_json.len())
         .build();
 
-    Ok(json_response_to_result(response))
+    Ok(json_response_to_result(&response))
 }

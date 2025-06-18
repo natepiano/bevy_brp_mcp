@@ -6,7 +6,8 @@ use super::constants::{
     BRP_METHOD_DESTROY, DEFAULT_BRP_PORT, JSON_FIELD_DESTROYED_ENTITY, JSON_FIELD_PORT,
 };
 use super::support::{
-    BrpHandlerConfig, EntityParamExtractor, ResponseFormatterFactory, extractors, handle_request,
+    BrpHandlerConfig, EntityParamExtractor, ResponseFormatterFactory, extractors,
+    handle_brp_request,
 };
 use crate::BrpMcpService;
 use crate::brp_tools::constants::JSON_FIELD_ENTITY;
@@ -34,7 +35,7 @@ pub async fn handle(
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     let config = BrpHandlerConfig {
-        method:            BRP_METHOD_DESTROY,
+        method:            Some(BRP_METHOD_DESTROY),
         param_extractor:   Box::new(EntityParamExtractor { required: true }),
         formatter_factory: ResponseFormatterFactory::entity_operation(JSON_FIELD_DESTROYED_ENTITY)
             .with_template("Successfully destroyed entity {entity}")
@@ -42,5 +43,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_request(service, request, context, &config).await
+    handle_brp_request(service, request, context, &config).await
 }
