@@ -22,7 +22,7 @@ pub fn register_tool() -> Tool {
             .add_any_property(
                 JSON_FIELD_DATA,
                 "Object specifying what component data to retrieve. Properties: components (array), option (array), has (array)",
-                false
+                true
             )
             .add_any_property(
                 "filter",
