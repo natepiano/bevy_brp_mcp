@@ -16,3 +16,11 @@ For components and resources to be accessible through BRP, they must meet ALL re
 For Resources, use Resource instead of Component in the above steps.
 
 Note: Only registered components will appear in BRP queries and listings.
+
+BRP Wire Format:
+Component serialization differs from schema representation:
+• Vec3: Use [x, y, z] not {x: 0, y: 0, z: 0}
+• Quat: Use [x, y, z, w] not {x: 0, y: 0, z: 0, w: 1}
+• Transform: {"translation": [x,y,z], "rotation": [x,y,z,w], "scale": [x,y,z]}
+• When in doubt: Use bevy_get on existing entities to see format examples
+• Error messages will guide you: "expected sequence of N values" → use array format

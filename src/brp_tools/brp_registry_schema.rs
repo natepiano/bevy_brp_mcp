@@ -1,23 +1,17 @@
 use rmcp::model::{CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
-use serde_json::{Value, json};
+use serde_json::Value;
 
 use super::constants::{
-    BRP_METHOD_REGISTRY_SCHEMA, DEFAULT_BRP_PORT, JSON_FIELD_DATA, JSON_FIELD_MESSAGE,
-    JSON_FIELD_PORT, JSON_FIELD_STATUS, RESPONSE_STATUS_SUCCESS,
+    BRP_METHOD_REGISTRY_SCHEMA, DEFAULT_BRP_PORT, JSON_FIELD_DATA, JSON_FIELD_PORT,
 };
-use super::support::generic_handler::{
-    BrpHandlerConfig, FormatterContext, FormatterFactory, ParamExtractor, handle_generic,
-};
-use super::support::response_processor::{
-    BrpError, BrpMetadata, BrpResponseFormatter, format_error_default,
-};
+use super::support::configurable_formatter::{ConfigurableFormatterFactory, extractors};
+use super::support::generic_handler::{BrpHandlerConfig, ParamExtractor, handle_generic};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REGISTRY_SCHEMA, TOOL_BRP_REGISTRY_SCHEMA};
 use crate::support::params::{extract_optional_number, extract_optional_string_array_from_request};
 use crate::support::schema;
-use crate::support::serialization::json_tool_result;
 
 pub fn register_tool() -> Tool {
     Tool {
@@ -30,7 +24,7 @@ pub fn register_tool() -> Tool {
                 false
             )
             .add_string_array_property(
-                "without_crates", 
+                "without_crates",
                 "Exclude types from these crates (e.g., [\"bevy_render\", \"bevy_pbr\"])",
                 false
             )
@@ -44,7 +38,7 @@ pub fn register_tool() -> Tool {
                 "Exclude types with these reflect traits (e.g., [\"RenderResource\"])",
                 false
             )
-            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {})", DEFAULT_BRP_PORT), false)
+            .add_number_property(JSON_FIELD_PORT, &format!("The BRP port (default: {DEFAULT_BRP_PORT})" ), false)
             .build(),
     }
 }
@@ -57,7 +51,11 @@ pub async fn handle(
     let config = BrpHandlerConfig {
         method:            BRP_METHOD_REGISTRY_SCHEMA,
         param_extractor:   Box::new(RegistrySchemaParamExtractor),
-        formatter_factory: Box::new(RegistrySchemaFormatterFactory),
+        formatter_factory: ConfigurableFormatterFactory::pass_through()
+            .with_template("Retrieved schema information")
+            .with_response_field(JSON_FIELD_DATA, extractors::pass_through_data)
+            .with_default_error()
+            .build(),
     };
 
     handle_generic(service, request, context, &config).await
@@ -66,10 +64,10 @@ pub async fn handle(
 /// Parameter extractor for registry/schema method
 ///
 /// Transforms individual filter parameters into the query structure expected by the BRP method:
-/// - with_crates: Include only types from specified crates
-/// - without_crates: Exclude types from specified crates
-/// - with_types: Include only types with specified reflect traits
-/// - without_types: Exclude types with specified reflect traits
+/// - `with_crates`: Include only types from specified crates
+/// - `without_crates`: Exclude types from specified crates
+/// - `with_types`: Include only types with specified reflect traits
+/// - `without_types`: Exclude types with specified reflect traits
 struct RegistrySchemaParamExtractor;
 
 impl ParamExtractor for RegistrySchemaParamExtractor {
@@ -80,7 +78,8 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
         use serde_json::json;
 
         let port =
-            extract_optional_number(request, JSON_FIELD_PORT, DEFAULT_BRP_PORT as u64)? as u16;
+            u16::try_from(extract_optional_number(request, JSON_FIELD_PORT, u64::from(DEFAULT_BRP_PORT))?)
+                .map_err(|_| McpError::invalid_params("Port number must be a valid u16".to_string(), None))?;
 
         // Extract the individual filter parameters
         let with_crates = extract_optional_string_array_from_request(request, "with_crates")?;
@@ -121,66 +120,5 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
         };
 
         Ok((params, port))
-    }
-}
-
-/// Factory for creating RegistrySchemaFormatter
-struct RegistrySchemaFormatterFactory;
-
-impl FormatterFactory for RegistrySchemaFormatterFactory {
-    fn create(&self, context: FormatterContext) -> Box<dyn BrpResponseFormatter> {
-        // Check if any filters were applied based on the parameters
-        let filters_applied = context.params.is_some();
-        Box::new(RegistrySchemaFormatter::new(filters_applied))
-    }
-}
-
-/// Formatter for bevy/registry/schema responses
-///
-/// Provides detailed feedback about the number of schemas returned and any applied filters
-struct RegistrySchemaFormatter {
-    filters_applied: bool,
-}
-
-impl RegistrySchemaFormatter {
-    fn new(filters_applied: bool) -> Self {
-        Self { filters_applied }
-    }
-}
-
-impl BrpResponseFormatter for RegistrySchemaFormatter {
-    fn format_success(&self, data: Value, _metadata: BrpMetadata) -> CallToolResult {
-        // Count the number of schemas returned
-        let schema_count = if data.is_object() {
-            data.as_object().unwrap().len()
-        } else if data.is_array() {
-            data.as_array().unwrap().len()
-        } else {
-            0
-        };
-
-        let message = if self.filters_applied {
-            format!(
-                "Retrieved schema information for {} filtered type(s)",
-                schema_count
-            )
-        } else {
-            format!(
-                "Retrieved schema information for {} type(s) (all registered types)",
-                schema_count
-            )
-        };
-
-        let formatted_data = json!({
-            JSON_FIELD_STATUS: RESPONSE_STATUS_SUCCESS,
-            JSON_FIELD_MESSAGE: message,
-            JSON_FIELD_DATA: data,
-        });
-
-        json_tool_result(&formatted_data)
-    }
-
-    fn format_error(&self, error: BrpError, metadata: BrpMetadata) -> CallToolResult {
-        format_error_default(error, metadata)
     }
 }

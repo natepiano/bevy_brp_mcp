@@ -58,7 +58,7 @@ pub async fn execute_brp_method(
     port: Option<u16>,
 ) -> Result<BrpResult, McpError> {
     let port = port.unwrap_or(DEFAULT_BRP_PORT);
-    let url = format!("http://localhost:{}/jsonrpc", port);
+    let url = format!("http://localhost:{port}/jsonrpc");
 
     // Build JSON-RPC request
     let mut builder = BrpJsonRpcBuilder::new(method);
@@ -78,7 +78,7 @@ pub async fn execute_brp_method(
         .await
         .map_err(|e| {
             McpError::from(rmcp::model::ErrorData::internal_error(
-                format!("Failed to send BRP request to {}: {}", url, e),
+                format!("Failed to send BRP request to {url}: {e}"),
                 None,
             ))
         })?;
@@ -101,7 +101,7 @@ pub async fn execute_brp_method(
     // Parse JSON-RPC response
     let brp_response: BrpResponse = response.json().await.map_err(|e| {
         McpError::from(rmcp::model::ErrorData::internal_error(
-            format!("Failed to parse BRP response: {}", e),
+            format!("Failed to parse BRP response: {e}"),
             None,
         ))
     })?;
