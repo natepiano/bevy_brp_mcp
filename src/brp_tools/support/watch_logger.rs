@@ -128,9 +128,8 @@ pub fn get_watch_log_path(watch_id: u32, entity_id: u64, watch_type: &str) -> Pa
         .unwrap()
         .as_secs();
 
-    let filename = format!(
-        "bevy_brp_mcp_watch_{watch_id}_{watch_type}_{entity_id}_{timestamp}.log"
-    );
+    let filename =
+        format!("bevy_brp_mcp_watch_{watch_id}_{watch_type}_{entity_id}_{timestamp}.log");
 
     std::env::temp_dir().join(filename)
 }

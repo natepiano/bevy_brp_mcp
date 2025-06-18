@@ -1,4 +1,4 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
@@ -6,10 +6,10 @@ use super::constants::{
     BRP_METHOD_QUERY, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENT_COUNT, JSON_FIELD_DATA,
     JSON_FIELD_ENTITY_COUNT, JSON_FIELD_PORT, JSON_FIELD_QUERY_PARAMS, JSON_FIELD_STRICT,
 };
-use super::support::configurable_formatter::{
-    ConfigurableFormatterFactory, FieldExtractor, extractors,
+use super::support::{
+    BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory, extractors,
+    handle_request,
 };
-use super::support::generic_handler::{BrpHandlerConfig, PassthroughExtractor, handle_generic};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_QUERY, TOOL_BRP_QUERY};
 use crate::support::schema;
@@ -41,7 +41,7 @@ pub fn register_tool() -> Tool {
 
 pub async fn handle(
     service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     // Use common array_count extractor for entity count
@@ -68,7 +68,7 @@ pub async fn handle(
     let config = BrpHandlerConfig {
         method:            BRP_METHOD_QUERY,
         param_extractor:   Box::new(PassthroughExtractor),
-        formatter_factory: ConfigurableFormatterFactory::pass_through()
+        formatter_factory: ResponseFormatterFactory::pass_through()
             .with_template("Query completed successfully")
             .with_response_field(JSON_FIELD_DATA, extractors::pass_through_data)
             .with_response_field(JSON_FIELD_ENTITY_COUNT, extractors::array_count)
@@ -78,5 +78,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_generic(service, request, context, &config).await
+    handle_request(service, request, context, &config).await
 }

@@ -8,7 +8,7 @@ use sysinfo::System;
 use tokio::time::timeout;
 
 use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_STATUS};
-use super::support::builder::BrpJsonRpcBuilder;
+use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
 use crate::constants::{PARAM_APP_NAME, PARAM_PORT, TOOL_BRP_STATUS};
 use crate::support::{params, response, schema};
@@ -34,28 +34,27 @@ pub async fn handle(
     let port = params::extract_optional_number(&request, PARAM_PORT, u64::from(DEFAULT_BRP_PORT))?;
 
     // Check the app
-    check_brp_for_app(app_name, u16::try_from(port)
-        .map_err(|_| McpError::invalid_params("Port number must be a valid u16".to_string(), None))?).await
+    check_brp_for_app(
+        app_name,
+        u16::try_from(port).map_err(|_| {
+            McpError::invalid_params("Port number must be a valid u16".to_string(), None)
+        })?,
+    )
+    .await
 }
 
-async fn check_brp_for_app(
-    app_name: &str,
-    port: u16,
-) -> Result<CallToolResult, McpError> {
+async fn check_brp_for_app(app_name: &str, port: u16) -> Result<CallToolResult, McpError> {
     // Check if a process with this name is running using sysinfo
     let mut system = System::new_all();
     system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
 
-    let running_process = system
-        .processes()
-        .values()
-        .find(|process| {
-            let process_name = process.name().to_string_lossy();
-            // Match exact name or with common variations (.exe suffix, etc.)
-            process_name == app_name 
-                || process_name == format!("{app_name}.exe")
-                || process_name.strip_suffix(".exe").unwrap_or(&process_name) == app_name
-        });
+    let running_process = system.processes().values().find(|process| {
+        let process_name = process.name().to_string_lossy();
+        // Match exact name or with common variations (.exe suffix, etc.)
+        process_name == app_name
+            || process_name == format!("{app_name}.exe")
+            || process_name.strip_suffix(".exe").unwrap_or(&process_name) == app_name
+    });
 
     // Check BRP connectivity
     let brp_responsive = check_brp_on_port(port).await?;

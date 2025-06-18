@@ -4,11 +4,11 @@ use rmcp::{Error as McpError, RoleServer};
 use serde_json::Value;
 
 use super::brp_client::execute_brp_method;
-use super::response_processor::{BrpMetadata, BrpResponseFormatter, process_brp_response};
+use super::response_formatter::{BrpMetadata, ResponseFormatterFactory};
 use crate::BrpMcpService;
 use crate::brp_tools::constants::{DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT};
-use crate::types::BrpExecuteParams;
 use crate::support::params::extract_optional_number;
+use crate::types::BrpExecuteParams;
 
 /// Configuration for a BRP handler
 pub struct BrpHandlerConfig {
@@ -17,7 +17,7 @@ pub struct BrpHandlerConfig {
     /// Function to extract and validate parameters
     pub param_extractor:   Box<dyn ParamExtractor>,
     /// Function to create the appropriate formatter
-    pub formatter_factory: Box<dyn FormatterFactory>,
+    pub formatter_factory: ResponseFormatterFactory,
 }
 
 /// Configuration for a dynamic BRP handler (like `brp_execute`)
@@ -25,7 +25,7 @@ pub struct DynamicBrpHandlerConfig {
     /// Function to extract method, parameters and port
     pub param_extractor:   Box<dyn DynamicParamExtractor>,
     /// Function to create the appropriate formatter
-    pub formatter_factory: Box<dyn FormatterFactory>,
+    pub formatter_factory: ResponseFormatterFactory,
 }
 
 /// Trait for extracting parameters from a request
@@ -46,12 +46,6 @@ pub trait DynamicParamExtractor: Send + Sync {
     ) -> Result<(String, Option<Value>, u16), McpError>;
 }
 
-/// Trait for creating response formatters
-pub trait FormatterFactory: Send + Sync {
-    /// Create a formatter with the given context
-    fn create(&self, context: FormatterContext) -> Box<dyn BrpResponseFormatter>;
-}
-
 /// Context passed to formatter factory
 #[derive(Debug, Clone)]
 pub struct FormatterContext {
@@ -59,12 +53,14 @@ pub struct FormatterContext {
 }
 
 /// Generic handler for BRP methods
-pub async fn handle_generic(
+pub async fn handle_request(
     _service: &BrpMcpService,
     request: rmcp::model::CallToolRequestParam,
     _context: RequestContext<RoleServer>,
     config: &BrpHandlerConfig,
 ) -> Result<CallToolResult, McpError> {
+    use super::brp_client::BrpResult;
+
     // Extract parameters using the configured extractor
     let (params, port) = config.param_extractor.extract(&request)?;
 
@@ -78,8 +74,22 @@ pub async fn handle_generic(
     let formatter = config.formatter_factory.create(formatter_context);
     let metadata = BrpMetadata::new(config.method, port);
 
-    // Process response using the new BrpResult directly
-    process_brp_response(brp_result, formatter, metadata)
+    // Process response using ResponseFormatter directly
+    match brp_result {
+        BrpResult::Success(data) => {
+            let response_data = data.unwrap_or(Value::Null);
+            Ok(formatter.format_success(response_data, metadata))
+        }
+        BrpResult::Error(error_info) => {
+            use super::brp_client::BrpError;
+            let error = BrpError {
+                code:    error_info.code,
+                message: error_info.message,
+                data:    error_info.data,
+            };
+            Ok(formatter.format_error(error, metadata))
+        }
+    }
 }
 
 /// Generic handler for dynamic BRP methods (like `brp_execute`)
@@ -89,6 +99,8 @@ pub async fn handle_dynamic(
     _context: RequestContext<RoleServer>,
     config: &DynamicBrpHandlerConfig,
 ) -> Result<CallToolResult, McpError> {
+    use super::brp_client::BrpResult;
+
     // Extract method, parameters and port using the configured extractor
     let (method, params, port) = config.param_extractor.extract(&request)?;
 
@@ -102,8 +114,22 @@ pub async fn handle_dynamic(
     let formatter = config.formatter_factory.create(formatter_context);
     let metadata = BrpMetadata::new("brp_execute", port); // Use brp_execute for special error formatting
 
-    // Process response using the new BrpResult directly
-    process_brp_response(brp_result, formatter, metadata)
+    // Process response using ResponseFormatter directly
+    match brp_result {
+        BrpResult::Success(data) => {
+            let response_data = data.unwrap_or(Value::Null);
+            Ok(formatter.format_success(response_data, metadata))
+        }
+        BrpResult::Error(error_info) => {
+            use super::brp_client::BrpError;
+            let error = BrpError {
+                code:    error_info.code,
+                message: error_info.message,
+                data:    error_info.data,
+            };
+            Ok(formatter.format_error(error, metadata))
+        }
+    }
 }
 
 /// Simple parameter extractor that just extracts port
@@ -114,9 +140,14 @@ impl ParamExtractor for SimplePortExtractor {
         &self,
         request: &rmcp::model::CallToolRequestParam,
     ) -> Result<(Option<Value>, u16), McpError> {
-        let port =
-            u16::try_from(extract_optional_number(request, JSON_FIELD_PORT, u64::from(DEFAULT_BRP_PORT))?)
-                .map_err(|_| McpError::invalid_params("Port number must be a valid u16".to_string(), None))?;
+        let port = u16::try_from(extract_optional_number(
+            request,
+            JSON_FIELD_PORT,
+            u64::from(DEFAULT_BRP_PORT),
+        )?)
+        .map_err(|_| {
+            McpError::invalid_params("Port number must be a valid u16".to_string(), None)
+        })?;
         Ok((None, port))
     }
 }

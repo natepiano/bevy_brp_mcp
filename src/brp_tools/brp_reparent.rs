@@ -5,8 +5,10 @@ use rmcp::{Error as McpError, RoleServer};
 use super::constants::{
     BRP_METHOD_REPARENT, DEFAULT_BRP_PORT, JSON_FIELD_ENTITIES, JSON_FIELD_PARENT, JSON_FIELD_PORT,
 };
-use super::support::configurable_formatter::{ConfigurableFormatterFactory, FieldExtractor};
-use super::support::generic_handler::{BrpHandlerConfig, PassthroughExtractor, handle_generic};
+use super::support::{
+    BrpHandlerConfig, FieldExtractor, PassthroughExtractor, ResponseFormatterFactory,
+    handle_request,
+};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_REPARENT, TOOL_BRP_REPARENT};
 use crate::support::schema;
@@ -58,7 +60,7 @@ pub async fn handle(
     let config = BrpHandlerConfig {
         method:            BRP_METHOD_REPARENT,
         param_extractor:   Box::new(PassthroughExtractor),
-        formatter_factory: ConfigurableFormatterFactory::pass_through()
+        formatter_factory: ResponseFormatterFactory::pass_through()
             .with_template("Successfully reparented entities")
             .with_response_field(JSON_FIELD_ENTITIES, entities_extractor)
             .with_response_field(JSON_FIELD_PARENT, parent_extractor)
@@ -67,5 +69,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_generic(service, request, context, &config).await
+    handle_request(service, request, context, &config).await
 }

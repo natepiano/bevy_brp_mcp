@@ -1,4 +1,4 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
@@ -6,8 +6,9 @@ use super::constants::{
     BRP_METHOD_LIST, DEFAULT_BRP_PORT, JSON_FIELD_COMPONENT_COUNT, JSON_FIELD_DATA,
     JSON_FIELD_ENTITY, JSON_FIELD_PORT,
 };
-use super::support::configurable_formatter::{ConfigurableFormatterFactory, extractors};
-use super::support::generic_handler::{BrpHandlerConfig, EntityParamExtractor, handle_generic};
+use super::support::{
+    BrpHandlerConfig, EntityParamExtractor, ResponseFormatterFactory, extractors, handle_request,
+};
 use crate::BrpMcpService;
 use crate::constants::{DESC_BRP_LIST, TOOL_BRP_LIST};
 use crate::support::schema;
@@ -33,7 +34,7 @@ pub fn register_tool() -> Tool {
 
 pub async fn handle(
     service: &BrpMcpService,
-    request: rmcp::model::CallToolRequestParam,
+    request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
     // Use common array_count extractor for component count
@@ -41,7 +42,7 @@ pub async fn handle(
     let config = BrpHandlerConfig {
         method:            BRP_METHOD_LIST,
         param_extractor:   Box::new(EntityParamExtractor { required: false }),
-        formatter_factory: ConfigurableFormatterFactory::list_operation()
+        formatter_factory: ResponseFormatterFactory::list_operation()
             .with_template("Listed components")
             .with_response_field(JSON_FIELD_DATA, extractors::pass_through_data)
             .with_response_field(JSON_FIELD_COMPONENT_COUNT, extractors::array_count)
@@ -50,5 +51,5 @@ pub async fn handle(
             .build(),
     };
 
-    handle_generic(service, request, context, &config).await
+    handle_request(service, request, context, &config).await
 }

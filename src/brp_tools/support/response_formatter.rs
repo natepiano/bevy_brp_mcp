@@ -1,15 +1,52 @@
 use rmcp::model::CallToolResult;
 use serde_json::{Value, json};
 
-use super::generic_handler::{FormatterContext, FormatterFactory};
-use super::response_processor::{
-    BrpError, BrpMetadata, BrpResponseFormatter, format_error_default,
-};
+use super::brp_client::BrpError;
+use super::request_handler::FormatterContext;
 use crate::support::response::ResponseBuilder;
 use crate::support::serialization::json_response_to_result;
 
+/// Metadata about a BRP request for response formatting
+#[derive(Debug, Clone)]
+pub struct BrpMetadata {
+    pub method: String,
+    pub port:   u16,
+}
+
+impl BrpMetadata {
+    pub fn new(method: &str, port: u16) -> Self {
+        Self {
+            method: method.to_string(),
+            port,
+        }
+    }
+}
+
+/// Default error formatter implementation
+pub fn format_error_default(error: BrpError, metadata: BrpMetadata) -> CallToolResult {
+    use crate::brp_tools::constants::{
+        JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA, JSON_FIELD_METHOD,
+        JSON_FIELD_PORT,
+    };
+
+    let response = ResponseBuilder::error()
+        .message(&error.message)
+        .add_field(JSON_FIELD_ERROR_CODE, error.code)
+        .add_field(JSON_FIELD_DATA, error.data)
+        .add_field(
+            JSON_FIELD_METADATA,
+            json!({
+                JSON_FIELD_METHOD: metadata.method,
+                JSON_FIELD_PORT: metadata.port
+            }),
+        )
+        .build();
+
+    json_response_to_result(response)
+}
+
 /// A configurable formatter that can handle various BRP response formatting needs
-pub struct ConfigurableFormatter {
+pub struct ResponseFormatter {
     config:  FormatterConfig,
     context: FormatterContext,
 }
@@ -30,14 +67,12 @@ pub struct FormatterConfig {
 /// Function type for extracting field values from context
 pub type FieldExtractor = fn(&Value, &FormatterContext) -> Value;
 
-impl ConfigurableFormatter {
+impl ResponseFormatter {
     pub fn new(config: FormatterConfig, context: FormatterContext) -> Self {
         Self { config, context }
     }
-}
 
-impl BrpResponseFormatter for ConfigurableFormatter {
-    fn format_success(&self, data: Value, _metadata: BrpMetadata) -> CallToolResult {
+    pub fn format_success(&self, data: Value, _metadata: BrpMetadata) -> CallToolResult {
         let mut builder = ResponseBuilder::success();
 
         // Apply success template if provided
@@ -55,12 +90,12 @@ impl BrpResponseFormatter for ConfigurableFormatter {
         json_response_to_result(builder.build())
     }
 
-    fn format_error(&self, error: BrpError, metadata: BrpMetadata) -> CallToolResult {
+    pub fn format_error(&self, error: BrpError, metadata: BrpMetadata) -> CallToolResult {
         if self.config.use_default_error {
             format_error_default(error, metadata)
         } else {
             use crate::brp_tools::constants::{
-                JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA, 
+                JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA,
                 JSON_FIELD_METHOD, JSON_FIELD_PORT,
             };
 
@@ -77,8 +112,7 @@ impl BrpResponseFormatter for ConfigurableFormatter {
                 }
             }
 
-            let mut builder = ResponseBuilder::error()
-                .message(&error.message);
+            let mut builder = ResponseBuilder::error().message(&error.message);
 
             // Handle special BRP execution error format
             if metadata.method == "brp_execute" {
@@ -97,16 +131,16 @@ impl BrpResponseFormatter for ConfigurableFormatter {
 }
 
 /// Factory for creating configurable formatters
-pub struct ConfigurableFormatterFactory {
+pub struct ResponseFormatterFactory {
     config: FormatterConfig,
 }
 
-impl ConfigurableFormatterFactory {
+impl ResponseFormatterFactory {
     /// Create a formatter for simple entity operations (destroy, etc.)
-    pub fn entity_operation(_entity_field: &str) -> ConfigurableFormatterBuilder {
+    pub fn entity_operation(_entity_field: &str) -> ResponseFormatterBuilder {
         use crate::brp_tools::constants::JSON_FIELD_ENTITY;
 
-        ConfigurableFormatterBuilder {
+        ResponseFormatterBuilder {
             config: FormatterConfig {
                 success_template:      None,
                 success_fields:        vec![],
@@ -120,10 +154,10 @@ impl ConfigurableFormatterFactory {
     }
 
     /// Create a formatter for resource operations
-    pub fn resource_operation(_resource_field: &str) -> ConfigurableFormatterBuilder {
+    pub fn resource_operation(_resource_field: &str) -> ResponseFormatterBuilder {
         use crate::brp_tools::constants::JSON_FIELD_RESOURCE;
 
-        ConfigurableFormatterBuilder {
+        ResponseFormatterBuilder {
             config: FormatterConfig {
                 success_template:      None,
                 success_fields:        vec![],
@@ -137,10 +171,10 @@ impl ConfigurableFormatterFactory {
     }
 
     /// Create a formatter that passes through the response data
-    pub fn pass_through() -> ConfigurableFormatterBuilder {
+    pub fn pass_through() -> ResponseFormatterBuilder {
         use crate::brp_tools::constants::JSON_FIELD_DATA;
 
-        ConfigurableFormatterBuilder {
+        ResponseFormatterBuilder {
             config: FormatterConfig {
                 success_template:      Some("Operation completed successfully".to_string()),
                 success_fields:        vec![(
@@ -154,12 +188,14 @@ impl ConfigurableFormatterFactory {
     }
 
     /// Create a formatter for generic method execution
-    pub fn method_execution() -> ConfigurableFormatterBuilder {
+    pub fn method_execution() -> ResponseFormatterBuilder {
         use crate::brp_tools::constants::JSON_FIELD_DATA;
 
-        ConfigurableFormatterBuilder {
+        ResponseFormatterBuilder {
             config: FormatterConfig {
-                success_template:      Some("Successfully executed BRP method: {method}".to_string()),
+                success_template:      Some(
+                    "Successfully executed BRP method: {method}".to_string(),
+                ),
                 success_fields:        vec![(
                     JSON_FIELD_DATA.to_string(),
                     extractors::conditional_data,
@@ -171,8 +207,8 @@ impl ConfigurableFormatterFactory {
     }
 
     /// Create a formatter for list operations
-    pub fn list_operation() -> ConfigurableFormatterBuilder {
-        ConfigurableFormatterBuilder {
+    pub fn list_operation() -> ResponseFormatterBuilder {
+        ResponseFormatterBuilder {
             config: FormatterConfig {
                 success_template:      None,
                 success_fields:        vec![],
@@ -183,18 +219,18 @@ impl ConfigurableFormatterFactory {
     }
 }
 
-impl FormatterFactory for ConfigurableFormatterFactory {
-    fn create(&self, context: FormatterContext) -> Box<dyn BrpResponseFormatter> {
-        Box::new(ConfigurableFormatter::new(self.config.clone(), context))
+impl ResponseFormatterFactory {
+    pub fn create(&self, context: FormatterContext) -> ResponseFormatter {
+        ResponseFormatter::new(self.config.clone(), context)
     }
 }
 
 /// Builder for configuring formatters
-pub struct ConfigurableFormatterBuilder {
+pub struct ResponseFormatterBuilder {
     config: FormatterConfig,
 }
 
-impl ConfigurableFormatterBuilder {
+impl ResponseFormatterBuilder {
     /// Set the success message template
     pub fn with_template(mut self, template: impl Into<String>) -> Self {
         self.config.success_template = Some(template.into());
@@ -230,10 +266,10 @@ impl ConfigurableFormatterBuilder {
     }
 
     /// Build the formatter factory
-    pub fn build(self) -> Box<dyn FormatterFactory> {
-        Box::new(ConfigurableFormatterFactory {
+    pub fn build(self) -> ResponseFormatterFactory {
+        ResponseFormatterFactory {
             config: self.config,
-        })
+        }
     }
 }
 
@@ -355,7 +391,7 @@ mod tests {
             params: Some(json!({ "entity": 123 })),
         };
 
-        let formatter = ConfigurableFormatter::new(config, context);
+        let formatter = ResponseFormatter::new(config, context);
         let metadata = BrpMetadata::new("bevy/destroy", 15702);
         let result = formatter.format_success(Value::Null, metadata);
 
@@ -383,7 +419,7 @@ mod tests {
             params: Some(json!({ "entity": 456 })),
         };
 
-        let formatter = ConfigurableFormatter::new(config, context);
+        let formatter = ResponseFormatter::new(config, context);
         let metadata = BrpMetadata::new("bevy/destroy", 15702);
         let error = BrpError {
             code:    -32603,
@@ -409,7 +445,7 @@ mod tests {
 
         let context = FormatterContext { params: None };
 
-        let formatter = ConfigurableFormatter::new(config, context);
+        let formatter = ResponseFormatter::new(config, context);
         let metadata = BrpMetadata::new("bevy/test", 15702);
         let error = BrpError {
             code:    -32603,
@@ -428,7 +464,7 @@ mod tests {
     fn test_entity_operation_builder() {
         use crate::brp_tools::constants::JSON_FIELD_DESTROYED_ENTITY;
 
-        let factory = ConfigurableFormatterFactory::entity_operation(JSON_FIELD_DESTROYED_ENTITY)
+        let factory = ResponseFormatterFactory::entity_operation(JSON_FIELD_DESTROYED_ENTITY)
             .with_template("Successfully destroyed entity {entity}")
             .with_response_field(JSON_FIELD_DESTROYED_ENTITY, extractors::entity_from_params)
             .build();
@@ -448,7 +484,7 @@ mod tests {
 
     #[test]
     fn test_pass_through_builder() {
-        let factory = ConfigurableFormatterFactory::pass_through().build();
+        let factory = ResponseFormatterFactory::pass_through().build();
 
         let context = FormatterContext { params: None };
 
