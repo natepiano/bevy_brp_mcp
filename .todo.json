@@ -1,0 +1,142 @@
+[
+  {
+    "id": "meta-todo",
+    "content": "Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "remove-string-to-object-enum",
+    "content": "Remove TransformationType::StringToObject from the enum definition",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "remove-string-to-object-enum-build",
+    "content": "Build and fix any compile errors and warnings after removing StringToObject from enum",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "remove-string-to-object-apply",
+    "content": "Remove the StringToObject case from apply_transformation() function",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "remove-string-to-object-apply-build",
+    "content": "Build and fix any compile errors and warnings after removing StringToObject from apply_transformation",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "remove-string-to-object-get-transformations",
+    "content": "Remove StringToObject from get_possible_transformations() for String values",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "remove-string-to-object-get-transformations-build",
+    "content": "Build and fix any compile errors and warnings after removing StringToObject from get_possible_transformations",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "remove-string-to-object-hint",
+    "content": "Remove the StringToObject case from hint generation in try_component_format_alternatives_legacy()",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "remove-string-to-object-hint-build",
+    "content": "Build and fix any compile errors and warnings after removing StringToObject hint generation",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "improve-error-message",
+    "content": "Update the diagnostic message in analyze_schema_for_type() to clarify that both #[derive(Serialize, Deserialize)] AND #[reflect(Serialize, Deserialize)] are needed",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "improve-error-message-build",
+    "content": "Build and fix any compile errors and warnings after updating error message",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "improve-error-propagation",
+    "content": "Modify tiered_type_format_discovery() to better handle and propagate serialization diagnostic errors",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "improve-error-propagation-build",
+    "content": "Build and fix any compile errors and warnings after improving error propagation",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "run-clippy",
+    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "fix-clippy-issues",
+    "content": "Fix any issues reported by clippy",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "run-format",
+    "content": "Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "run-tests",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-test-issues",
+    "content": "If there are test issues, STOP and review them with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "code-review-task",
+    "content": "Task a new subagent to do a code review of the changes focusing on identifying duplication and complexity (read and analyze only, no modifications)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-suggestions",
+    "content": "When code review subagent returns, STOP and review the suggested changes with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
