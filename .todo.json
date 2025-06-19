@@ -1,70 +1,35 @@
 [
   {
     "id": "1",
-    "content": "Rename constants and generalize error detection (COMPONENT_ERROR_CODE -> TYPE_FORMAT_ERROR_CODE, etc)",
+    "content": "Add section comments to tiered_type_format_discovery function for clarity",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "2",
-    "content": "Add resource methods to FORMAT_DISCOVERY_METHODS constant",
+    "content": "Create minimal string helper functions for most duplicated patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "3",
-    "content": "Create ParameterLocation enum and get_parameter_location function",
+    "content": "Update existing string formatting to use new helper functions",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "4",
-    "content": "Create extract_type_items function to handle all parameter locations",
+    "content": "Add simple tuple path fix for LinearRgba case",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "5",
-    "content": "Create apply_corrections function to reconstruct params",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "6",
-    "content": "Replace attempt_components_format_discovery and attempt_value_format_discovery with unified attempt_format_discovery",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "7",
-    "content": "Update ErrorPattern enum to include TupleStructAccess",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "8",
-    "content": "Implement fix_tuple_struct_path for handling tuple struct access errors",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "9",
-    "content": "Update debug messages and documentation to use 'type' instead of 'component'",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "10",
-    "content": "Update analyze_error_pattern to detect tuple struct errors",
+    "content": "Integrate tuple path fix into analyze_error_pattern",
     "status": "pending",
     "priority": "high",
     "notes": ""
