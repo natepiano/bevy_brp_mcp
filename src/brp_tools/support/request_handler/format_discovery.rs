@@ -1,8 +1,8 @@
-//! Auto-format discovery for BRP component serialization
+//! Auto-format discovery for BRP type serialization
 //!
-//! This module provides error-driven component format auto-discovery that intercepts
-//! BRP responses and automatically detects and corrects component serialization format
-//! errors with zero boilerplate in individual tools.
+//! This module provides error-driven type format auto-discovery that intercepts
+//! BRP responses and automatically detects and corrects type serialization format
+//! errors with zero boilerplate in individual tools. Works with both components and resources.
 
 use std::sync::OnceLock;
 
@@ -12,12 +12,12 @@ use serde_json::{Map, Value};
 
 use super::super::brp_client::{BrpError, BrpResult, execute_brp_method};
 use crate::brp_tools::constants::{
-    BRP_METHOD_DESTROY, BRP_METHOD_INSERT, BRP_METHOD_MUTATE_COMPONENT, BRP_METHOD_REGISTRY_SCHEMA,
-    BRP_METHOD_SPAWN,
+    BRP_METHOD_DESTROY, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_MUTATE_COMPONENT,
+    BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_REGISTRY_SCHEMA, BRP_METHOD_SPAWN,
 };
 
-/// Error code for component format errors from BRP
-const COMPONENT_ERROR_CODE: i32 = -23402;
+/// Error code for type format errors from BRP (components and resources)
+const TYPE_FORMAT_ERROR_CODE: i32 = -23402;
 
 /// Tier constants for format discovery
 const TIER_DETERMINISTIC: u8 = 1;
@@ -39,6 +39,19 @@ pub enum ErrorPattern {
     MathTypeArray { math_type: String },
     /// Enum serialization issue - unknown component type
     UnknownComponentType { component_type: String },
+    /// Tuple struct access error (e.g., "found a tuple struct instead")
+    TupleStructAccess { field_path: String },
+}
+
+/// Location of type items in method parameters
+#[derive(Debug, Clone, Copy)]
+enum ParameterLocation {
+    /// Type items are in a "components" object (spawn, insert)
+    Components,
+    /// Single type value in "value" field (`mutate_component`)
+    ComponentValue,
+    /// Single type value in "value" field (`insert_resource`, `mutate_resource`)
+    ResourceValue,
 }
 
 /// Result of error pattern analysis
@@ -63,17 +76,122 @@ pub struct TierInfo {
     pub success:   bool,
 }
 
-/// Methods that support component format discovery
-const COMPONENT_METHODS: &[&str] = &[
+/// Methods that support format discovery (components and resources)
+const FORMAT_DISCOVERY_METHODS: &[&str] = &[
     BRP_METHOD_SPAWN,
     BRP_METHOD_INSERT,
     BRP_METHOD_MUTATE_COMPONENT,
+    BRP_METHOD_INSERT_RESOURCE,
+    BRP_METHOD_MUTATE_RESOURCE,
 ];
 
-/// Format correction information for a component
+/// Helper function to format type mismatch error messages
+fn type_format_error(type_name: &str, expected: &str, found: &str) -> String {
+    format!("`{type_name}` expects {expected} format, not {found}")
+}
+
+/// Helper function to format array expectation messages
+fn type_expects_array(type_name: &str, array_type: &str) -> String {
+    format!("`{type_name}` {array_type} expects array format")
+}
+
+/// Helper function to fix enum tuple variant paths for `LinearRgba`
+fn fix_enum_tuple_path(path: &str) -> String {
+    match path {
+        ".LinearRgba.red" | ".LinearRgba.r" => ".0.0".to_string(),
+        ".LinearRgba.green" | ".LinearRgba.g" => ".0.1".to_string(),
+        ".LinearRgba.blue" | ".LinearRgba.b" => ".0.2".to_string(),
+        ".LinearRgba.alpha" | ".LinearRgba.a" => ".0.3".to_string(),
+        _ => path.to_string(),
+    }
+}
+
+/// Get the parameter location for a given method
+fn get_parameter_location(method: &str) -> ParameterLocation {
+    match method {
+        BRP_METHOD_MUTATE_COMPONENT => ParameterLocation::ComponentValue,
+        BRP_METHOD_INSERT_RESOURCE | BRP_METHOD_MUTATE_RESOURCE => ParameterLocation::ResourceValue,
+        _ => ParameterLocation::Components, // Default: spawn, insert, and others
+    }
+}
+
+/// Extract type items based on parameter location
+fn extract_type_items(params: &Value, location: ParameterLocation) -> Vec<(String, Value)> {
+    match location {
+        ParameterLocation::Components => {
+            // Extract from "components" object
+            if let Some(Value::Object(components)) = params.get("components") {
+                components
+                    .iter()
+                    .map(|(name, value)| (name.clone(), value.clone()))
+                    .collect()
+            } else {
+                Vec::new()
+            }
+        }
+        ParameterLocation::ComponentValue => {
+            // Extract single component from "component" and "value" fields
+            if let (Some(component_name), Some(value)) = (
+                params.get("component").and_then(Value::as_str),
+                params.get("value"),
+            ) {
+                vec![(component_name.to_string(), value.clone())]
+            } else {
+                Vec::new()
+            }
+        }
+        ParameterLocation::ResourceValue => {
+            // Extract single resource from "resource" and "value" fields
+            if let (Some(resource_name), Some(value)) = (
+                params.get("resource").and_then(Value::as_str),
+                params.get("value"),
+            ) {
+                vec![(resource_name.to_string(), value.clone())]
+            } else {
+                Vec::new()
+            }
+        }
+    }
+}
+
+/// Apply corrections to reconstruct params based on parameter location
+fn apply_corrections(
+    params: &Value,
+    location: ParameterLocation,
+    corrected_items: &[(String, Value)],
+) -> Value {
+    let mut corrected_params = params.clone();
+
+    match location {
+        ParameterLocation::Components => {
+            // Rebuild "components" object
+            let mut components_map = Map::new();
+            for (name, value) in corrected_items {
+                components_map.insert(name.clone(), value.clone());
+            }
+            corrected_params["components"] = Value::Object(components_map);
+        }
+        ParameterLocation::ComponentValue => {
+            // Update "value" field for component mutations
+            if let Some((_, value)) = corrected_items.first() {
+                corrected_params["value"] = value.clone();
+            }
+        }
+        ParameterLocation::ResourceValue => {
+            // Update "value" field for resource operations
+            if let Some((_, value)) = corrected_items.first() {
+                corrected_params["value"] = value.clone();
+            }
+        }
+    }
+
+    corrected_params
+}
+
+/// Format correction information for a type (component or resource)
 #[derive(Debug, Clone)]
 pub struct FormatCorrection {
-    pub component:        String,
+    pub component:        String, // Keep field name for API compatibility
     pub original_format:  Value,
     pub corrected_format: Value,
     pub hint:             String,
@@ -110,12 +228,13 @@ pub async fn execute_brp_method_with_format_discovery(
     debug_info.push(format!(
         "Format Discovery: Initial result: {initial_result:?}"
     ));
-    
+
     // Log the successful response details
     if let BrpResult::Success(ref data) = initial_result {
         debug_info.push(format!(
             "Format Discovery: SUCCESS RESPONSE DATA: {}",
-            serde_json::to_string_pretty(data).unwrap_or_else(|_| "<serialization error>".to_string())
+            serde_json::to_string_pretty(data)
+                .unwrap_or_else(|_| "<serialization error>".to_string())
         ));
     }
 
@@ -126,14 +245,15 @@ pub async fn execute_brp_method_with_format_discovery(
             error.code
         ));
 
-        if COMPONENT_METHODS.contains(&method) {
+        if FORMAT_DISCOVERY_METHODS.contains(&method) {
             debug_info.push(format!(
-                "Format Discovery: Method '{method}' is in COMPONENT_METHODS"
+                "Format Discovery: Method '{method}' is in FORMAT_DISCOVERY_METHODS"
             ));
 
-            if is_component_format_error(error) {
+            if is_type_format_error(error) {
                 debug_info.push(
-                    "Format Discovery: Error is component format error, attempting discovery".to_string()
+                    "Format Discovery: Error is type format error, attempting discovery"
+                        .to_string(),
                 );
 
                 if let Some(params) = params.as_ref() {
@@ -145,19 +265,18 @@ pub async fn execute_brp_method_with_format_discovery(
                 debug_info.push("Format Discovery: No params available for discovery".to_string());
             } else {
                 debug_info.push(format!(
-                    "Format Discovery: Error is NOT a component format error (code: {})",
+                    "Format Discovery: Error is NOT a type format error (code: {})",
                     error.code
                 ));
             }
         } else {
             debug_info.push(format!(
-                "Format Discovery: Method '{method}' is NOT in COMPONENT_METHODS"
+                "Format Discovery: Method '{method}' is NOT in FORMAT_DISCOVERY_METHODS"
             ));
         }
     } else {
-        debug_info.push(
-            "Format Discovery: Initial request succeeded, no discovery needed".to_string()
-        );
+        debug_info
+            .push("Format Discovery: Initial request succeeded, no discovery needed".to_string());
     }
 
     // Return original result if no format discovery needed/possible
@@ -172,9 +291,9 @@ pub async fn execute_brp_method_with_format_discovery(
     })
 }
 
-/// Detect if an error is a component format error that can be fixed
-pub const fn is_component_format_error(error: &BrpError) -> bool {
-    error.code == COMPONENT_ERROR_CODE
+/// Detect if an error is a type format error that can be fixed
+pub const fn is_type_format_error(error: &BrpError) -> bool {
+    error.code == TYPE_FORMAT_ERROR_CODE
 }
 
 /// Analyze error message to identify known patterns
@@ -245,6 +364,29 @@ pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
         };
     }
 
+    // Pattern 5: Tuple struct access errors
+    if message.contains("found a tuple struct instead")
+        || message.contains("tuple struct")
+        || (message.contains("expected") && message.contains("found tuple"))
+    {
+        // Try to extract the field path from the error message
+        let field_path = if message.contains("at path") {
+            message
+                .split("at path")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .unwrap_or(".0")
+                .to_string()
+        } else {
+            ".0".to_string() // Default to first element
+        };
+
+        return ErrorAnalysis {
+            pattern:    Some(ErrorPattern::TupleStructAccess { field_path }),
+            confidence: 0.85,
+        };
+    }
+
     // No pattern matched
     ErrorAnalysis {
         pattern:    None,
@@ -252,46 +394,44 @@ pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
     }
 }
 
-/// Check if a component supports serialization by querying the registry schema
-pub async fn check_component_serialization(
-    component_type: &str,
+/// Check if a type supports serialization by querying the registry schema
+pub async fn check_type_serialization(
+    type_name: &str,
     port: Option<u16>,
 ) -> Result<SerializationCheck, McpError> {
-    // Query the registry schema for this specific component type
+    // Query the registry schema for this specific type
     let schema_params = serde_json::json!({
-        "with_types": ["Component"],
-        "with_crates": [extract_crate_name(component_type)]
+        "with_types": ["Component", "Resource"],
+        "with_crates": [extract_crate_name(type_name)]
     });
 
     let schema_result =
         execute_brp_method(BRP_METHOD_REGISTRY_SCHEMA, Some(schema_params), port).await?;
 
     match schema_result {
-        BrpResult::Success(Some(schema_data)) => {
-            analyze_schema_for_component(component_type, &schema_data)
-        }
+        BrpResult::Success(Some(schema_data)) => analyze_schema_for_type(type_name, &schema_data),
         BrpResult::Success(None) => Ok(SerializationCheck {
-            diagnostic_message: format!("No schema data returned for component `{component_type}`"),
+            diagnostic_message: format!("No schema data returned for type `{type_name}`"),
         }),
         BrpResult::Error(err) => Ok(SerializationCheck {
             diagnostic_message: format!(
-                "Failed to query schema for component `{component_type}`: {}",
+                "Failed to query schema for type `{type_name}`: {}",
                 err.message
             ),
         }),
     }
 }
 
-/// Extract crate name from a fully-qualified component type
-fn extract_crate_name(component_type: &str) -> &str {
+/// Extract crate name from a fully-qualified type name
+fn extract_crate_name(type_name: &str) -> &str {
     // Extract the first part before :: for crate name
     // e.g., "bevy_transform::components::transform::Transform" -> "bevy_transform"
-    component_type.split("::").next().unwrap_or(component_type)
+    type_name.split("::").next().unwrap_or(type_name)
 }
 
-/// Analyze schema data to determine serialization support for a component
-fn analyze_schema_for_component(
-    component_type: &str,
+/// Analyze schema data to determine serialization support for a type
+fn analyze_schema_for_type(
+    type_name: &str,
     schema_data: &Value,
 ) -> Result<SerializationCheck, McpError> {
     // Schema response should be an array of type definitions
@@ -302,10 +442,10 @@ fn analyze_schema_for_component(
         ))
     })?;
 
-    // Look for our specific component type
+    // Look for our specific type
     for schema in schemas {
         if let Some(type_path) = schema.get("typePath").and_then(Value::as_str) {
-            if type_path == component_type {
+            if type_path == type_name {
                 // Found our component, check its reflect types
                 let reflect_types = schema
                     .get("reflectTypes")
@@ -331,13 +471,13 @@ fn analyze_schema_for_component(
                     };
 
                     format!(
-                        "Component `{component_type}` is missing {missing} trait(s). Available traits: {}. \
+                        "Type `{type_name}` is missing {missing} trait(s). Available traits: {}. \
                         To fix this, add #[derive(Serialize, Deserialize)] or use #[reflect(Serialize, Deserialize)] \
-                        in your component definition.",
+                        in your type definition.",
                         reflect_types.join(", ")
                     )
                 } else {
-                    format!("Component `{component_type}` has proper serialization support")
+                    format!("Type `{type_name}` has proper serialization support")
                 };
 
                 return Ok(SerializationCheck { diagnostic_message });
@@ -345,11 +485,11 @@ fn analyze_schema_for_component(
         }
     }
 
-    // Component not found in schema
+    // Type not found in schema
     Ok(SerializationCheck {
         diagnostic_message: format!(
-            "Component `{component_type}` not found in registry schema. \
-            This component may not be registered with BRP or may not exist."
+            "Type `{type_name}` not found in registry schema. \
+            This type may not be registered with BRP or may not exist."
         ),
     })
 }
@@ -362,6 +502,7 @@ fn convert_to_array_format(value: &Value, field_names: &[&str]) -> Option<Value>
             // Extract fields in order and convert to f32
             let mut values = Vec::new();
             for field_name in field_names {
+                #[allow(clippy::cast_possible_truncation)]
                 let field_value = obj.get(*field_name)?.as_f64()? as f32;
                 values.push(serde_json::json!(field_value));
             }
@@ -369,7 +510,7 @@ fn convert_to_array_format(value: &Value, field_names: &[&str]) -> Option<Value>
         }
         Value::Array(arr) if arr.len() == field_names.len() => {
             // Already in array format, validate all are numbers
-            if arr.iter().all(|v| v.is_number()) {
+            if arr.iter().all(Value::is_number) {
                 Some(value.clone())
             } else {
                 None
@@ -399,6 +540,9 @@ pub fn apply_pattern_fix(
             // This pattern is handled by Tier 2 (registry checking), not direct conversion
             None
         }
+        ErrorPattern::TupleStructAccess { field_path } => {
+            fix_tuple_struct_path(component_name, original_value, field_path)
+        }
     }
 }
 
@@ -418,7 +562,7 @@ fn apply_transform_sequence_fix(
             if let Some(field_value) = obj.get(field) {
                 if let Some(vec3_array) = convert_to_vec3_array(field_value) {
                     corrected.insert(field.to_string(), vec3_array);
-                    hint_parts.push(format!("`{}` converted to Vec3 array format", field));
+                    hint_parts.push(format!("`{field}` converted to Vec3 array format"));
                 } else {
                     corrected.insert(field.to_string(), field_value.clone());
                 }
@@ -437,9 +581,7 @@ fn apply_transform_sequence_fix(
 
         if !corrected.is_empty() {
             let hint = format!(
-                "`{}` Transform expected {} f32 values in sequence - {}",
-                component_name,
-                expected_count,
+                "`{component_name}` Transform expected {expected_count} f32 values in sequence - {}",
                 hint_parts.join(", ")
             );
             return Some((Value::Object(corrected), hint));
@@ -479,9 +621,10 @@ fn apply_name_component_fix(
             if let Some(Value::String(name)) = obj.get("name").or_else(|| obj.get("value")) {
                 return Some((
                     Value::String(name.clone()),
-                    format!(
-                        "`{}` Name component expects string format, not object",
-                        component_name
+                    type_format_error(
+                        &format!("{component_name} Name component"),
+                        "string",
+                        "object",
                     ),
                 ));
             }
@@ -492,9 +635,10 @@ fn apply_name_component_fix(
                 if let Value::String(name) = &arr[0] {
                     return Some((
                         Value::String(name.clone()),
-                        format!(
-                            "`{}` Name component expects string format, not array",
-                            component_name
+                        type_format_error(
+                            &format!("{component_name} Name component"),
+                            "string",
+                            "array",
                         ),
                     ));
                 }
@@ -516,31 +660,21 @@ fn apply_math_type_array_fix(
         "Vec3" => convert_to_vec3_array(original_value).map(|arr| {
             (
                 arr,
-                format!("`{}` Vec3 expects array format [x, y, z]", component_name),
+                type_expects_array(component_name, "Vec3") + " [x, y, z]",
             )
         }),
-        "Vec2" => convert_to_vec2_array(original_value).map(|arr| {
-            (
-                arr,
-                format!("`{}` Vec2 expects array format [x, y]", component_name),
-            )
-        }),
+        "Vec2" => convert_to_vec2_array(original_value)
+            .map(|arr| (arr, type_expects_array(component_name, "Vec2") + " [x, y]")),
         "Vec4" => convert_to_vec4_array(original_value).map(|arr| {
             (
                 arr,
-                format!(
-                    "`{}` Vec4 expects array format [x, y, z, w]",
-                    component_name
-                ),
+                type_expects_array(component_name, "Vec4") + " [x, y, z, w]",
             )
         }),
         "Quat" => convert_to_quat_array(original_value).map(|arr| {
             (
                 arr,
-                format!(
-                    "`{}` Quat expects array format [x, y, z, w]",
-                    component_name
-                ),
+                type_expects_array(component_name, "Quat") + " [x, y, z, w]",
             )
         }),
         _ => None,
@@ -581,8 +715,7 @@ fn convert_to_string_format(
                     return Some((
                         Value::String(s.clone()),
                         format!(
-                            "`{}` expects string format, extracted from `{}` field",
-                            component_name, field
+                            "`{component_name}` expects string format, extracted from `{field}` field"
                         ),
                     ));
                 }
@@ -594,8 +727,7 @@ fn convert_to_string_format(
                     return Some((
                         Value::String(s.clone()),
                         format!(
-                            "`{}` expects string format, extracted from single-element array",
-                            component_name
+                            "`{component_name}` expects string format, extracted from single-element array"
                         ),
                     ));
                 }
@@ -607,157 +739,102 @@ fn convert_to_string_format(
     None
 }
 
-/// Unified format discovery for all component methods
+/// Fix tuple struct path access errors
+fn fix_tuple_struct_path(
+    type_name: &str,
+    original_value: &Value,
+    field_path: &str,
+) -> Option<(Value, String)> {
+    // Tuple structs use numeric indices like .0, .1, etc.
+    // If the error mentions a field path, it might be trying to access
+    // a field using the wrong syntax
+
+    // Common patterns:
+    // - Trying to access .value on a tuple struct that should be .0
+    // - Trying to use named fields on a tuple struct
+    // - Enum tuple variants like LinearRgba with color field names
+
+    // Apply enum-specific path fixes
+    let fixed_path = fix_enum_tuple_path(field_path);
+
+    match original_value {
+        Value::Object(obj) => {
+            // If we have an object with a single field, try converting to tuple access
+            if obj.len() == 1 {
+                if let Some((_, value)) = obj.iter().next() {
+                    return Some((
+                        value.clone(),
+                        format!(
+                            "`{type_name}` is a tuple struct, use numeric indices like .0 instead of named fields"
+                        ),
+                    ));
+                }
+            }
+        }
+        Value::Array(arr) => {
+            // If we have an array and the path suggests index access, extract the element
+            // Use the fixed path which may have been transformed from enum variant field names
+            if let Ok(index) = fixed_path.trim_start_matches('.').parse::<usize>() {
+                if let Some(element) = arr.get(index) {
+                    let hint = if fixed_path == field_path {
+                        format!("`{type_name}` tuple struct element at index {index} extracted")
+                    } else {
+                        format!(
+                            "`{type_name}` tuple struct: converted '{field_path}' to '{fixed_path}' for element access"
+                        )
+                    };
+                    return Some((element.clone(), hint));
+                }
+            }
+        }
+        _ => {}
+    }
+
+    None
+}
+
+/// Unified format discovery for all type methods (components and resources)
 async fn attempt_format_discovery(
     method: &str,
     params: &Value,
     port: Option<u16>,
     original_error: &BrpError,
 ) -> Result<EnhancedBrpResult, McpError> {
-    match method {
-        BRP_METHOD_SPAWN | BRP_METHOD_INSERT => {
-            attempt_components_format_discovery(method, params, port, original_error).await
-        }
-        BRP_METHOD_MUTATE_COMPONENT => {
-            attempt_value_format_discovery(method, params, port, original_error).await
-        }
-        _ => Ok(EnhancedBrpResult {
-            result:             BrpResult::Error(original_error.clone()),
+    let mut debug_info = vec![format!(
+        "Format Discovery: Attempting discovery for method '{method}'"
+    )];
+
+    // Get parameter location based on method
+    let location = get_parameter_location(method);
+    debug_info.push(format!(
+        "Format Discovery: Parameter location: {location:?}"
+    ));
+
+    // Extract type items based on location
+    let type_items = extract_type_items(params, location);
+    if type_items.is_empty() {
+        debug_info.push("Format Discovery: No type items found in params".to_string());
+        return Ok(EnhancedBrpResult {
+            result: BrpResult::Error(original_error.clone()),
             format_corrections: Vec::new(),
-            debug_info:         vec![format!(
-                "Format Discovery: Unsupported method for discovery: {method}"
-            )],
-        }),
+            debug_info,
+        });
     }
-}
 
-/// Extract and validate components from parameters
-fn extract_and_validate_components<'a>(
-    params: &'a Value,
-    _original_error: &BrpError,
-) -> Option<&'a Map<String, Value>> {
-    match params.get("components") {
-        Some(Value::Object(components)) => Some(components),
-        _ => None,
-    }
-}
-
-/// Process a single component for format discovery
-async fn process_single_component(
-    component_name: &str,
-    component_value: &Value,
-    method: &str,
-    port: Option<u16>,
-    original_error: &BrpError,
-    debug_info: &mut Vec<String>,
-) -> Result<(Option<(Value, String)>, Vec<TierInfo>), McpError> {
     debug_info.push(format!(
-        "Format Discovery: Checking component '{}' with value: {:?}",
-        component_name, component_value
+        "Format Discovery: Found {} type items to check",
+        type_items.len()
     ));
-
-    let (discovery_result, mut tier_info) =
-        tiered_component_format_discovery(component_name, component_value, original_error, port)
-            .await;
-
-    // Add component context to tier info
-    for info in &mut tier_info {
-        info.action = format!("[{}] {}", component_name, info.action);
-    }
-
-    match discovery_result {
-        Some((corrected_value, hint)) => {
-            debug_info.push(format!(
-                "Format Discovery: Found alternative for '{}': {:?}",
-                component_name, corrected_value
-            ));
-
-            // For spawn, validate the format by testing; for insert, just trust it
-            let final_format = if method == BRP_METHOD_SPAWN {
-                match test_component_format_with_spawn(component_name, &corrected_value, port).await
-                {
-                    Ok(validated_format) => validated_format,
-                    Err(_) => return Ok((None, tier_info)), /* Skip this component if validation
-                                                             * fails */
-                }
-            } else {
-                corrected_value
-            };
-
-            Ok((Some((final_format, hint)), tier_info))
-        }
-        None => {
-            debug_info.push(format!(
-                "Format Discovery: No alternative found for '{}'",
-                component_name
-            ));
-            Ok((None, tier_info))
-        }
-    }
-}
-
-/// Apply corrections and retry the BRP request
-async fn apply_corrections_and_retry(
-    method: &str,
-    params: &Value,
-    port: Option<u16>,
-    corrected_components: Map<String, Value>,
-    format_corrections: Vec<FormatCorrection>,
-    mut debug_info: Vec<String>,
-) -> Result<EnhancedBrpResult, McpError> {
-    debug_info.push(format!(
-        "Format Discovery: Found {} corrections, retrying request",
-        format_corrections.len()
-    ));
-
-    // Try the request with corrected components
-    let mut corrected_params = params.clone();
-    corrected_params["components"] = Value::Object(corrected_components);
-
-    let result = execute_brp_method(method, Some(corrected_params), port).await?;
-    debug_info.push(format!("Format Discovery: Retry result: {:?}", result));
-
-    Ok(EnhancedBrpResult {
-        result,
-        format_corrections,
-        debug_info,
-    })
-}
-
-/// Unified format discovery for spawn/insert operations (work with "components" parameter)
-async fn attempt_components_format_discovery(
-    method: &str,
-    params: &Value,
-    port: Option<u16>,
-    original_error: &BrpError,
-) -> Result<EnhancedBrpResult, McpError> {
-    // Extract components from parameters
-    let components = match extract_and_validate_components(params, original_error) {
-        Some(comps) => comps,
-        None => {
-            return Ok(EnhancedBrpResult {
-                result:             BrpResult::Error(original_error.clone()),
-                format_corrections: Vec::new(),
-                debug_info:         vec![
-                    "Format Discovery: No components object found in params".to_string(),
-                ],
-            });
-        }
-    };
 
     let mut format_corrections = Vec::new();
-    let mut corrected_components = Map::new();
-    let mut debug_info = vec![format!(
-        "Format Discovery: Found {} components to check",
-        components.len()
-    )];
+    let mut corrected_items = Vec::new();
     let mut all_tier_info = Vec::new();
 
-    // Process each component
-    for (component_name, component_value) in components {
-        let (discovery_result, tier_info) = process_single_component(
-            component_name,
-            component_value,
+    // Process each type item
+    for (type_name, type_value) in &type_items {
+        let (discovery_result, tier_info) = process_single_type_item(
+            type_name,
+            type_value,
             method,
             port,
             original_error,
@@ -770,16 +847,16 @@ async fn attempt_components_format_discovery(
         match discovery_result {
             Some((final_format, hint)) => {
                 format_corrections.push(FormatCorrection {
-                    component: component_name.to_string(),
-                    original_format: component_value.clone(),
+                    component: type_name.clone(),
+                    original_format: type_value.clone(),
                     corrected_format: final_format.clone(),
                     hint,
                 });
-                corrected_components.insert(component_name.to_string(), final_format);
+                corrected_items.push((type_name.clone(), final_format));
             }
             None => {
                 // Keep original format if no alternative found
-                corrected_components.insert(component_name.to_string(), component_value.clone());
+                corrected_items.push((type_name.clone(), type_value.clone()));
             }
         }
     }
@@ -789,143 +866,123 @@ async fn attempt_components_format_discovery(
 
     if format_corrections.is_empty() {
         debug_info.push("Format Discovery: No corrections were possible".to_string());
-        // No corrections were possible
         Ok(EnhancedBrpResult {
             result: BrpResult::Error(original_error.clone()),
             format_corrections: Vec::new(),
             debug_info,
-            })
+        })
     } else {
         // Apply corrections and retry
-        apply_corrections_and_retry(
-            method,
-            params,
-            port,
-            corrected_components,
+        debug_info.push(format!(
+            "Format Discovery: Found {} corrections, retrying request",
+            format_corrections.len()
+        ));
+
+        let corrected_params = apply_corrections(params, location, &corrected_items);
+        let result = execute_brp_method(method, Some(corrected_params), port).await?;
+        debug_info.push(format!("Format Discovery: Retry result: {result:?}"));
+
+        Ok(EnhancedBrpResult {
+            result,
             format_corrections,
             debug_info,
-        )
-        .await
+        })
     }
 }
 
-/// Format discovery for `mutate_component` operations (work with "value" parameter)
-async fn attempt_value_format_discovery(
+/// Process a single type item (component or resource) for format discovery
+async fn process_single_type_item(
+    type_name: &str,
+    type_value: &Value,
     method: &str,
-    params: &Value,
     port: Option<u16>,
     original_error: &BrpError,
-) -> Result<EnhancedBrpResult, McpError> {
-    let Some(component_name) = params.get("component").and_then(|v| v.as_str()) else {
-        return Ok(EnhancedBrpResult {
-            result:             BrpResult::Error(original_error.clone()),
-            format_corrections: Vec::new(),
-            debug_info:         vec![format!(
-                "Format Discovery: No component name found in mutate params"
-            )],
-        });
-    };
+    debug_info: &mut Vec<String>,
+) -> Result<(Option<(Value, String)>, Vec<TierInfo>), McpError> {
+    debug_info.push(format!(
+        "Format Discovery: Checking type '{type_name}' with value: {type_value:?}"
+    ));
 
-    let Some(original_value) = params.get("value") else {
-        return Ok(EnhancedBrpResult {
-            result:             BrpResult::Error(original_error.clone()),
-            format_corrections: Vec::new(),
-            debug_info:         vec![format!("Format Discovery: No value found in mutate params")],
-        });
-    };
+    let (discovery_result, mut tier_info) =
+        tiered_type_format_discovery(type_name, type_value, original_error, port).await;
 
-    let (discovery_result, tier_info) =
-        tiered_component_format_discovery(component_name, original_value, original_error, port)
-            .await;
+    // Add type context to tier info
+    for info in &mut tier_info {
+        info.action = format!("[{}] {}", type_name, info.action);
+    }
 
-    let mut debug_info = vec![format!(
-        "Format Discovery: Processing mutate component '{}'",
-        component_name
-    )];
-    debug_info.extend(tier_info_to_debug_strings(&tier_info));
+    if let Some((corrected_value, hint)) = discovery_result {
+        debug_info.push(format!(
+            "Format Discovery: Found alternative for '{type_name}': {corrected_value:?}"
+        ));
 
-    match discovery_result {
-        Some((corrected_value, hint)) => {
-            let mut corrected_params = params.clone();
-            corrected_params["value"] = corrected_value.clone();
+        // For spawn, validate the format by testing; for insert, just trust it
+        let final_format = if method == BRP_METHOD_SPAWN {
+            match test_component_format_with_spawn(type_name, &corrected_value, port).await {
+                Ok(validated_format) => validated_format,
+                Err(_) => return Ok((None, tier_info)), // Skip this type if validation fails
+            }
+        } else {
+            corrected_value
+        };
 
-            let result = execute_brp_method(method, Some(corrected_params), port).await?;
-            let format_corrections = vec![FormatCorrection {
-                component: component_name.to_string(),
-                original_format: original_value.clone(),
-                corrected_format: corrected_value,
-                hint,
-            }];
-
-            debug_info.push(format!("Format Discovery: Found alternative for mutate component '{}', retried successfully", component_name));
-            Ok(EnhancedBrpResult {
-                result,
-                format_corrections,
-                debug_info,
-            })
-        }
-        None => {
-            debug_info.push(format!(
-                "Format Discovery: No alternative found for mutate component '{}'",
-                component_name
-            ));
-            Ok(EnhancedBrpResult {
-                result: BrpResult::Error(original_error.clone()),
-                format_corrections: Vec::new(),
-                debug_info,
-            })
-        }
+        Ok((Some((final_format, hint)), tier_info))
+    } else {
+        debug_info.push(format!(
+            "Format Discovery: No alternative found for '{type_name}'"
+        ));
+        Ok((None, tier_info))
     }
 }
 
-/// Tiered format discovery dispatcher - replaces try_component_format_alternatives
+/// Tiered format discovery dispatcher - replaces `try_component_format_alternatives`
 /// Uses intelligent pattern matching with fallback to generic approaches
-async fn tiered_component_format_discovery(
-    component_name: &str,
+async fn tiered_type_format_discovery(
+    type_name: &str,
     original_value: &Value,
     error: &BrpError,
     port: Option<u16>,
 ) -> (Option<(Value, String)>, Vec<TierInfo>) {
     let mut tier_info = Vec::new();
 
-    // Tier 1: Deterministic Pattern Matching
+    // ========== TIER 1: Deterministic Pattern Matching ==========
+    // Uses error message patterns to determine exact format mismatches
+    // and applies targeted fixes with high confidence
     let error_analysis = analyze_error_pattern(error);
     if let Some(pattern) = &error_analysis.pattern {
         if error_analysis.confidence >= 0.8 {
             tier_info.push(TierInfo {
                 tier:      TIER_DETERMINISTIC,
                 tier_name: "Deterministic Pattern Matching".to_string(),
-                action:    format!("Matched pattern: {:?}", pattern),
+                action:    format!("Matched pattern: {pattern:?}"),
                 success:   false, // Will be updated if successful
             });
 
             if let Some((corrected_value, hint)) =
-                apply_pattern_fix(pattern, component_name, original_value)
+                apply_pattern_fix(pattern, type_name, original_value)
             {
                 tier_info.last_mut().unwrap().success = true;
-                tier_info.last_mut().unwrap().action = format!("Applied pattern fix: {}", hint);
+                tier_info.last_mut().unwrap().action = format!("Applied pattern fix: {hint}");
                 return (Some((corrected_value, hint)), tier_info);
             }
         }
     }
 
-    // Tier 2: Serialization Diagnostics (for UnknownComponentType pattern)
+    // ========== TIER 2: Serialization Diagnostics ==========
+    // For UnknownComponentType errors, queries BRP to check if types
+    // support required reflection traits (Serialize/Deserialize)
     if let Some(ErrorPattern::UnknownComponentType { component_type }) = &error_analysis.pattern {
         tier_info.push(TierInfo {
             tier:      TIER_SERIALIZATION,
             tier_name: "Serialization Diagnostics".to_string(),
-            action:    format!(
-                "Checking serialization support for component: {}",
-                component_type
-            ),
+            action:    format!("Checking serialization support for component: {component_type}"),
             success:   false,
         });
 
-        match check_component_serialization(component_type, port).await {
+        match check_type_serialization(component_type, port).await {
             Ok(serialization_check) => {
                 tier_info.last_mut().unwrap().success = true;
-                tier_info.last_mut().unwrap().action =
-                    serialization_check.diagnostic_message.clone();
+                tier_info.last_mut().unwrap().action = serialization_check.diagnostic_message;
 
                 // Return diagnostic information instead of a fix
                 return (None, tier_info); // No fix, just diagnostic
@@ -937,7 +994,9 @@ async fn tiered_component_format_discovery(
         }
     }
 
-    // Tier 3: Generic Fallback (existing logic)
+    // ========== TIER 3: Generic Fallback ==========
+    // Falls back to legacy transformation logic trying various
+    // format conversions (object->array, array->string, etc.)
     tier_info.push(TierInfo {
         tier:      TIER_GENERIC_FALLBACK,
         tier_name: "Generic Fallback".to_string(),
@@ -946,7 +1005,7 @@ async fn tiered_component_format_discovery(
     });
 
     let fallback_result =
-        try_component_format_alternatives_legacy(component_name, original_value, error);
+        try_component_format_alternatives_legacy(type_name, original_value, error);
     if fallback_result.is_some() {
         tier_info.last_mut().unwrap().success = true;
         tier_info.last_mut().unwrap().action = "Found generic format alternative".to_string();
@@ -1041,7 +1100,7 @@ fn get_possible_transformations(value: &Value) -> Vec<TransformationType> {
     }
 }
 
-/// Legacy format discovery function (renamed from try_component_format_alternatives)
+/// Legacy format discovery function (renamed from `try_component_format_alternatives`)
 /// Since we can't reliably parse error messages, we try all reasonable alternatives
 fn try_component_format_alternatives_legacy(
     component_name: &str,
@@ -1056,19 +1115,19 @@ fn try_component_format_alternatives_legacy(
         if let Some(transformed_value) = apply_transformation(original_value, transformation) {
             let hint = match transformation {
                 TransformationType::ObjectToString => {
-                    format!("`{component_name}` expects string format, not object")
+                    type_format_error(component_name, "string", "object")
                 }
                 TransformationType::ObjectToArray => {
-                    format!("`{component_name}` expects array format, not object")
+                    type_format_error(component_name, "array", "object")
                 }
                 TransformationType::StringToObject => {
-                    format!("`{component_name}` expects object format, not string")
+                    type_format_error(component_name, "object", "string")
                 }
                 TransformationType::ArrayToString => {
-                    format!("`{component_name}` expects string format, not array")
+                    type_format_error(component_name, "string", "array")
                 }
                 TransformationType::ArrayToObject => {
-                    format!("`{component_name}` expects object format, not array")
+                    type_format_error(component_name, "object", "array")
                 }
             };
             return Some((transformed_value, hint));
