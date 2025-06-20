@@ -1,0 +1,205 @@
+[
+  {
+    "id": "meta-1",
+    "content": "Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-1",
+    "content": "Add MAX_RESPONSE_TOKENS constant to src/brp_tools/constants.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-1b",
+    "content": "Build and fix any compile errors and any compile warnings for constants",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-2",
+    "content": "Create src/brp_tools/support/pagination.rs with core pagination functions",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-2b",
+    "content": "Build and fix any compile errors and any compile warnings for pagination module",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-3",
+    "content": "Add response size estimation functions to src/brp_tools/support/response_formatter.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-3b",
+    "content": "Build and fix any compile errors and any compile warnings for response formatter",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-4",
+    "content": "Update ParamType enum in src/brp_tools/tool_definitions.rs to support pagination parameters",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-4b",
+    "content": "Build and fix any compile errors and any compile warnings for tool definitions",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-5",
+    "content": "Add pagination parameter definitions to bevy_registry_schema tool",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-5b",
+    "content": "Build and fix any compile errors and any compile warnings for registry schema tool",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-6",
+    "content": "Update request handler in src/brp_tools/support/request_handler/handler.rs with pagination logic",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-6b",
+    "content": "Build and fix any compile errors and any compile warnings for request handler",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-7",
+    "content": "Add pagination parameters to bevy_list tool definition",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-7b",
+    "content": "Build and fix any compile errors and any compile warnings for bevy_list tool",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-8",
+    "content": "Add pagination parameters to bevy_list_resources tool definition",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-8b",
+    "content": "Build and fix any compile errors and any compile warnings for bevy_list_resources tool",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-9",
+    "content": "Add pagination parameters to bevy_query tool definition",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-9b",
+    "content": "Build and fix any compile errors and any compile warnings for bevy_query tool",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-10",
+    "content": "Update rust/.claude/commands/brp_test.md to explicitly test pagination on registry schema",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-10b",
+    "content": "Build and fix any compile errors and any compile warnings after documentation update",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "clippy-1",
+    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "clippy-2",
+    "content": "Fix any clippy issues following rules: do not mark code as dead, remove unused variables instead of prefixing with _",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "format-1",
+    "content": "Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-1",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-2",
+    "content": "If there are test issues, STOP and review them with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-1",
+    "content": "STOP work here and return control to main agent",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-2",
+    "content": "Task a new subagent to do a code review of the changes in the worktree - focus on identifying duplication and complexity, emphasize read-only analysis",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-3",
+    "content": "When code review subagent returns, STOP and review the suggested changes with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
