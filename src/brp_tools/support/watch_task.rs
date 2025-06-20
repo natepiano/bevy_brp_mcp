@@ -8,7 +8,7 @@ use tracing::{debug, error, info};
 
 use crate::brp_tools::support::json_rpc_builder::BrpJsonRpcBuilder;
 use crate::brp_tools::support::watch_logger::{self, BufferedWatchLogger};
-use crate::watch_manager::{WATCH_MANAGER, WatchInfo};
+use super::watch_manager::{WATCH_MANAGER, WatchInfo};
 
 /// Process the watch stream from the BRP server
 async fn process_watch_stream(
