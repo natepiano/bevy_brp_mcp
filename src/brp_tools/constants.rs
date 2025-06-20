@@ -53,5 +53,61 @@ pub const JSONRPC_FIELD_ID: &str = "id";
 pub const JSONRPC_FIELD_METHOD: &str = "method";
 pub const JSONRPC_FIELD_PARAMS: &str = "params";
 
+// Macro to include help text files
+macro_rules! include_help_text {
+    ($file:expr) => {
+        include_str!(concat!("../../help_text/", $file))
+    };
+}
+
+// Parameter name constants
+pub const PARAM_PORT: &str = JSON_FIELD_PORT;
+
+// Tool name constants
+pub const TOOL_BRP_LIST: &str = "bevy_list";
+pub const TOOL_BRP_GET: &str = "bevy_get";
+pub const TOOL_BRP_DESTROY: &str = "bevy_destroy";
+pub const TOOL_BRP_INSERT: &str = "bevy_insert";
+pub const TOOL_BRP_REMOVE: &str = "bevy_remove";
+pub const TOOL_BRP_LIST_RESOURCES: &str = "bevy_list_resources";
+pub const TOOL_BRP_GET_RESOURCE: &str = "bevy_get_resource";
+pub const TOOL_BRP_INSERT_RESOURCE: &str = "bevy_insert_resource";
+pub const TOOL_BRP_REMOVE_RESOURCE: &str = "bevy_remove_resource";
+pub const TOOL_BRP_MUTATE_RESOURCE: &str = "bevy_mutate_resource";
+pub const TOOL_BRP_MUTATE_COMPONENT: &str = "bevy_mutate_component";
+pub const TOOL_BRP_RPC_DISCOVER: &str = "bevy_rpc_discover";
+pub const TOOL_BRP_STATUS: &str = "brp_status";
+
+// Streaming/watch tool names
+pub const TOOL_BRP_GET_WATCH: &str = "brp_get_watch";
+pub const TOOL_BRP_LIST_WATCH: &str = "brp_list_watch";
+pub const TOOL_BEVY_STOP_WATCH: &str = "bevy_stop_watch";
+pub const TOOL_BEVY_LIST_ACTIVE_WATCHES: &str = "bevy_list_active_watches";
+
+// Debug tool name
+pub const TOOL_SET_DEBUG_MODE: &str = "set_debug_mode";
+
+// BRP tool descriptions
+pub const DESC_BRP_LIST: &str = include_help_text!("brp_tools/brp_list.txt");
+pub const DESC_BRP_GET: &str = include_help_text!("brp_tools/brp_get.txt");
+pub const DESC_BRP_DESTROY: &str = include_help_text!("brp_tools/brp_destroy.txt");
+pub const DESC_BRP_INSERT: &str = include_help_text!("brp_tools/brp_insert.txt");
+pub const DESC_BRP_REMOVE: &str = include_help_text!("brp_tools/brp_remove.txt");
+pub const DESC_BRP_LIST_RESOURCES: &str = include_help_text!("brp_tools/brp_list_resources.txt");
+pub const DESC_BRP_GET_RESOURCE: &str = include_help_text!("brp_tools/brp_get_resource.txt");
+pub const DESC_BRP_INSERT_RESOURCE: &str = include_help_text!("brp_tools/brp_insert_resource.txt");
+pub const DESC_BRP_REMOVE_RESOURCE: &str = include_help_text!("brp_tools/brp_remove_resource.txt");
+pub const DESC_BRP_MUTATE_RESOURCE: &str = include_help_text!("brp_tools/brp_mutate_resource.txt");
+pub const DESC_BRP_MUTATE_COMPONENT: &str =
+    include_help_text!("brp_tools/brp_mutate_component.txt");
+pub const DESC_BRP_RPC_DISCOVER: &str = include_help_text!("brp_tools/brp_rpc_discover.txt");
+
+// Watch tool descriptions
+pub const DESC_BRP_GET_WATCH: &str = include_help_text!("brp_tools/brp_get_watch.txt");
+pub const DESC_BRP_LIST_WATCH: &str = include_help_text!("brp_tools/brp_list_watch.txt");
+pub const DESC_BEVY_STOP_WATCH: &str = include_help_text!("brp_tools/bevy_stop_watch.txt");
+pub const DESC_BEVY_LIST_ACTIVE_WATCHES: &str =
+    include_help_text!("brp_tools/bevy_list_active_watches.txt");
+
 // Documentation/Help Constants
 pub const PORT_DESCRIPTION: &str = "The BRP port (default: 15702)";

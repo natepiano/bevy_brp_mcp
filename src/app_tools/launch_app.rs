@@ -6,12 +6,10 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
+use super::constants::{DESC_LAUNCH_BEVY_APP, PARAM_APP_NAME, TOOL_LAUNCH_BEVY_APP};
 use super::support::{logging, process, scanning};
 use crate::BrpMcpService;
-use crate::constants::{
-    DEFAULT_PROFILE, DESC_LAUNCH_BEVY_APP, PARAM_APP_NAME, PARAM_PROFILE, PROFILE_RELEASE,
-    TOOL_LAUNCH_BEVY_APP,
-};
+use crate::constants::{DEFAULT_PROFILE, PARAM_PROFILE, PROFILE_RELEASE};
 use crate::support::{params, response, schema, service};
 
 pub fn register_tool() -> Tool {

@@ -8,12 +8,7 @@ use crate::brp_tools::{
     bevy_list_active_watches, bevy_stop_watch, brp_get_watch, brp_list_watch, brp_status,
     tool_definitions, tool_generator,
 };
-use crate::constants::{
-    TOOL_BEVY_LIST_ACTIVE_WATCHES, TOOL_BEVY_STOP_WATCH, TOOL_BRP_GET_WATCH, TOOL_BRP_LIST_WATCH,
-    TOOL_BRP_STATUS, TOOL_CLEANUP_LOGS, TOOL_LAUNCH_BEVY_APP, TOOL_LAUNCH_BEVY_EXAMPLE,
-    TOOL_LIST_BEVY_APPS, TOOL_LIST_BEVY_EXAMPLES, TOOL_LIST_LOGS, TOOL_READ_LOG,
-    TOOL_SET_DEBUG_MODE,
-};
+// Imports removed - using fully qualified paths in match statement to avoid naming conflicts
 use crate::log_tools::{cleanup_logs, list_logs, read_log};
 use crate::support::debug_tools;
 
@@ -78,29 +73,53 @@ pub async fn handle_tool_call(
     // Handle remaining tools
     match request.name.as_ref() {
         // Core BRP tools (with custom logic)
-        TOOL_BRP_STATUS => brp_status::handle(service, request, context).await,
+        name if name == crate::brp_tools::constants::TOOL_BRP_STATUS => {
+            brp_status::handle(service, request, context).await
+        }
 
         // App management tools
-        TOOL_LIST_BEVY_APPS => list_apps::handle(service, context).await,
-        TOOL_LIST_BEVY_EXAMPLES => list_examples::handle(service, context).await,
-        TOOL_LAUNCH_BEVY_APP => launch_app::handle(service, request, context).await,
-        TOOL_LAUNCH_BEVY_EXAMPLE => launch_example::handle(service, request, context).await,
+        name if name == crate::app_tools::constants::TOOL_LIST_BEVY_APPS => {
+            list_apps::handle(service, context).await
+        }
+        name if name == crate::app_tools::constants::TOOL_LIST_BEVY_EXAMPLES => {
+            list_examples::handle(service, context).await
+        }
+        name if name == crate::app_tools::constants::TOOL_LAUNCH_BEVY_APP => {
+            launch_app::handle(service, request, context).await
+        }
+        name if name == crate::app_tools::constants::TOOL_LAUNCH_BEVY_EXAMPLE => {
+            launch_example::handle(service, request, context).await
+        }
 
         // Log management tools
-        TOOL_LIST_LOGS => list_logs::handle(service, &request, context),
-        TOOL_READ_LOG => read_log::handle(service, &request, context),
-        TOOL_CLEANUP_LOGS => cleanup_logs::handle(service, &request, context),
+        name if name == crate::log_tools::constants::TOOL_LIST_LOGS => {
+            list_logs::handle(service, &request, context)
+        }
+        name if name == crate::log_tools::constants::TOOL_READ_LOG => {
+            read_log::handle(service, &request, context)
+        }
+        name if name == crate::log_tools::constants::TOOL_CLEANUP_LOGS => {
+            cleanup_logs::handle(service, &request, context)
+        }
 
         // Streaming/watch tools (custom logic)
-        TOOL_BRP_GET_WATCH => brp_get_watch::handle(service, request, context).await,
-        TOOL_BRP_LIST_WATCH => brp_list_watch::handle(service, request, context).await,
-        TOOL_BEVY_STOP_WATCH => bevy_stop_watch::handle(service, request, context).await,
-        TOOL_BEVY_LIST_ACTIVE_WATCHES => {
+        name if name == crate::brp_tools::constants::TOOL_BRP_GET_WATCH => {
+            brp_get_watch::handle(service, request, context).await
+        }
+        name if name == crate::brp_tools::constants::TOOL_BRP_LIST_WATCH => {
+            brp_list_watch::handle(service, request, context).await
+        }
+        name if name == crate::brp_tools::constants::TOOL_BEVY_STOP_WATCH => {
+            bevy_stop_watch::handle(service, request, context).await
+        }
+        name if name == crate::brp_tools::constants::TOOL_BEVY_LIST_ACTIVE_WATCHES => {
             bevy_list_active_watches::handle(service, request, context).await
         }
 
         // Debug tools
-        TOOL_SET_DEBUG_MODE => debug_tools::handle_set_debug_mode(service, request, context),
+        name if name == crate::brp_tools::constants::TOOL_SET_DEBUG_MODE => {
+            debug_tools::handle_set_debug_mode(service, request, context)
+        }
 
         _ => Err(McpError::from(rmcp::model::ErrorData::invalid_params(
             format!("Unknown tool: {}", request.name),
