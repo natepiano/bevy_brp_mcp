@@ -1,5 +1,6 @@
 // Module organization
 mod config;
+mod constants;
 mod extractors;
 mod format_discovery;
 mod handler;

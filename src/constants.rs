@@ -95,3 +95,6 @@ pub const TOOL_BRP_GET_WATCH: &str = "brp_get_watch";
 pub const TOOL_BRP_LIST_WATCH: &str = "brp_list_watch";
 pub const TOOL_BEVY_STOP_WATCH: &str = "bevy_stop_watch";
 pub const TOOL_BEVY_LIST_ACTIVE_WATCHES: &str = "bevy_list_active_watches";
+
+// Debug tool name
+pub const TOOL_SET_DEBUG_MODE: &str = "set_debug_mode";

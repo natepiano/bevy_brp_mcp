@@ -18,9 +18,10 @@ use crate::constants::{
     TOOL_BRP_REMOVE, TOOL_BRP_REMOVE_RESOURCE, TOOL_BRP_REPARENT, TOOL_BRP_RPC_DISCOVER,
     TOOL_BRP_SPAWN, TOOL_BRP_STATUS, TOOL_CLEANUP_LOGS, TOOL_LAUNCH_BEVY_APP,
     TOOL_LAUNCH_BEVY_EXAMPLE, TOOL_LIST_BEVY_APPS, TOOL_LIST_BEVY_EXAMPLES, TOOL_LIST_LOGS,
-    TOOL_READ_LOG,
+    TOOL_READ_LOG, TOOL_SET_DEBUG_MODE,
 };
 use crate::log_tools::{cleanup_logs, list_logs, read_log};
+use crate::support::debug_tools;
 
 pub fn register_tools() -> ListToolsResult {
     let tools = vec![
@@ -60,6 +61,8 @@ pub fn register_tools() -> ListToolsResult {
         brp_list_watch::register_tool(),
         bevy_stop_watch::register_tool(),
         bevy_list_active_watches::register_tool(),
+        // Debug tools
+        debug_tools::register_tool(),
     ];
 
     ListToolsResult {
@@ -118,6 +121,9 @@ pub async fn handle_tool_call(
         TOOL_BEVY_LIST_ACTIVE_WATCHES => {
             bevy_list_active_watches::handle(service, request, context).await
         }
+
+        // Debug tools
+        TOOL_SET_DEBUG_MODE => debug_tools::handle_set_debug_mode(service, request, context),
 
         _ => Err(McpError::from(rmcp::model::ErrorData::invalid_params(
             format!("Unknown tool: {}", request.name),

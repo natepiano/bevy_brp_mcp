@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use rmcp::model::CallToolResult;
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
@@ -10,8 +8,10 @@ use super::format_discovery::execute_brp_method_with_format_discovery;
 use crate::BrpMcpService;
 use crate::brp_tools::support::brp_client::BrpResult;
 use crate::brp_tools::support::response_formatter::BrpMetadata;
+use crate::support::debug_tools;
 
 /// Unified handler for all BRP methods (both static and dynamic)
+#[allow(clippy::too_many_lines)]
 pub async fn handle_brp_request(
     _service: &BrpMcpService,
     request: rmcp::model::CallToolRequestParam,
@@ -81,7 +81,7 @@ pub async fn handle_brp_request(
                     additions["format_corrections"] = corrections_value;
                 }
 
-                if !enhanced_result.debug_info.is_empty() {
+                if !enhanced_result.debug_info.is_empty() && debug_tools::is_debug_enabled() {
                     additions["debug_info"] = json!(enhanced_result.debug_info);
                 }
 
@@ -92,26 +92,78 @@ pub async fn handle_brp_request(
                     }
                 } else {
                     // If not an object, wrap it
-                    response_data = json!({
+                    let mut wrapped = json!({
                         "data": response_data,
-                        "format_corrections": additions.get("format_corrections").cloned().unwrap_or(json!([])),
-                        "debug_info": additions.get("debug_info").cloned().unwrap_or(json!([]))
+                        "format_corrections": additions.get("format_corrections").cloned().unwrap_or(json!([]))
                     });
+
+                    // Only add debug_info if debug mode is enabled
+                    if debug_tools::is_debug_enabled() {
+                        wrapped["debug_info"] =
+                            additions.get("debug_info").cloned().unwrap_or(json!([]));
+                    }
+
+                    response_data = wrapped;
                 }
             }
 
             Ok(formatter.format_success(&response_data, metadata))
         }
         BrpResult::Error(mut error_info) => {
-            // Add debug info to error message if present
-            if !enhanced_result.debug_info.is_empty() {
-                write!(
-                    error_info.message,
-                    "\n\nDEBUG INFO:\n{}",
-                    enhanced_result.debug_info.join("\n")
-                )
-                .unwrap();
+            let original_error_message = error_info.message.clone();
+
+            // Check if we have an enhanced diagnostic message from format discovery
+            let enhanced_message = enhanced_result
+                .format_corrections
+                .iter()
+                .find(|correction| correction.hint.contains("cannot be used with BRP"))
+                .map(|correction| correction.hint.clone());
+
+            // Use enhanced message if available, otherwise keep original
+            let has_enhanced = enhanced_message.is_some();
+            if let Some(enhanced_msg) = enhanced_message {
+                error_info.message = enhanced_msg;
             }
+
+            // Add debug info and format corrections to error data if present
+            if !enhanced_result.debug_info.is_empty()
+                || !enhanced_result.format_corrections.is_empty()
+                || has_enhanced
+            {
+                let mut data_obj = error_info.data.unwrap_or_else(|| json!({}));
+
+                if let Value::Object(ref mut map) = data_obj {
+                    // Store original error message if we replaced it with enhanced message
+                    if has_enhanced {
+                        map.insert("original_error".to_string(), json!(original_error_message));
+                    }
+
+                    // Add debug info only if debug mode is enabled
+                    if !enhanced_result.debug_info.is_empty() && debug_tools::is_debug_enabled() {
+                        map.insert("debug_info".to_string(), json!(enhanced_result.debug_info));
+                    }
+
+                    // Add format corrections
+                    if !enhanced_result.format_corrections.is_empty() {
+                        let corrections = enhanced_result
+                            .format_corrections
+                            .iter()
+                            .map(|c| {
+                                json!({
+                                    "component": c.component,
+                                    "hint": c.hint,
+                                    "original_format": c.original_format,
+                                    "corrected_format": c.corrected_format
+                                })
+                            })
+                            .collect::<Vec<_>>();
+                        map.insert("format_corrections".to_string(), json!(corrections));
+                    }
+                }
+
+                error_info.data = Some(data_obj);
+            }
+
             Ok(formatter.format_error(error_info, &metadata))
         }
     }
