@@ -5,6 +5,7 @@ mod json_rpc_builder;
 mod request_handler;
 mod response_formatter;
 mod watch_logger;
+pub mod watch_manager;
 mod watch_response;
 mod watch_task;
 pub use json_rpc_builder::BrpJsonRpcBuilder;
