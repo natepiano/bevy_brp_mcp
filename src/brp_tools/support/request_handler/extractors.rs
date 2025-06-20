@@ -1,10 +1,24 @@
 use rmcp::Error as McpError;
-use serde_json::json;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 use super::traits::{ExtractedParams, ParamExtractor};
 use crate::brp_tools::constants::{DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT};
 use crate::support::params::{extract_any_value, extract_optional_number, extract_required_number};
-use crate::types::BrpExecuteParams;
+
+/// Parameters for BRP execute tool
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BrpExecuteParams {
+    pub method: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub params: Option<Value>,
+    #[serde(default = "default_port")]
+    pub port: u16,
+}
+
+const fn default_port() -> u16 {
+    DEFAULT_BRP_PORT
+}
 
 /// Helper function to extract and validate port from request
 fn extract_port(request: &rmcp::model::CallToolRequestParam) -> Result<u16, McpError> {
