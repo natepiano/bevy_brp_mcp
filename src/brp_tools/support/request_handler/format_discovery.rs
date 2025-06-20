@@ -17,17 +17,28 @@ use crate::brp_tools::constants::{
     BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_REGISTRY_SCHEMA, BRP_METHOD_SPAWN,
 };
 
-/// Error code for type format errors from BRP (components and resources)
-const TYPE_FORMAT_ERROR_CODE: i32 = -23402;
+/// Error code for component type format errors from BRP
+const COMPONENT_FORMAT_ERROR_CODE: i32 = -23402;
+
+/// Error code for resource type format errors from BRP
+const RESOURCE_FORMAT_ERROR_CODE: i32 = -23501;
 
 /// Tier constants for format discovery
 const TIER_DETERMINISTIC: u8 = 1;
 const TIER_SERIALIZATION: u8 = 2;
 const TIER_GENERIC_FALLBACK: u8 = 3;
 
-/// Static regex patterns for error analysis
+/// Static regex patterns for error analysis - Based on exact Bevy error strings
 static TRANSFORM_SEQUENCE_REGEX: OnceLock<Regex> = OnceLock::new();
 static EXPECTED_TYPE_REGEX: OnceLock<Regex> = OnceLock::new();
+static ACCESS_ERROR_REGEX: OnceLock<Regex> = OnceLock::new();
+static TYPE_MISMATCH_REGEX: OnceLock<Regex> = OnceLock::new();
+static VARIANT_TYPE_MISMATCH_REGEX: OnceLock<Regex> = OnceLock::new();
+static MISSING_FIELD_REGEX: OnceLock<Regex> = OnceLock::new();
+static UNKNOWN_COMPONENT_REGEX: OnceLock<Regex> = OnceLock::new();
+static TUPLE_STRUCT_PATH_REGEX: OnceLock<Regex> = OnceLock::new();
+static MATH_TYPE_ARRAY_REGEX: OnceLock<Regex> = OnceLock::new();
+static UNKNOWN_COMPONENT_TYPE_REGEX: OnceLock<Regex> = OnceLock::new();
 
 /// Known error patterns that can be deterministically handled
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,6 +53,30 @@ pub enum ErrorPattern {
     UnknownComponentType { component_type: String },
     /// Tuple struct access error (e.g., "found a tuple struct instead")
     TupleStructAccess { field_path: String },
+    /// Bevy `AccessError`: Error accessing element with X access
+    AccessError {
+        access:     String,
+        error_type: String,
+    },
+    /// Type mismatch: Expected X access to access Y, found Z instead
+    TypeMismatch {
+        expected: String,
+        actual:   String,
+        access:   String,
+    },
+    /// Variant type mismatch for enums
+    VariantTypeMismatch {
+        expected: String,
+        actual:   String,
+        access:   String,
+    },
+    /// Missing field in struct/tuple
+    MissingField {
+        field_name: String,
+        type_name:  String,
+    },
+    /// Unknown component type from BRP
+    UnknownComponent { component_path: String },
 }
 
 /// Location of type items in method parameters
@@ -95,13 +130,105 @@ fn type_expects_array(type_name: &str, array_type: &str) -> String {
     format!("`{type_name}` {array_type} expects array format")
 }
 
-/// Helper function to fix enum tuple variant paths for `LinearRgba`
-fn fix_enum_tuple_path(path: &str) -> String {
+/// Helper function to fix tuple struct paths for all enum tuple variants
+fn fix_tuple_struct_path(path: &str) -> String {
     match path {
-        ".LinearRgba.red" | ".LinearRgba.r" => ".0.0".to_string(),
-        ".LinearRgba.green" | ".LinearRgba.g" => ".0.1".to_string(),
-        ".LinearRgba.blue" | ".LinearRgba.b" => ".0.2".to_string(),
-        ".LinearRgba.alpha" | ".LinearRgba.a" => ".0.3".to_string(),
+        // ===== All Index 0 Mappings (.0.0) =====
+        // Color: red, hue, lightness, x | Math: x components
+        ".LinearRgba.red" | ".LinearRgba.r" | ".Srgba.red" | ".Srgba.r" | ".Hsla.hue"
+        | ".Hsla.h" | ".Hsva.hue" | ".Hsva.h" | ".Hwba.hue" | ".Hwba.h" | ".Laba.lightness"
+        | ".Laba.l" | ".Lcha.lightness" | ".Lcha.l" | ".Oklaba.lightness" | ".Oklaba.l"
+        | ".Oklcha.lightness" | ".Oklcha.l" | ".Xyza.x" | ".Vec2.x" | ".Vec3.x" | ".Vec4.x"
+        | ".Quat.x" | ".IVec2.x" | ".IVec3.x" | ".IVec4.x" | ".UVec2.x" | ".UVec3.x"
+        | ".UVec4.x" | ".DVec2.x" | ".DVec3.x" | ".DVec4.x" => ".0.0".to_string(),
+
+        // ===== All Index 1 Mappings (.0.1) =====
+        // Color: green, saturation, whiteness, Lab 'a', chroma, y | Math: y components
+        ".LinearRgba.green" | ".LinearRgba.g" | ".Srgba.green" | ".Srgba.g"
+        | ".Hsla.saturation" | ".Hsla.s" | ".Hsva.saturation" | ".Hsva.s" | ".Hwba.whiteness"
+        | ".Hwba.w" | ".Laba.a" | ".Oklaba.a" | ".Lcha.chroma" | ".Lcha.c" | ".Oklcha.chroma"
+        | ".Oklcha.c" | ".Xyza.y" | ".Vec2.y" | ".Vec3.y" | ".Vec4.y" | ".Quat.y" | ".IVec2.y"
+        | ".IVec3.y" | ".IVec4.y" | ".UVec2.y" | ".UVec3.y" | ".UVec4.y" | ".DVec2.y"
+        | ".DVec3.y" | ".DVec4.y" => ".0.1".to_string(),
+
+        // ===== All Index 2 Mappings (.0.2) =====
+        // Color: blue, lightness, value, blackness, Lab 'b', hue for Lab variants, z | Math: z
+        // components
+        ".LinearRgba.blue" | ".LinearRgba.b" | ".Srgba.blue" | ".Srgba.b" | ".Hsla.lightness"
+        | ".Hsla.l" | ".Hsva.value" | ".Hsva.v" | ".Hwba.blackness" | ".Hwba.b" | ".Laba.b"
+        | ".Oklaba.b" | ".Lcha.hue" | ".Lcha.h" | ".Oklcha.hue" | ".Oklcha.h" | ".Xyza.z"
+        | ".Vec3.z" | ".Vec4.z" | ".Quat.z" | ".IVec3.z" | ".IVec4.z" | ".UVec3.z" | ".UVec4.z"
+        | ".DVec3.z" | ".DVec4.z" => ".0.2".to_string(),
+
+        // ===== All Index 3 Mappings (.0.3) =====
+        // Color: alpha | Math: w components
+        ".LinearRgba.alpha" | ".LinearRgba.a" | ".Srgba.alpha" | ".Srgba.a" | ".Hsla.alpha"
+        | ".Hsla.a" | ".Hsva.alpha" | ".Hsva.a" | ".Hwba.alpha" | ".Hwba.a" | ".Laba.alpha"
+        | ".Lcha.alpha" | ".Lcha.a" | ".Oklaba.alpha" | ".Oklcha.alpha" | ".Oklcha.a"
+        | ".Xyza.alpha" | ".Xyza.a" | ".Vec4.w" | ".Quat.w" | ".IVec4.w" | ".UVec4.w"
+        | ".DVec4.w" => ".0.3".to_string(),
+
+        // ===== Simple Tuple Struct Field Access =====
+        // Direct field access on tuple structs (not nested)
+        ".x" => ".0".to_string(),
+        ".y" => ".1".to_string(),
+        ".z" => ".2".to_string(),
+
+        // ===== Generic Patterns =====
+        // Generic field access patterns for tuple structs and enum variants
+        p if p.starts_with('.') && p.contains('.') => {
+            // Try to convert nested field access to tuple access
+            // e.g., ".SomeEnum.field" -> ".0.field" or ".SomeColor.red" -> ".0.0"
+            let parts: Vec<&str> = p.split('.').collect();
+            if parts.len() >= 3 && !parts[1].is_empty() && !parts[2].is_empty() {
+                let variant_name = parts[1];
+                let field_name = parts[2];
+
+                // Check if the second part looks like an enum variant (starts with uppercase)
+                if variant_name
+                    .chars()
+                    .next()
+                    .is_some_and(|c| c.is_ascii_uppercase())
+                {
+                    // For color enum variants, try to map common field names to indices
+                    match field_name {
+                        // Index 0: First position fields
+                        "red" | "r" | "hue" | "h" | "lightness" | "l" | "x" => ".0.0".to_string(),
+                        // Index 1: Second position fields (including special cases)
+                        "green" | "g" | "saturation" | "s" | "y" | "whiteness" | "chroma" | "c" => {
+                            ".0.1".to_string()
+                        }
+                        // Index 2: Third position fields
+                        "blue" | "b" | "value" | "v" | "z" | "blackness" => ".0.2".to_string(),
+                        // Index 3: Fourth position fields
+                        "alpha" | "w" => ".0.3".to_string(),
+                        // Special case for 'a' - could be alpha or Lab 'a' component
+                        "a" => {
+                            if variant_name.contains("Lab") {
+                                ".0.1".to_string() // Lab 'a' component
+                            } else {
+                                ".0.3".to_string() // Alpha component
+                            }
+                        }
+                        _ => {
+                            // Generic enum variant field access -> use tuple index 0 and preserve
+                            // field path
+                            if parts.len() > 3 {
+                                format!(".0.{}", parts[2..].join("."))
+                            } else {
+                                format!(".0.{field_name}")
+                            }
+                        }
+                    }
+                } else {
+                    // Not an enum variant, keep original path
+                    path.to_string()
+                }
+            } else {
+                // Not enough parts, keep original path
+                path.to_string()
+            }
+        }
         _ => path.to_string(),
     }
 }
@@ -238,11 +365,11 @@ pub async fn execute_brp_method_with_format_discovery(
         ));
     }
 
-    // Check if this is a component format error that we can fix
+    // Check if this is a type format error that we can fix
     if let BrpResult::Error(ref error) = initial_result {
         debug_info.push(format!(
-            "Format Discovery: Got error code {}, checking if component method",
-            error.code
+            "Format Discovery: Got error code {}, checking if method '{}' supports format discovery",
+            error.code, method
         ));
 
         if FORMAT_DISCOVERY_METHODS.contains(&method) {
@@ -291,94 +418,180 @@ pub async fn execute_brp_method_with_format_discovery(
     })
 }
 
-/// Detect if an error is a type format error that can be fixed
+/// Detect if an error is a type format error that can be fixed (component or resource)
 pub const fn is_type_format_error(error: &BrpError) -> bool {
-    error.code == TYPE_FORMAT_ERROR_CODE
+    error.code == COMPONENT_FORMAT_ERROR_CODE || error.code == RESOURCE_FORMAT_ERROR_CODE
 }
 
-/// Analyze error message to identify known patterns
-pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
-    let message = &error.message;
+/// Check for access error pattern
+fn check_access_error(message: &str) -> Option<ErrorPattern> {
+    let access_error_regex = ACCESS_ERROR_REGEX.get_or_init(|| {
+        Regex::new(r"Error accessing element with `([^`]+)` access(?:\s*\(offset \d+\))?: (.+)")
+            .unwrap()
+    });
 
-    // Pattern 1: Transform sequence errors
+    access_error_regex.captures(message).map(|captures| {
+        let access = captures[1].to_string();
+        let error_type = captures[2].to_string();
+        ErrorPattern::AccessError { access, error_type }
+    })
+}
+
+/// Check for type mismatch pattern
+fn check_type_mismatch(message: &str) -> Option<ErrorPattern> {
+    let type_mismatch_regex = TYPE_MISMATCH_REGEX.get_or_init(|| {
+        Regex::new(r"Expected ([a-zA-Z0-9_\[\]]+) access to access a ([a-zA-Z0-9_]+), found a ([a-zA-Z0-9_]+) instead\.")
+            .unwrap()
+    });
+
+    type_mismatch_regex.captures(message).map(|captures| {
+        let access = captures[1].to_string();
+        let expected = captures[2].to_string();
+        let actual = captures[3].to_string();
+        ErrorPattern::TypeMismatch {
+            expected,
+            actual,
+            access,
+        }
+    })
+}
+
+/// Check for variant type mismatch pattern
+fn check_variant_type_mismatch(message: &str) -> Option<ErrorPattern> {
+    let variant_type_mismatch_regex = VARIANT_TYPE_MISMATCH_REGEX.get_or_init(|| {
+        Regex::new(r"Expected variant ([a-zA-Z0-9_\[\]]+) access to access a ([a-zA-Z0-9_]+) variant, found a ([a-zA-Z0-9_]+) variant instead\.")
+            .unwrap()
+    });
+
+    variant_type_mismatch_regex
+        .captures(message)
+        .map(|captures| {
+            let access = captures[1].to_string();
+            let expected = captures[2].to_string();
+            let actual = captures[3].to_string();
+            ErrorPattern::VariantTypeMismatch {
+                expected,
+                actual,
+                access,
+            }
+        })
+}
+
+/// Check for missing field pattern
+fn check_missing_field(message: &str) -> Option<ErrorPattern> {
+    let missing_field_regex = MISSING_FIELD_REGEX.get_or_init(|| {
+        Regex::new(r#"The ([a-zA-Z0-9_]+) accessed doesn't have (?:an? )?[`"]([^`"]+)[`"] field"#)
+            .unwrap()
+    });
+
+    missing_field_regex.captures(message).map(|captures| {
+        let type_name = captures[1].to_string();
+        let field_name = captures[2].to_string();
+        ErrorPattern::MissingField {
+            field_name,
+            type_name,
+        }
+    })
+}
+
+/// Check for unknown component pattern
+fn check_unknown_component(message: &str) -> Option<ErrorPattern> {
+    let unknown_component_regex = UNKNOWN_COMPONENT_REGEX
+        .get_or_init(|| Regex::new(r"Unknown component type: `([^`]+)`").unwrap());
+
+    unknown_component_regex.captures(message).map(|captures| {
+        let component_path = captures[1].to_string();
+        ErrorPattern::UnknownComponent { component_path }
+    })
+}
+
+/// Check for transform sequence pattern
+fn check_transform_sequence(message: &str) -> Option<ErrorPattern> {
     let transform_regex = TRANSFORM_SEQUENCE_REGEX
         .get_or_init(|| Regex::new(r"expected a sequence of (\d+) f32 values").unwrap());
 
-    if let Some(captures) = transform_regex.captures(message) {
-        if let Ok(count) = captures[1].parse::<usize>() {
-            return ErrorAnalysis {
-                pattern: Some(ErrorPattern::TransformSequence {
-                    expected_count: count,
-                }),
-            };
-        }
-    }
+    transform_regex.captures(message).and_then(|captures| {
+        captures[1]
+            .parse::<usize>()
+            .ok()
+            .map(|count| ErrorPattern::TransformSequence {
+                expected_count: count,
+            })
+    })
+}
 
-    // Pattern 2: Expected specific type
+/// Check for expected type pattern
+fn check_expected_type(message: &str) -> Option<ErrorPattern> {
     let expected_type_regex = EXPECTED_TYPE_REGEX
-        .get_or_init(|| Regex::new(r"expected ([a-zA-Z_:]+(?::[a-zA-Z_:]+)*)").unwrap());
+        .get_or_init(|| Regex::new(r"expected `([a-zA-Z_:]+(?::[a-zA-Z_:]+)*)`").unwrap());
 
-    if let Some(captures) = expected_type_regex.captures(message) {
+    expected_type_regex.captures(message).map(|captures| {
         let expected_type = captures[1].to_string();
+        ErrorPattern::ExpectedType { expected_type }
+    })
+}
+
+/// Check for math type array pattern
+fn check_math_type_array(message: &str) -> Option<ErrorPattern> {
+    let math_type_array_regex = MATH_TYPE_ARRAY_REGEX.get_or_init(|| {
+        Regex::new(r"(Vec2|Vec3|Vec4|Quat)\s+(?:expects?|requires?|needs?)\s+array").unwrap()
+    });
+
+    math_type_array_regex.captures(message).map(|captures| {
+        let math_type = captures[1].to_string();
+        ErrorPattern::MathTypeArray { math_type }
+    })
+}
+
+/// Check for tuple struct path pattern
+fn check_tuple_struct_path(message: &str) -> Option<ErrorPattern> {
+    let tuple_struct_path_regex = TUPLE_STRUCT_PATH_REGEX
+        .get_or_init(|| Regex::new(r#"(?:at path|path)\s+[`"]?([^`"\s]+)[`"]?"#).unwrap());
+
+    tuple_struct_path_regex.captures(message).map(|captures| {
+        let field_path = captures[1].to_string();
+        ErrorPattern::TupleStructAccess { field_path }
+    })
+}
+
+/// Check for unknown component type pattern
+fn check_unknown_component_type(message: &str) -> Option<ErrorPattern> {
+    let unknown_component_type_regex = UNKNOWN_COMPONENT_TYPE_REGEX.get_or_init(|| {
+        Regex::new(r"Unknown component type(?::\s*)?[`']?([^`'\s]+)[`']?").unwrap()
+    });
+
+    unknown_component_type_regex
+        .captures(message)
+        .map(|captures| {
+            let component_type = captures[1].to_string();
+            ErrorPattern::UnknownComponentType { component_type }
+        })
+}
+
+/// Analyze error message to identify known patterns using exact regex matching
+pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
+    let message = &error.message;
+
+    // Pattern 1: Access errors
+    if let Some(pattern) = check_access_error(message) {
         return ErrorAnalysis {
-            pattern: Some(ErrorPattern::ExpectedType { expected_type }),
+            pattern: Some(pattern),
         };
     }
 
-    // Pattern 3: Math type array format
-    if message.contains("Vec3")
-        || message.contains("Quat")
-        || message.contains("Vec2")
-        || message.contains("Vec4")
+    // Check all patterns
+    if let Some(pattern) = check_type_mismatch(message)
+        .or_else(|| check_variant_type_mismatch(message))
+        .or_else(|| check_missing_field(message))
+        .or_else(|| check_unknown_component(message))
+        .or_else(|| check_transform_sequence(message))
+        .or_else(|| check_expected_type(message))
+        .or_else(|| check_math_type_array(message))
+        .or_else(|| check_tuple_struct_path(message))
+        .or_else(|| check_unknown_component_type(message))
     {
-        let math_type = if message.contains("Vec3") {
-            "Vec3".to_string()
-        } else if message.contains("Quat") {
-            "Quat".to_string()
-        } else if message.contains("Vec2") {
-            "Vec2".to_string()
-        } else {
-            "Vec4".to_string()
-        };
-
         return ErrorAnalysis {
-            pattern: Some(ErrorPattern::MathTypeArray { math_type }),
-        };
-    }
-
-    // Pattern 4: Unknown component type (DynamicEnum issue)
-    if message.contains("Unknown component type") && message.contains("DynamicEnum") {
-        let component_type = message
-            .split("Unknown component type: ")
-            .nth(1)
-            .unwrap_or("unknown")
-            .trim()
-            .to_string();
-
-        return ErrorAnalysis {
-            pattern: Some(ErrorPattern::UnknownComponentType { component_type }),
-        };
-    }
-
-    // Pattern 5: Tuple struct access errors
-    if message.contains("found a tuple struct instead")
-        || message.contains("tuple struct")
-        || (message.contains("expected") && message.contains("found tuple"))
-    {
-        // Try to extract the field path from the error message
-        let field_path = if message.contains("at path") {
-            message
-                .split("at path")
-                .nth(1)
-                .and_then(|s| s.split_whitespace().next())
-                .unwrap_or(".0")
-                .to_string()
-        } else {
-            ".0".to_string() // Default to first element
-        };
-
-        return ErrorAnalysis {
-            pattern: Some(ErrorPattern::TupleStructAccess { field_path }),
+            pattern: Some(pattern),
         };
     }
 
@@ -587,12 +800,39 @@ pub fn apply_pattern_fix(
         ErrorPattern::MathTypeArray { math_type } => {
             apply_math_type_array_fix(type_name, original_value, math_type)
         }
-        ErrorPattern::UnknownComponentType { .. } => {
-            // This pattern is handled by Tier 2 (registry checking), not direct conversion
+        ErrorPattern::UnknownComponentType { .. } | ErrorPattern::UnknownComponent { .. } => {
+            // These patterns are handled by Tier 2 (registry checking), not direct conversion
             None
         }
         ErrorPattern::TupleStructAccess { field_path } => {
-            fix_tuple_struct_path(type_name, original_value, field_path)
+            fix_tuple_struct_format(type_name, original_value, field_path)
+        }
+        ErrorPattern::AccessError { access, error_type } => {
+            // Handle Bevy AccessError patterns - convert field access to tuple access
+            fix_access_error(type_name, original_value, access, error_type)
+        }
+        ErrorPattern::TypeMismatch {
+            expected,
+            actual,
+            access,
+        } => {
+            // Handle type mismatch errors
+            fix_type_mismatch(type_name, original_value, expected, actual, access)
+        }
+        ErrorPattern::VariantTypeMismatch {
+            expected,
+            actual,
+            access,
+        } => {
+            // Handle variant type mismatch for enums
+            fix_variant_type_mismatch(type_name, original_value, expected, actual, access)
+        }
+        ErrorPattern::MissingField {
+            field_name,
+            type_name: _,
+        } => {
+            // Handle missing field errors - convert to tuple access
+            fix_missing_field(type_name, original_value, field_name)
         }
     }
 }
@@ -716,7 +956,7 @@ fn convert_to_string_format(type_name: &str, original_value: &Value) -> Option<(
 }
 
 /// Fix tuple struct path access errors
-fn fix_tuple_struct_path(
+fn fix_tuple_struct_format(
     type_name: &str,
     original_value: &Value,
     field_path: &str,
@@ -731,7 +971,7 @@ fn fix_tuple_struct_path(
     // - Enum tuple variants like LinearRgba with color field names
 
     // Apply enum-specific path fixes
-    let fixed_path = fix_enum_tuple_path(field_path);
+    let fixed_path = fix_tuple_struct_path(field_path);
 
     match original_value {
         Value::Object(obj) => {
@@ -1276,4 +1516,679 @@ fn tier_info_to_debug_strings(tier_info: &[TierInfo]) -> Vec<String> {
     }
 
     debug_strings
+}
+
+/// Extract path information from error context strings
+/// Used to parse paths from error messages like "at path .LinearRgba.red"
+#[allow(clippy::option_if_let_else)]
+fn extract_path_from_error_context(error_message: &str) -> Option<String> {
+    // Pattern 1: "at path X" or "path X"
+    if let Some(start_idx) = error_message.find("at path ") {
+        let path_start = start_idx + "at path ".len();
+        extract_path_from_position(error_message, path_start)
+    } else if let Some(start_idx) = error_message.find("path ") {
+        let path_start = start_idx + "path ".len();
+        extract_path_from_position(error_message, path_start)
+    } else {
+        None
+    }
+}
+
+/// Helper function to extract path from a specific position in an error message
+fn extract_path_from_position(error_message: &str, start_pos: usize) -> Option<String> {
+    let remaining = &error_message[start_pos..];
+
+    // Remove quotes if present
+    let trimmed = remaining.trim_start_matches(['`', '"']);
+
+    // Find the end of the path (space, quote, or end of string)
+    let end_pos = trimmed
+        .find([' ', '`', '"', '.', ',', ':', ';'])
+        .unwrap_or(trimmed.len());
+
+    if end_pos > 0 {
+        Some(trimmed[..end_pos].to_string())
+    } else {
+        None
+    }
+}
+
+/// Fix Bevy `AccessError` patterns
+fn fix_access_error(
+    type_name: &str,
+    original_value: &Value,
+    access: &str,
+    error_type: &str,
+) -> Option<(Value, String)> {
+    // Use helper functions to extract more information from the error_type
+    let field_path = extract_path_from_error_context(error_type);
+
+    // If we found a path, try to fix tuple struct access
+    if let Some(path) = field_path {
+        return fix_tuple_struct_format(type_name, original_value, &path);
+    }
+
+    // Fallback: Try generic access pattern fixes based on the access type
+    match access {
+        "Field" | "FieldMut" => {
+            // Field access errors often mean we're trying to access a field on a tuple struct
+            // Try converting to tuple access
+            match original_value {
+                Value::Object(obj) if obj.len() == 1 => {
+                    if let Some((field_name, value)) = obj.iter().next() {
+                        let hint = format!(
+                            "`{type_name}` AccessError with {access} access: converted field '{field_name}' to tuple access"
+                        );
+                        return Some((value.clone(), hint));
+                    }
+                }
+                _ => {}
+            }
+        }
+        "TupleIndex" => {
+            // Tuple index access errors might mean incorrect array format
+            if let Value::Array(arr) = original_value {
+                if !arr.is_empty() {
+                    let hint = format!(
+                        "`{type_name}` AccessError with {access} access: using first array element"
+                    );
+                    return Some((arr[0].clone(), hint));
+                }
+            }
+        }
+        _ => {}
+    }
+
+    None
+}
+
+/// Fix type mismatch errors
+fn fix_type_mismatch(
+    type_name: &str,
+    original_value: &Value,
+    expected: &str,
+    actual: &str,
+    access: &str,
+) -> Option<(Value, String)> {
+    // Common type mismatches and their fixes
+    match (expected, actual) {
+        // Trying to access a struct field on a tuple struct
+        ("struct", "tuple_struct") => match original_value {
+            Value::Object(obj) if obj.len() == 1 => {
+                if let Some((field_name, value)) = obj.iter().next() {
+                    let hint = format!(
+                        "`{type_name}` TypeMismatch: Expected {expected} access to access a {actual}, \
+                            converted field '{field_name}' to tuple access"
+                    );
+                    return Some((value.clone(), hint));
+                }
+            }
+            _ => {}
+        },
+        // Trying to access a tuple index on a struct
+        ("tuple_struct", "struct") => {
+            if let Value::Array(arr) = original_value {
+                if !arr.is_empty() {
+                    let hint = format!(
+                        "`{type_name}` TypeMismatch: Expected {expected} access to access a {actual}, \
+                        using first array element"
+                    );
+                    return Some((arr[0].clone(), hint));
+                }
+            }
+        }
+        // Array vs object mismatches
+        ("array", "object") => {
+            if let Some(array_value) = transform_object_to_array(original_value) {
+                let hint = format!(
+                    "`{type_name}` TypeMismatch: Expected {expected} access to access a {actual}, \
+                    converted object to array"
+                );
+                return Some((array_value, hint));
+            }
+        }
+        ("object", "array") => {
+            if let Some(object_value) = transform_array_to_object(original_value) {
+                let hint = format!(
+                    "`{type_name}` TypeMismatch: Expected {expected} access to access a {actual}, \
+                    converted array to object"
+                );
+                return Some((object_value, hint));
+            }
+        }
+        // String vs other type mismatches
+        ("string", _) => {
+            if let Some(string_value) = extract_string_value(original_value) {
+                let hint = format!(
+                    "`{type_name}` TypeMismatch: Expected {expected} access to access a {actual}, \
+                    extracted string value: {}",
+                    string_value.1
+                );
+                return Some((Value::String(string_value.0), hint));
+            }
+        }
+        _ => {}
+    }
+
+    // Try using access pattern to determine fix
+    match access {
+        "Field" | "FieldMut" => {
+            // Field access on wrong type, try tuple conversion
+            match original_value {
+                Value::Object(obj) if obj.len() == 1 => {
+                    if let Some((_, value)) = obj.iter().next() {
+                        let hint = format!(
+                            "`{type_name}` TypeMismatch with {access} access: converted to tuple element"
+                        );
+                        return Some((value.clone(), hint));
+                    }
+                }
+                _ => {}
+            }
+        }
+        "TupleIndex" => {
+            // Tuple index access on wrong type, try array access
+            if let Value::Array(arr) = original_value {
+                if !arr.is_empty() {
+                    let hint = format!(
+                        "`{type_name}` TypeMismatch with {access} access: using array element"
+                    );
+                    return Some((arr[0].clone(), hint));
+                }
+            }
+        }
+        _ => {}
+    }
+
+    None
+}
+
+/// Fix variant type mismatch for enums
+fn fix_variant_type_mismatch(
+    type_name: &str,
+    original_value: &Value,
+    expected: &str,
+    actual: &str,
+    access: &str,
+) -> Option<(Value, String)> {
+    // Common enum variant mismatches
+    match (expected, actual) {
+        // Tuple variant vs struct variant
+        ("tuple", "struct") => match original_value {
+            Value::Object(obj) if obj.len() == 1 => {
+                if let Some((variant_name, value)) = obj.iter().next() {
+                    let hint = format!(
+                        "`{type_name}` VariantTypeMismatch: Expected {expected} variant access to access a {actual} variant, \
+                            converted '{variant_name}' to tuple variant format"
+                    );
+                    return Some((value.clone(), hint));
+                }
+            }
+            _ => {}
+        },
+        // Struct variant vs tuple variant
+        ("struct", "tuple") => {
+            if let Value::Array(arr) = original_value {
+                if arr.len() == 1 {
+                    // Single element tuple variant, convert to struct-like format
+                    let hint = format!(
+                        "`{type_name}` VariantTypeMismatch: Expected {expected} variant access to access a {actual} variant, \
+                        converted array to struct variant format"
+                    );
+                    return Some((arr[0].clone(), hint));
+                }
+            }
+        }
+        _ => {}
+    }
+
+    // Use access type to determine conversion
+    match access {
+        "Field" | "FieldMut" => {
+            // Field access on enum variant, likely needs tuple conversion
+            match original_value {
+                Value::Object(obj) if obj.len() == 1 => {
+                    if let Some((_, value)) = obj.iter().next() {
+                        let hint = format!(
+                            "`{type_name}` VariantTypeMismatch with {access} access: converted to variant element"
+                        );
+                        return Some((value.clone(), hint));
+                    }
+                }
+                _ => {}
+            }
+        }
+        "TupleIndex" => {
+            // Tuple index access on enum variant
+            if let Value::Array(arr) = original_value {
+                if !arr.is_empty() {
+                    let hint = format!(
+                        "`{type_name}` VariantTypeMismatch with {access} access: using variant element"
+                    );
+                    return Some((arr[0].clone(), hint));
+                }
+            }
+        }
+        _ => {}
+    }
+
+    None
+}
+
+/// Fix missing field errors
+fn fix_missing_field(
+    type_name: &str,
+    original_value: &Value,
+    field_name: &str,
+) -> Option<(Value, String)> {
+    // Missing field errors often occur when:
+    // 1. Trying to access a named field on a tuple struct
+    // 2. Trying to access a field that doesn't exist
+    // 3. Enum variant field access issues
+
+    // Check if this is a tuple struct access issue
+    if field_name
+        .chars()
+        .next()
+        .is_some_and(|c| c.is_ascii_lowercase())
+    {
+        // Likely a field name like "red", "x", "y", etc.
+        // Try to convert to tuple struct access
+        let fixed_path = fix_tuple_struct_path(&format!(".{field_name}"));
+        if fixed_path != format!(".{field_name}") {
+            // The path was transformed, so it's likely a tuple struct
+            match original_value {
+                Value::Array(arr) => {
+                    // Extract the correct index from the fixed path
+                    if let Some(index_str) = fixed_path.strip_prefix('.') {
+                        if let Ok(index) = index_str.parse::<usize>() {
+                            if let Some(element) = arr.get(index) {
+                                let hint = format!(
+                                    "`{type_name}` MissingField '{field_name}': converted to tuple struct index {index}"
+                                );
+                                return Some((element.clone(), hint));
+                            }
+                        }
+                    }
+                }
+                Value::Object(obj) if obj.len() == 1 => {
+                    // Single field object, likely needs tuple conversion
+                    if let Some((_, value)) = obj.iter().next() {
+                        let hint = format!(
+                            "`{type_name}` MissingField '{field_name}': converted object to tuple struct access"
+                        );
+                        return Some((value.clone(), hint));
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // Check if this is an enum variant field access issue
+    if field_name
+        .chars()
+        .next()
+        .is_some_and(|c| c.is_ascii_uppercase())
+    {
+        // Likely an enum variant name like "LinearRgba"
+        if let Value::Object(obj) = original_value {
+            // Try to find the variant field
+            if let Some(variant_value) = obj.get(field_name) {
+                let hint = format!(
+                    "`{type_name}` MissingField '{field_name}': extracted enum variant value"
+                );
+                return Some((variant_value.clone(), hint));
+            } else if obj.len() == 1 {
+                // Single field object, use its value
+                if let Some((actual_field, value)) = obj.iter().next() {
+                    let hint = format!(
+                        "`{type_name}` MissingField '{field_name}': used field '{actual_field}' instead"
+                    );
+                    return Some((value.clone(), hint));
+                }
+            }
+        }
+    }
+
+    // Generic fallback: try to extract any reasonable value
+    match original_value {
+        Value::Object(obj) if obj.len() == 1 => {
+            if let Some((actual_field, value)) = obj.iter().next() {
+                let hint = format!(
+                    "`{type_name}` MissingField '{field_name}': used available field '{actual_field}'"
+                );
+                return Some((value.clone(), hint));
+            }
+        }
+        Value::Array(arr) if !arr.is_empty() => {
+            let hint =
+                format!("`{type_name}` MissingField '{field_name}': used first array element");
+            return Some((arr[0].clone(), hint));
+        }
+        _ => {}
+    }
+
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn test_fix_tuple_struct_path_linear_rgba() {
+        // Test the original LinearRgba tuple struct error case
+        assert_eq!(fix_tuple_struct_path(".LinearRgba.red"), ".0.0");
+        assert_eq!(fix_tuple_struct_path(".LinearRgba.r"), ".0.0");
+        assert_eq!(fix_tuple_struct_path(".LinearRgba.green"), ".0.1");
+        assert_eq!(fix_tuple_struct_path(".LinearRgba.g"), ".0.1");
+        assert_eq!(fix_tuple_struct_path(".LinearRgba.blue"), ".0.2");
+        assert_eq!(fix_tuple_struct_path(".LinearRgba.b"), ".0.2");
+        assert_eq!(fix_tuple_struct_path(".LinearRgba.alpha"), ".0.3");
+        assert_eq!(fix_tuple_struct_path(".LinearRgba.a"), ".0.3");
+    }
+
+    #[test]
+    fn test_fix_tuple_struct_path_other_color_variants() {
+        // Test other Bevy color variants
+        assert_eq!(fix_tuple_struct_path(".Srgba.red"), ".0.0");
+        assert_eq!(fix_tuple_struct_path(".Hsla.hue"), ".0.0");
+        assert_eq!(fix_tuple_struct_path(".Hsva.saturation"), ".0.1");
+        assert_eq!(fix_tuple_struct_path(".Hwba.blackness"), ".0.2");
+        assert_eq!(fix_tuple_struct_path(".Laba.a"), ".0.1");
+        assert_eq!(fix_tuple_struct_path(".Lcha.chroma"), ".0.1");
+        assert_eq!(fix_tuple_struct_path(".Xyza.z"), ".0.2");
+    }
+
+    #[test]
+    fn test_fix_tuple_struct_path_math_types() {
+        // Test Bevy math vector types
+        assert_eq!(fix_tuple_struct_path(".Vec3.x"), ".0.0");
+        assert_eq!(fix_tuple_struct_path(".Vec3.y"), ".0.1");
+        assert_eq!(fix_tuple_struct_path(".Vec3.z"), ".0.2");
+        assert_eq!(fix_tuple_struct_path(".Quat.w"), ".0.3");
+        assert_eq!(fix_tuple_struct_path(".IVec2.x"), ".0.0");
+        assert_eq!(fix_tuple_struct_path(".DVec4.w"), ".0.3");
+    }
+
+    #[test]
+    fn test_fix_tuple_struct_path_simple_access() {
+        // Test simple field access on tuple structs
+        assert_eq!(fix_tuple_struct_path(".x"), ".0");
+        assert_eq!(fix_tuple_struct_path(".y"), ".1");
+        assert_eq!(fix_tuple_struct_path(".z"), ".2");
+    }
+
+    #[test]
+    fn test_analyze_error_pattern_tuple_struct_access() {
+        let error = BrpError {
+            code:    COMPONENT_FORMAT_ERROR_CODE,
+            message: "Error accessing element with Field access at path .LinearRgba.red"
+                .to_string(),
+            data:    None,
+        };
+
+        let analysis = analyze_error_pattern(&error);
+        assert!(analysis.pattern.is_some());
+
+        if let Some(ErrorPattern::TupleStructAccess { field_path }) = analysis.pattern {
+            assert_eq!(field_path, ".LinearRgba.red");
+        } else {
+            panic!(
+                "Expected TupleStructAccess pattern, got: {:?}",
+                analysis.pattern
+            );
+        }
+    }
+
+    #[test]
+    fn test_analyze_error_pattern_transform_sequence() {
+        let error = BrpError {
+            code:    COMPONENT_FORMAT_ERROR_CODE,
+            message: "Transform component expected a sequence of 3 f32 values".to_string(),
+            data:    None,
+        };
+
+        let analysis = analyze_error_pattern(&error);
+        assert!(analysis.pattern.is_some());
+
+        if let Some(ErrorPattern::TransformSequence { expected_count }) = analysis.pattern {
+            assert_eq!(expected_count, 3);
+        } else {
+            panic!(
+                "Expected TransformSequence pattern, got: {:?}",
+                analysis.pattern
+            );
+        }
+    }
+
+    #[test]
+    fn test_analyze_error_pattern_expected_type() {
+        let error = BrpError {
+            code:    COMPONENT_FORMAT_ERROR_CODE,
+            message: "expected `bevy_ecs::name::Name`".to_string(),
+            data:    None,
+        };
+
+        let analysis = analyze_error_pattern(&error);
+        assert!(analysis.pattern.is_some());
+
+        if let Some(ErrorPattern::ExpectedType { expected_type }) = analysis.pattern {
+            assert_eq!(expected_type, "bevy_ecs::name::Name");
+        } else {
+            panic!("Expected ExpectedType pattern, got: {:?}", analysis.pattern);
+        }
+    }
+
+    #[test]
+    fn test_analyze_error_pattern_math_type_array() {
+        let error = BrpError {
+            code:    COMPONENT_FORMAT_ERROR_CODE,
+            message: "Vec3 expects array format".to_string(),
+            data:    None,
+        };
+
+        let analysis = analyze_error_pattern(&error);
+        assert!(analysis.pattern.is_some());
+
+        if let Some(ErrorPattern::MathTypeArray { math_type }) = analysis.pattern {
+            assert_eq!(math_type, "Vec3");
+        } else {
+            panic!(
+                "Expected MathTypeArray pattern, got: {:?}",
+                analysis.pattern
+            );
+        }
+    }
+
+    #[test]
+    fn test_apply_pattern_fix_linear_rgba_case() {
+        // Test the original failing case: LinearRgba tuple struct access
+        let pattern = ErrorPattern::TupleStructAccess {
+            field_path: ".LinearRgba.red".to_string(),
+        };
+
+        let original_value = json!({
+            "LinearRgba": { "red": 1.0, "green": 0.0, "blue": 0.0, "alpha": 1.0 }
+        });
+
+        let result = apply_pattern_fix(&pattern, "bevy_render::color::Color", &original_value);
+        assert!(result.is_some());
+
+        let (corrected_value, hint) = result.unwrap();
+        // Should extract the nested object since we're accessing a tuple variant
+        assert!(corrected_value.is_object());
+        assert!(hint.contains("tuple struct"));
+        assert!(hint.contains("numeric indices"));
+
+        // Verify the extracted object has the correct color fields
+        let obj = corrected_value.as_object().unwrap();
+        assert!((obj.get("red").unwrap().as_f64().unwrap() - 1.0).abs() < f64::EPSILON);
+        assert!((obj.get("green").unwrap().as_f64().unwrap() - 0.0).abs() < f64::EPSILON);
+        assert!((obj.get("blue").unwrap().as_f64().unwrap() - 0.0).abs() < f64::EPSILON);
+        assert!((obj.get("alpha").unwrap().as_f64().unwrap() - 1.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_apply_pattern_fix_transform_sequence() {
+        let pattern = ErrorPattern::TransformSequence { expected_count: 3 };
+
+        let original_value = json!({
+            "translation": { "x": 1.0, "y": 2.0, "z": 3.0 },
+            "rotation": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 },
+            "scale": { "x": 1.0, "y": 1.0, "z": 1.0 }
+        });
+
+        let result = apply_pattern_fix(
+            &pattern,
+            "bevy_transform::components::transform::Transform",
+            &original_value,
+        );
+        assert!(result.is_some());
+
+        let (corrected_value, hint) = result.unwrap();
+        assert!(corrected_value.is_object());
+        assert!(hint.contains("Transform"));
+        assert!(hint.contains("array format"));
+
+        // Check that math types were converted to arrays
+        let corrected_obj = corrected_value.as_object().unwrap();
+        if let Some(translation) = corrected_obj.get("translation") {
+            assert!(translation.is_array());
+            let arr = translation.as_array().unwrap();
+            assert_eq!(arr.len(), 3);
+        }
+    }
+
+    #[test]
+    fn test_apply_pattern_fix_expected_type_name() {
+        let pattern = ErrorPattern::ExpectedType {
+            expected_type: "bevy_ecs::name::Name".to_string(),
+        };
+
+        let original_value = json!({ "name": "TestEntity" });
+
+        let result = apply_pattern_fix(&pattern, "bevy_ecs::name::Name", &original_value);
+        assert!(result.is_some());
+
+        let (corrected_value, hint) = result.unwrap();
+        assert_eq!(corrected_value, json!("TestEntity"));
+        assert!(hint.contains("Name component"));
+        assert!(hint.contains("string format"));
+    }
+
+    #[test]
+    fn test_apply_pattern_fix_math_type_array() {
+        let pattern = ErrorPattern::MathTypeArray {
+            math_type: "Vec3".to_string(),
+        };
+
+        let original_value = json!({ "x": 1.0, "y": 2.0, "z": 3.0 });
+
+        let result = apply_pattern_fix(&pattern, "bevy_math::vector::Vec3", &original_value);
+        assert!(result.is_some());
+
+        let (corrected_value, hint) = result.unwrap();
+        assert_eq!(corrected_value, json!([1.0, 2.0, 3.0]));
+        assert!(hint.contains("Vec3"));
+        assert!(hint.contains("array format"));
+        assert!(hint.contains("[x, y, z]"));
+    }
+
+    #[test]
+    fn test_extract_string_value() {
+        // Test various input formats
+        assert_eq!(
+            extract_string_value(&json!("direct_string")),
+            Some((
+                "direct_string".to_string(),
+                "already string format".to_string()
+            ))
+        );
+
+        assert_eq!(
+            extract_string_value(&json!({"name": "test_name"})),
+            Some(("test_name".to_string(), "from `name` field".to_string()))
+        );
+
+        assert_eq!(
+            extract_string_value(&json!({"value": "test_value"})),
+            Some(("test_value".to_string(), "from `value` field".to_string()))
+        );
+
+        assert_eq!(
+            extract_string_value(&json!(["single_element"])),
+            Some((
+                "single_element".to_string(),
+                "from single-element array".to_string()
+            ))
+        );
+
+        // Test single-field object
+        assert_eq!(
+            extract_string_value(&json!({"custom_field": "custom_value"})),
+            Some((
+                "custom_value".to_string(),
+                "from `custom_field` field".to_string()
+            ))
+        );
+    }
+
+    #[test]
+    fn test_convert_to_math_type_array() {
+        // Test Vec3 conversion
+        let vec3_obj = json!({ "x": 1.0, "y": 2.0, "z": 3.0 });
+        let result = convert_to_math_type_array(&vec3_obj, "Vec3");
+        assert_eq!(result, Some(json!([1.0, 2.0, 3.0])));
+
+        // Test Vec2 conversion
+        let vec2_obj = json!({ "x": 5.0, "y": 6.0 });
+        let result = convert_to_math_type_array(&vec2_obj, "Vec2");
+        assert_eq!(result, Some(json!([5.0, 6.0])));
+
+        // Test Quat conversion
+        let quat_obj = json!({ "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 });
+        let result = convert_to_math_type_array(&quat_obj, "Quat");
+        assert_eq!(result, Some(json!([0.0, 0.0, 0.0, 1.0])));
+
+        // Test already array format
+        let vec3_array = json!([1.0, 2.0, 3.0]);
+        let result = convert_to_math_type_array(&vec3_array, "Vec3");
+        assert_eq!(result, Some(json!([1.0, 2.0, 3.0])));
+
+        // Test invalid input
+        let invalid = json!({ "x": 1.0 }); // Missing y, z for Vec3
+        let result = convert_to_math_type_array(&invalid, "Vec3");
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_is_type_format_error() {
+        // Test component format error
+        let component_error = BrpError {
+            code:    COMPONENT_FORMAT_ERROR_CODE,
+            message: "Component type format error".to_string(),
+            data:    None,
+        };
+        assert!(is_type_format_error(&component_error));
+
+        // Test resource format error
+        let resource_error = BrpError {
+            code:    RESOURCE_FORMAT_ERROR_CODE,
+            message: "Resource type format error".to_string(),
+            data:    None,
+        };
+        assert!(is_type_format_error(&resource_error));
+
+        // Test unrelated error code
+        let other_error = BrpError {
+            code:    -32602, // JSON-RPC invalid params error
+            message: "Invalid params".to_string(),
+            data:    None,
+        };
+        assert!(!is_type_format_error(&other_error));
+    }
 }
