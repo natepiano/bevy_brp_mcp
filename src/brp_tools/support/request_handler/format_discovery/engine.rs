@@ -447,29 +447,10 @@ async fn tiered_type_format_discovery(
 ) -> (Option<(Value, String)>, Vec<TierInfo>) {
     let mut tier_info = Vec::new();
 
-    // ========== TIER 1: Deterministic Pattern Matching ==========
-    // Uses error message patterns to determine exact format mismatches
-    // and applies targeted fixes with high confidence
-    let error_analysis = analyze_error_pattern(error);
-    if let Some(pattern) = &error_analysis.pattern {
-        tier_info.push(TierInfo {
-            tier:      TIER_DETERMINISTIC,
-            tier_name: "Deterministic Pattern Matching".to_string(),
-            action:    format!("Matched pattern: {pattern:?}"),
-            success:   false, // Will be updated if successful
-        });
-
-        if let Some((corrected_value, hint)) = apply_pattern_fix(pattern, type_name, original_value)
-        {
-            tier_info.last_mut().unwrap().success = true;
-            tier_info.last_mut().unwrap().action = format!("Applied pattern fix: {hint}");
-            return (Some((corrected_value, hint)), tier_info);
-        }
-    }
-
-    // ========== TIER 2: Serialization Diagnostics ==========
+    // ========== TIER 1: Serialization Diagnostics ==========
     // For UnknownComponentType errors, queries BRP to check if types
     // support required reflection traits (Serialize/Deserialize)
+    let error_analysis = analyze_error_pattern(error);
     if let Some(ErrorPattern::UnknownComponentType { component_type: _ }) = &error_analysis.pattern
     {
         tier_info.push(TierInfo {
@@ -515,6 +496,25 @@ async fn tiered_type_format_discovery(
                 tier_info.last_mut().unwrap().action =
                     format!("Failed to query serialization info for {type_name}: {e}");
             }
+        }
+    }
+
+    // ========== TIER 2: Deterministic Pattern Matching ==========
+    // Uses error message patterns to determine exact format mismatches
+    // and applies targeted fixes with high confidence
+    if let Some(pattern) = &error_analysis.pattern {
+        tier_info.push(TierInfo {
+            tier:      TIER_DETERMINISTIC,
+            tier_name: "Deterministic Pattern Matching".to_string(),
+            action:    format!("Matched pattern: {pattern:?}"),
+            success:   false, // Will be updated if successful
+        });
+
+        if let Some((corrected_value, hint)) = apply_pattern_fix(pattern, type_name, original_value)
+        {
+            tier_info.last_mut().unwrap().success = true;
+            tier_info.last_mut().unwrap().action = format!("Applied pattern fix: {hint}");
+            return (Some((corrected_value, hint)), tier_info);
         }
     }
 

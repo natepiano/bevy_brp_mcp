@@ -82,10 +82,10 @@ pub async fn handle_tool_call(
         }
 
         // bevy_brp_extras tools
-        name if name == crate::brp_tools::constants::TOOL_BEVY_SHUTDOWN => {
+        name if name == crate::brp_tools::constants::TOOL_BRP_EXTRAS_SHUTDOWN => {
             bevy_shutdown::handle(service, request, context).await
         }
-        name if name == crate::brp_tools::constants::TOOL_BEVY_SCREENSHOT => {
+        name if name == crate::brp_tools::constants::TOOL_BRP_EXTRAS_SCREENSHOT => {
             bevy_screenshot::handle(service, request, context).await
         }
 

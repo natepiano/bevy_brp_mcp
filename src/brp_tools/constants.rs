@@ -92,8 +92,8 @@ pub const TOOL_BEVY_LIST_ACTIVE_WATCHES: &str = "bevy_list_active_watches";
 pub const TOOL_SET_DEBUG_MODE: &str = "set_debug_mode";
 
 // bevy_brp_extras tool names
-pub const TOOL_BEVY_SHUTDOWN: &str = "bevy_shutdown";
-pub const TOOL_BEVY_SCREENSHOT: &str = "bevy_screenshot";
+pub const TOOL_BRP_EXTRAS_SHUTDOWN: &str = "brp_extras_shutdown";
+pub const TOOL_BRP_EXTRAS_SCREENSHOT: &str = "brp_extras_screenshot";
 
 // BRP tool descriptions
 pub const DESC_BRP_LIST: &str = include_help_text!("brp_tools/brp_list.txt");
