@@ -8,7 +8,7 @@ use tokio::time::timeout;
 
 use super::constants::{
     BRP_METHOD_EXTRAS_SCREENSHOT, DEFAULT_BRP_PORT, DESC_BEVY_SCREENSHOT, JSON_FIELD_PATH,
-    JSON_FIELD_PORT, JSON_FIELD_STATUS, PARAM_PORT, TOOL_BEVY_SCREENSHOT,
+    JSON_FIELD_PORT, JSON_FIELD_STATUS, PARAM_PORT, TOOL_BRP_EXTRAS_SCREENSHOT,
 };
 use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
@@ -18,7 +18,7 @@ const PARAM_PATH: &str = "path";
 
 pub fn register_tool() -> Tool {
     Tool {
-        name:         TOOL_BEVY_SCREENSHOT.into(),
+        name:         TOOL_BRP_EXTRAS_SCREENSHOT.into(),
         description:  DESC_BEVY_SCREENSHOT.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property(

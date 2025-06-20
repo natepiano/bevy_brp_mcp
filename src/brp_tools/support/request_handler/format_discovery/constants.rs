@@ -16,8 +16,8 @@ pub const COMPONENT_FORMAT_ERROR_CODE: i32 = -23402;
 pub const RESOURCE_FORMAT_ERROR_CODE: i32 = -23501;
 
 /// Tier constants for format discovery
-pub const TIER_DETERMINISTIC: u8 = 1;
-pub const TIER_SERIALIZATION: u8 = 2;
+pub const TIER_SERIALIZATION: u8 = 1;
+pub const TIER_DETERMINISTIC: u8 = 2;
 pub const TIER_GENERIC_FALLBACK: u8 = 3;
 
 /// Methods that support format discovery (components and resources)
