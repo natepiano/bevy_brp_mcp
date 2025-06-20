@@ -147,6 +147,19 @@ impl ResponseFormatter {
                 builder = builder
                     .add_field(JSON_FIELD_ERROR_CODE, error.code)
                     .add_field(JSON_FIELD_METADATA, metadata_obj);
+
+                // Include error.data if present (contains debug_info, original_error, etc.)
+                if let Some(data) = error.data {
+                    // Merge the error data into the response
+                    if let Some(data_obj) = data.as_object() {
+                        for (key, value) in data_obj {
+                            if key != "metadata" {
+                                // Don't duplicate metadata
+                                builder = builder.add_field(key, value.clone());
+                            }
+                        }
+                    }
+                }
             }
 
             json_response_to_result(&builder.build())

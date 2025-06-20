@@ -11,6 +11,7 @@ use rmcp::Error as McpError;
 use serde_json::{Map, Value};
 
 use super::super::brp_client::{BrpError, BrpResult, execute_brp_method};
+use super::constants::{FIELD_LABEL, FIELD_NAME, FIELD_TEXT, FIELD_VALUE};
 use crate::brp_tools::constants::{
     BRP_METHOD_DESTROY, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_MUTATE_COMPONENT,
     BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_REGISTRY_SCHEMA, BRP_METHOD_SPAWN,
@@ -57,8 +58,7 @@ enum ParameterLocation {
 /// Result of error pattern analysis
 #[derive(Debug, Clone)]
 pub struct ErrorAnalysis {
-    pub pattern:    Option<ErrorPattern>,
-    pub confidence: f32, // 0.0 to 1.0
+    pub pattern: Option<ErrorPattern>,
 }
 
 /// Result of registry checking for serialization support
@@ -131,11 +131,11 @@ fn extract_type_items(params: &Value, location: ParameterLocation) -> Vec<(Strin
         }
         ParameterLocation::ComponentValue => {
             // Extract single component from "component" and "value" fields
-            if let (Some(component_name), Some(value)) = (
+            if let (Some(type_name), Some(value)) = (
                 params.get("component").and_then(Value::as_str),
                 params.get("value"),
             ) {
-                vec![(component_name.to_string(), value.clone())]
+                vec![(type_name.to_string(), value.clone())]
             } else {
                 Vec::new()
             }
@@ -307,10 +307,9 @@ pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
     if let Some(captures) = transform_regex.captures(message) {
         if let Ok(count) = captures[1].parse::<usize>() {
             return ErrorAnalysis {
-                pattern:    Some(ErrorPattern::TransformSequence {
+                pattern: Some(ErrorPattern::TransformSequence {
                     expected_count: count,
                 }),
-                confidence: 0.95,
             };
         }
     }
@@ -322,8 +321,7 @@ pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
     if let Some(captures) = expected_type_regex.captures(message) {
         let expected_type = captures[1].to_string();
         return ErrorAnalysis {
-            pattern:    Some(ErrorPattern::ExpectedType { expected_type }),
-            confidence: 0.90,
+            pattern: Some(ErrorPattern::ExpectedType { expected_type }),
         };
     }
 
@@ -344,8 +342,7 @@ pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
         };
 
         return ErrorAnalysis {
-            pattern:    Some(ErrorPattern::MathTypeArray { math_type }),
-            confidence: 0.85,
+            pattern: Some(ErrorPattern::MathTypeArray { math_type }),
         };
     }
 
@@ -359,8 +356,7 @@ pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
             .to_string();
 
         return ErrorAnalysis {
-            pattern:    Some(ErrorPattern::UnknownComponentType { component_type }),
-            confidence: 0.95,
+            pattern: Some(ErrorPattern::UnknownComponentType { component_type }),
         };
     }
 
@@ -382,16 +378,12 @@ pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
         };
 
         return ErrorAnalysis {
-            pattern:    Some(ErrorPattern::TupleStructAccess { field_path }),
-            confidence: 0.85,
+            pattern: Some(ErrorPattern::TupleStructAccess { field_path }),
         };
     }
 
     // No pattern matched
-    ErrorAnalysis {
-        pattern:    None,
-        confidence: 0.0,
-    }
+    ErrorAnalysis { pattern: None }
 }
 
 /// Check if a type supports serialization by querying the registry schema
@@ -434,55 +426,27 @@ fn analyze_schema_for_type(
     type_name: &str,
     schema_data: &Value,
 ) -> Result<SerializationCheck, McpError> {
-    // Schema response should be an array of type definitions
-    let schemas = schema_data.as_array().ok_or_else(|| {
-        McpError::from(rmcp::model::ErrorData::internal_error(
-            "Schema response is not an array".to_string(),
-            None,
-        ))
-    })?;
-
-    // Look for our specific type
-    for schema in schemas {
-        if let Some(type_path) = schema.get("typePath").and_then(Value::as_str) {
-            if type_path == type_name {
-                // Found our component, check its reflect types
-                let reflect_types = schema
-                    .get("reflectTypes")
-                    .and_then(Value::as_array)
-                    .map(|arr| {
-                        arr.iter()
-                            .filter_map(Value::as_str)
-                            .map(String::from)
-                            .collect::<Vec<_>>()
-                    })
-                    .unwrap_or_default();
-
-                let has_serialize = reflect_types.contains(&"Serialize".to_string());
-                let has_deserialize = reflect_types.contains(&"Deserialize".to_string());
-
-                let diagnostic_message = if !has_serialize || !has_deserialize {
-                    let missing = if !has_serialize && !has_deserialize {
-                        "Serialize and Deserialize"
-                    } else if !has_serialize {
-                        "Serialize"
-                    } else {
-                        "Deserialize"
-                    };
-
-                    format!(
-                        "Type `{type_name}` is missing {missing} trait(s). Available traits: {}. \
-                        To fix this, add #[derive(Serialize, Deserialize)] or use #[reflect(Serialize, Deserialize)] \
-                        in your type definition.",
-                        reflect_types.join(", ")
-                    )
-                } else {
-                    format!("Type `{type_name}` has proper serialization support")
-                };
-
-                return Ok(SerializationCheck { diagnostic_message });
+    // Schema response can be either an array (old format) or an object (new format)
+    // Try object format first (new format where keys are type names)
+    if let Some(schema_obj) = schema_data.as_object() {
+        // Direct lookup by type name
+        if let Some(schema) = schema_obj.get(type_name) {
+            return Ok(analyze_single_type_schema(type_name, schema));
+        }
+    } else if let Some(schemas) = schema_data.as_array() {
+        // Fall back to array format (old format)
+        for schema in schemas {
+            if let Some(type_path) = schema.get("typePath").and_then(Value::as_str) {
+                if type_path == type_name {
+                    return Ok(analyze_single_type_schema(type_name, schema));
+                }
             }
         }
+    } else {
+        return Err(McpError::from(rmcp::model::ErrorData::internal_error(
+            "Schema response is neither an array nor an object".to_string(),
+            None,
+        )));
     }
 
     // Type not found in schema
@@ -492,6 +456,46 @@ fn analyze_schema_for_type(
             This type may not be registered with BRP or may not exist."
         ),
     })
+}
+
+/// Analyze a single type's schema to check serialization support
+fn analyze_single_type_schema(type_name: &str, schema: &Value) -> SerializationCheck {
+    // Check its reflect types
+    let reflect_types = schema
+        .get("reflectTypes")
+        .and_then(Value::as_array)
+        .map(|arr| {
+            arr.iter()
+                .filter_map(Value::as_str)
+                .map(String::from)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    let has_serialize = reflect_types.contains(&"Serialize".to_string());
+    let has_deserialize = reflect_types.contains(&"Deserialize".to_string());
+
+    let diagnostic_message = if !has_serialize || !has_deserialize {
+        let missing = if !has_serialize && !has_deserialize {
+            "Serialize and Deserialize"
+        } else if !has_serialize {
+            "Serialize"
+        } else {
+            "Deserialize"
+        };
+
+        format!(
+            "Type `{type_name}` cannot be used with BRP because it lacks {missing} trait(s). \
+            Available traits: {}. \
+            To fix this, the type definition needs both #[derive(Serialize, Deserialize)] \
+            AND #[reflect(Serialize, Deserialize)] attributes.",
+            reflect_types.join(", ")
+        )
+    } else {
+        format!("Type `{type_name}` has proper serialization support")
+    };
+
+    SerializationCheck { diagnostic_message }
 }
 
 /// Generic function to convert object values to array format
@@ -520,223 +524,195 @@ fn convert_to_array_format(value: &Value, field_names: &[&str]) -> Option<Value>
     }
 }
 
+/// Generic function to convert math types to array format
+/// Supports Vec2 [x, y], Vec3 [x, y, z], Vec4/Quat [x, y, z, w]
+fn convert_to_math_type_array(value: &Value, math_type: &str) -> Option<Value> {
+    let field_names = match math_type {
+        "Vec2" => &["x", "y"][..],
+        "Vec3" => &["x", "y", "z"][..],
+        "Vec4" | "Quat" => &["x", "y", "z", "w"][..],
+        _ => return None,
+    };
+    convert_to_array_format(value, field_names)
+}
+
+/// Extract string value from various input formats
+/// Returns (`extracted_string`, `source_description`)
+fn extract_string_value(value: &Value) -> Option<(String, String)> {
+    match value {
+        Value::Object(obj) => {
+            // Try common field names that might contain the string value
+            for field in [FIELD_NAME, FIELD_VALUE, FIELD_TEXT, FIELD_LABEL] {
+                if let Some(Value::String(s)) = obj.get(field) {
+                    return Some((s.clone(), format!("from `{field}` field")));
+                }
+            }
+            // For single-field objects, use the value
+            if obj.len() == 1 {
+                if let Some((field_name, Value::String(s))) = obj.iter().next() {
+                    return Some((s.clone(), format!("from `{field_name}` field")));
+                }
+            }
+        }
+        Value::Array(arr) => {
+            // If it's an array with one string, extract it
+            if arr.len() == 1 {
+                if let Value::String(s) = &arr[0] {
+                    return Some((s.clone(), "from single-element array".to_string()));
+                }
+            }
+        }
+        Value::String(s) => {
+            // Already a string
+            return Some((s.clone(), "already string format".to_string()));
+        }
+        _ => {}
+    }
+    None
+}
+
 /// Apply specific format correction based on error pattern
 pub fn apply_pattern_fix(
     pattern: &ErrorPattern,
-    component_name: &str,
+    type_name: &str,
     original_value: &Value,
 ) -> Option<(Value, String)> {
     match pattern {
         ErrorPattern::TransformSequence { expected_count } => {
-            apply_transform_sequence_fix(component_name, original_value, *expected_count)
+            apply_transform_sequence_fix(type_name, original_value, *expected_count)
         }
         ErrorPattern::ExpectedType { expected_type } => {
-            apply_expected_type_fix(component_name, original_value, expected_type)
+            apply_expected_type_fix(type_name, original_value, expected_type)
         }
         ErrorPattern::MathTypeArray { math_type } => {
-            apply_math_type_array_fix(component_name, original_value, math_type)
+            apply_math_type_array_fix(type_name, original_value, math_type)
         }
         ErrorPattern::UnknownComponentType { .. } => {
             // This pattern is handled by Tier 2 (registry checking), not direct conversion
             None
         }
         ErrorPattern::TupleStructAccess { field_path } => {
-            fix_tuple_struct_path(component_name, original_value, field_path)
+            fix_tuple_struct_path(type_name, original_value, field_path)
         }
     }
 }
 
 /// Fix Transform component expecting sequence of f32 values
 fn apply_transform_sequence_fix(
-    component_name: &str,
+    type_name: &str,
     original_value: &Value,
     expected_count: usize,
 ) -> Option<(Value, String)> {
+    // Early return for non-object values
+    let Value::Object(obj) = original_value else {
+        return None;
+    };
+
     // Transform typically expects Vec3 arrays for translation/scale and Quat array for rotation
-    if let Value::Object(obj) = original_value {
-        let mut corrected = Map::new();
-        let mut hint_parts = Vec::new();
+    let mut corrected = Map::new();
+    let mut hint_parts = Vec::new();
 
-        // Convert Vec3 fields (translation, scale)
-        for field in ["translation", "scale"] {
-            if let Some(field_value) = obj.get(field) {
-                if let Some(vec3_array) = convert_to_vec3_array(field_value) {
-                    corrected.insert(field.to_string(), vec3_array);
-                    hint_parts.push(format!("`{field}` converted to Vec3 array format"));
-                } else {
-                    corrected.insert(field.to_string(), field_value.clone());
-                }
-            }
-        }
-
-        // Convert Quat field (rotation)
-        if let Some(rotation_value) = obj.get("rotation") {
-            if let Some(quat_array) = convert_to_quat_array(rotation_value) {
-                corrected.insert("rotation".to_string(), quat_array);
-                hint_parts.push("`rotation` converted to Quat array format".to_string());
+    // Convert Vec3 fields (translation, scale)
+    for field in ["translation", "scale"] {
+        if let Some(field_value) = obj.get(field) {
+            if let Some(vec3_array) = convert_to_math_type_array(field_value, "Vec3") {
+                corrected.insert(field.to_string(), vec3_array);
+                hint_parts.push(format!("`{field}` converted to Vec3 array format"));
             } else {
-                corrected.insert("rotation".to_string(), rotation_value.clone());
+                corrected.insert(field.to_string(), field_value.clone());
             }
-        }
-
-        if !corrected.is_empty() {
-            let hint = format!(
-                "`{component_name}` Transform expected {expected_count} f32 values in sequence - {}",
-                hint_parts.join(", ")
-            );
-            return Some((Value::Object(corrected), hint));
         }
     }
 
-    None
+    // Convert Quat field (rotation)
+    if let Some(rotation_value) = obj.get("rotation") {
+        if let Some(quat_array) = convert_to_math_type_array(rotation_value, "Quat") {
+            corrected.insert("rotation".to_string(), quat_array);
+            hint_parts.push("`rotation` converted to Quat array format".to_string());
+        } else {
+            corrected.insert("rotation".to_string(), rotation_value.clone());
+        }
+    }
+
+    if corrected.is_empty() {
+        None
+    } else {
+        let hint = format!(
+            "`{type_name}` Transform expected {expected_count} f32 values in sequence - {}",
+            hint_parts.join(", ")
+        );
+        Some((Value::Object(corrected), hint))
+    }
 }
 
 /// Fix component expecting a specific type (e.g., Name expects string)
 fn apply_expected_type_fix(
-    component_name: &str,
+    type_name: &str,
     original_value: &Value,
     expected_type: &str,
 ) -> Option<(Value, String)> {
     // Handle Name component specifically
     if expected_type.contains("::Name") || expected_type.contains("::name::Name") {
-        return apply_name_component_fix(component_name, original_value);
+        return apply_name_component_fix(type_name, original_value);
     }
 
     // Handle other known type patterns
     if expected_type.contains("String") {
-        return convert_to_string_format(component_name, original_value);
+        return convert_to_string_format(type_name, original_value);
     }
 
     None
 }
 
 /// Fix Name component format
-fn apply_name_component_fix(
-    component_name: &str,
-    original_value: &Value,
-) -> Option<(Value, String)> {
-    match original_value {
-        Value::Object(obj) => {
-            // If it's an object, try to extract a string value
-            if let Some(Value::String(name)) = obj.get("name").or_else(|| obj.get("value")) {
-                return Some((
-                    Value::String(name.clone()),
-                    type_format_error(
-                        &format!("{component_name} Name component"),
-                        "string",
-                        "object",
-                    ),
-                ));
-            }
-        }
-        Value::Array(arr) => {
-            // If it's an array with one string, extract it
-            if arr.len() == 1 {
-                if let Value::String(name) = &arr[0] {
-                    return Some((
-                        Value::String(name.clone()),
-                        type_format_error(
-                            &format!("{component_name} Name component"),
-                            "string",
-                            "array",
-                        ),
-                    ));
-                }
-            }
-        }
-        _ => {}
-    }
+fn apply_name_component_fix(type_name: &str, original_value: &Value) -> Option<(Value, String)> {
+    if let Some((extracted_string, source_description)) = extract_string_value(original_value) {
+        let format_type = match original_value {
+            Value::Object(_) => "object",
+            Value::Array(_) => "array",
+            _ => "other",
+        };
 
-    None
+        Some((
+            Value::String(extracted_string),
+            format!(
+                "`{type_name} Name component` expects string format, extracted {source_description} (was {format_type})"
+            ),
+        ))
+    } else {
+        None
+    }
 }
 
 /// Fix math type array format (Vec3, Quat, etc.)
 fn apply_math_type_array_fix(
-    component_name: &str,
+    type_name: &str,
     original_value: &Value,
     math_type: &str,
 ) -> Option<(Value, String)> {
     match math_type {
-        "Vec3" => convert_to_vec3_array(original_value).map(|arr| {
-            (
-                arr,
-                type_expects_array(component_name, "Vec3") + " [x, y, z]",
-            )
-        }),
-        "Vec2" => convert_to_vec2_array(original_value)
-            .map(|arr| (arr, type_expects_array(component_name, "Vec2") + " [x, y]")),
-        "Vec4" => convert_to_vec4_array(original_value).map(|arr| {
-            (
-                arr,
-                type_expects_array(component_name, "Vec4") + " [x, y, z, w]",
-            )
-        }),
-        "Quat" => convert_to_quat_array(original_value).map(|arr| {
-            (
-                arr,
-                type_expects_array(component_name, "Quat") + " [x, y, z, w]",
-            )
-        }),
+        "Vec3" => convert_to_math_type_array(original_value, "Vec3")
+            .map(|arr| (arr, type_expects_array(type_name, "Vec3") + " [x, y, z]")),
+        "Vec2" => convert_to_math_type_array(original_value, "Vec2")
+            .map(|arr| (arr, type_expects_array(type_name, "Vec2") + " [x, y]")),
+        "Vec4" => convert_to_math_type_array(original_value, "Vec4")
+            .map(|arr| (arr, type_expects_array(type_name, "Vec4") + " [x, y, z, w]")),
+        "Quat" => convert_to_math_type_array(original_value, "Quat")
+            .map(|arr| (arr, type_expects_array(type_name, "Quat") + " [x, y, z, w]")),
         _ => None,
     }
 }
 
-/// Convert value to Vec3 array format [x, y, z]
-fn convert_to_vec3_array(value: &Value) -> Option<Value> {
-    convert_to_array_format(value, &["x", "y", "z"])
-}
-
-/// Convert value to Vec2 array format [x, y]
-fn convert_to_vec2_array(value: &Value) -> Option<Value> {
-    convert_to_array_format(value, &["x", "y"])
-}
-
-/// Convert value to Vec4 array format [x, y, z, w]
-fn convert_to_vec4_array(value: &Value) -> Option<Value> {
-    convert_to_array_format(value, &["x", "y", "z", "w"])
-}
-
-/// Convert value to Quat array format [x, y, z, w]
-fn convert_to_quat_array(value: &Value) -> Option<Value> {
-    // Quat has the same format as Vec4
-    convert_to_vec4_array(value)
-}
-
 /// Convert value to string format
-fn convert_to_string_format(
-    component_name: &str,
-    original_value: &Value,
-) -> Option<(Value, String)> {
-    match original_value {
-        Value::Object(obj) => {
-            // Try common field names that might contain the string value
-            for field in ["name", "value", "text", "label"] {
-                if let Some(Value::String(s)) = obj.get(field) {
-                    return Some((
-                        Value::String(s.clone()),
-                        format!(
-                            "`{component_name}` expects string format, extracted from `{field}` field"
-                        ),
-                    ));
-                }
-            }
-        }
-        Value::Array(arr) => {
-            if arr.len() == 1 {
-                if let Value::String(s) = &arr[0] {
-                    return Some((
-                        Value::String(s.clone()),
-                        format!(
-                            "`{component_name}` expects string format, extracted from single-element array"
-                        ),
-                    ));
-                }
-            }
-        }
-        _ => {}
+fn convert_to_string_format(type_name: &str, original_value: &Value) -> Option<(Value, String)> {
+    if let Some((extracted_string, source_description)) = extract_string_value(original_value) {
+        Some((
+            Value::String(extracted_string),
+            format!("`{type_name}` expects string format, extracted {source_description}"),
+        ))
+    } else {
+        None
     }
-
-    None
 }
 
 /// Fix tuple struct path access errors
@@ -794,15 +770,15 @@ fn fix_tuple_struct_path(
 }
 
 /// Unified format discovery for all type methods (components and resources)
-async fn attempt_format_discovery(
+/// Extraction phase: Get parameter location and extract type items
+fn extract_discovery_context(
     method: &str,
     params: &Value,
-    port: Option<u16>,
-    original_error: &BrpError,
-) -> Result<EnhancedBrpResult, McpError> {
-    let mut debug_info = vec![format!(
+    debug_info: &mut Vec<String>,
+) -> Option<(ParameterLocation, Vec<(String, Value)>)> {
+    debug_info.push(format!(
         "Format Discovery: Attempting discovery for method '{method}'"
-    )];
+    ));
 
     // Get parameter location based on method
     let location = get_parameter_location(method);
@@ -814,11 +790,7 @@ async fn attempt_format_discovery(
     let type_items = extract_type_items(params, location);
     if type_items.is_empty() {
         debug_info.push("Format Discovery: No type items found in params".to_string());
-        return Ok(EnhancedBrpResult {
-            result: BrpResult::Error(original_error.clone()),
-            format_corrections: Vec::new(),
-            debug_info,
-        });
+        return None;
     }
 
     debug_info.push(format!(
@@ -826,19 +798,30 @@ async fn attempt_format_discovery(
         type_items.len()
     ));
 
+    Some((location, type_items))
+}
+
+/// Processing phase: Process type items and generate corrections
+async fn process_type_items_for_corrections(
+    type_items: &[(String, Value)],
+    method: &str,
+    port: Option<u16>,
+    original_error: &BrpError,
+    debug_info: &mut Vec<String>,
+) -> Result<(Vec<FormatCorrection>, Vec<(String, Value)>, Vec<TierInfo>), McpError> {
     let mut format_corrections = Vec::new();
     let mut corrected_items = Vec::new();
     let mut all_tier_info = Vec::new();
 
     // Process each type item
-    for (type_name, type_value) in &type_items {
+    for (type_name, type_value) in type_items {
         let (discovery_result, tier_info) = process_single_type_item(
             type_name,
             type_value,
             method,
             port,
             original_error,
-            &mut debug_info,
+            debug_info,
         )
         .await?;
 
@@ -861,15 +844,40 @@ async fn attempt_format_discovery(
         }
     }
 
+    Ok((format_corrections, corrected_items, all_tier_info))
+}
+
+/// Data needed for building discovery result
+struct DiscoveryResultData {
+    format_corrections: Vec<FormatCorrection>,
+    corrected_items:    Vec<(String, Value)>,
+    all_tier_info:      Vec<TierInfo>,
+}
+
+/// Result building phase: Build final result with retrying if corrections found
+async fn build_discovery_result(
+    method: &str,
+    params: &Value,
+    location: ParameterLocation,
+    data: DiscoveryResultData,
+    original_error: &BrpError,
+    port: Option<u16>,
+    debug_info: &mut Vec<String>,
+) -> Result<EnhancedBrpResult, McpError> {
+    let DiscoveryResultData {
+        format_corrections,
+        corrected_items,
+        all_tier_info,
+    } = data;
     // Add tier information to debug_info
     debug_info.extend(tier_info_to_debug_strings(&all_tier_info));
 
     if format_corrections.is_empty() {
         debug_info.push("Format Discovery: No corrections were possible".to_string());
         Ok(EnhancedBrpResult {
-            result: BrpResult::Error(original_error.clone()),
+            result:             BrpResult::Error(original_error.clone()),
             format_corrections: Vec::new(),
-            debug_info,
+            debug_info:         debug_info.clone(),
         })
     } else {
         // Apply corrections and retry
@@ -885,9 +893,56 @@ async fn attempt_format_discovery(
         Ok(EnhancedBrpResult {
             result,
             format_corrections,
-            debug_info,
+            debug_info: debug_info.clone(),
         })
     }
+}
+
+async fn attempt_format_discovery(
+    method: &str,
+    params: &Value,
+    port: Option<u16>,
+    original_error: &BrpError,
+) -> Result<EnhancedBrpResult, McpError> {
+    let mut debug_info = Vec::new();
+
+    // Phase 1: Extraction
+    let Some((location, type_items)) = extract_discovery_context(method, params, &mut debug_info)
+    else {
+        return Ok(EnhancedBrpResult {
+            result: BrpResult::Error(original_error.clone()),
+            format_corrections: Vec::new(),
+            debug_info,
+        });
+    };
+
+    // Phase 2: Processing
+    let (format_corrections, corrected_items, all_tier_info) = process_type_items_for_corrections(
+        &type_items,
+        method,
+        port,
+        original_error,
+        &mut debug_info,
+    )
+    .await?;
+
+    // Phase 3: Result Building
+    let result_data = DiscoveryResultData {
+        format_corrections,
+        corrected_items,
+        all_tier_info,
+    };
+
+    build_discovery_result(
+        method,
+        params,
+        location,
+        result_data,
+        original_error,
+        port,
+        &mut debug_info,
+    )
+    .await
 }
 
 /// Process a single type item (component or resource) for format discovery
@@ -950,46 +1005,68 @@ async fn tiered_type_format_discovery(
     // and applies targeted fixes with high confidence
     let error_analysis = analyze_error_pattern(error);
     if let Some(pattern) = &error_analysis.pattern {
-        if error_analysis.confidence >= 0.8 {
-            tier_info.push(TierInfo {
-                tier:      TIER_DETERMINISTIC,
-                tier_name: "Deterministic Pattern Matching".to_string(),
-                action:    format!("Matched pattern: {pattern:?}"),
-                success:   false, // Will be updated if successful
-            });
+        tier_info.push(TierInfo {
+            tier:      TIER_DETERMINISTIC,
+            tier_name: "Deterministic Pattern Matching".to_string(),
+            action:    format!("Matched pattern: {pattern:?}"),
+            success:   false, // Will be updated if successful
+        });
 
-            if let Some((corrected_value, hint)) =
-                apply_pattern_fix(pattern, type_name, original_value)
-            {
-                tier_info.last_mut().unwrap().success = true;
-                tier_info.last_mut().unwrap().action = format!("Applied pattern fix: {hint}");
-                return (Some((corrected_value, hint)), tier_info);
-            }
+        if let Some((corrected_value, hint)) = apply_pattern_fix(pattern, type_name, original_value)
+        {
+            tier_info.last_mut().unwrap().success = true;
+            tier_info.last_mut().unwrap().action = format!("Applied pattern fix: {hint}");
+            return (Some((corrected_value, hint)), tier_info);
         }
     }
 
     // ========== TIER 2: Serialization Diagnostics ==========
     // For UnknownComponentType errors, queries BRP to check if types
     // support required reflection traits (Serialize/Deserialize)
-    if let Some(ErrorPattern::UnknownComponentType { component_type }) = &error_analysis.pattern {
+    if let Some(ErrorPattern::UnknownComponentType { component_type: _ }) = &error_analysis.pattern
+    {
         tier_info.push(TierInfo {
             tier:      TIER_SERIALIZATION,
             tier_name: "Serialization Diagnostics".to_string(),
-            action:    format!("Checking serialization support for component: {component_type}"),
+            action:    format!("Checking serialization support for type: {type_name}"),
             success:   false,
         });
 
-        match check_type_serialization(component_type, port).await {
+        // Use the actual type_name from the request context instead of the extracted error type
+        // This fixes the issue where we'd get "`bevy_reflect::DynamicEnum`" instead of the actual
+        // component
+        match check_type_serialization(type_name, port).await {
             Ok(serialization_check) => {
                 tier_info.last_mut().unwrap().success = true;
-                tier_info.last_mut().unwrap().action = serialization_check.diagnostic_message;
+                tier_info
+                    .last_mut()
+                    .unwrap()
+                    .action
+                    .clone_from(&serialization_check.diagnostic_message);
 
-                // Return diagnostic information instead of a fix
-                return (None, tier_info); // No fix, just diagnostic
+                // If this is a missing trait error, make it prominent by returning it as a "hint"
+                // This ensures the diagnostic message is clearly visible to the user
+                if serialization_check
+                    .diagnostic_message
+                    .contains("cannot be used with BRP")
+                {
+                    // Return the diagnostic as a pseudo-correction with no actual value change
+                    // This makes the error message prominent in the output
+                    return (
+                        Some((
+                            original_value.clone(),
+                            serialization_check.diagnostic_message,
+                        )),
+                        tier_info,
+                    );
+                }
+
+                // Otherwise, return as before
+                return (None, tier_info);
             }
-            Err(_) => {
+            Err(e) => {
                 tier_info.last_mut().unwrap().action =
-                    "Failed to query serialization info".to_string();
+                    format!("Failed to query serialization info for {type_name}: {e}");
             }
         }
     }
@@ -1021,66 +1098,69 @@ async fn tiered_type_format_discovery(
 enum TransformationType {
     ObjectToString,
     ObjectToArray,
-    StringToObject,
     ArrayToString,
     ArrayToObject,
+}
+
+/// Transform object to string by extracting from common field names
+fn transform_object_to_string(value: &Value) -> Option<Value> {
+    if let Value::Object(map) = value {
+        // Try to extract string from common field names
+        for field in [FIELD_VALUE, FIELD_NAME, FIELD_TEXT, FIELD_LABEL] {
+            if let Some(Value::String(s)) = map.get(field) {
+                return Some(Value::String(s.clone()));
+            }
+        }
+        // For single-field objects, use the value
+        if map.len() == 1 {
+            if let Some((_, Value::String(s))) = map.iter().next() {
+                return Some(Value::String(s.clone()));
+            }
+        }
+    }
+    None
+}
+
+/// Transform object to array by collecting all values
+fn transform_object_to_array(value: &Value) -> Option<Value> {
+    if let Value::Object(map) = value {
+        let values: Vec<Value> = map.values().cloned().collect();
+        if !values.is_empty() {
+            return Some(Value::Array(values));
+        }
+    }
+    None
+}
+
+/// Transform single-element array to string
+fn transform_array_to_string(value: &Value) -> Option<Value> {
+    if let Value::Array(arr) = value {
+        if arr.len() == 1 {
+            if let Value::String(s) = &arr[0] {
+                return Some(Value::String(s.clone()));
+            }
+        }
+    }
+    None
+}
+
+/// Transform array to object by wrapping in "items" field
+fn transform_array_to_object(value: &Value) -> Option<Value> {
+    if let Value::Array(arr) = value {
+        let mut map = Map::new();
+        map.insert("items".to_string(), Value::Array(arr.clone()));
+        return Some(Value::Object(map));
+    }
+    None
 }
 
 /// Apply a transformation to convert between formats
 fn apply_transformation(value: &Value, transformation: TransformationType) -> Option<Value> {
     match transformation {
-        TransformationType::ObjectToString => {
-            if let Value::Object(map) = value {
-                // Try to extract string from common field names
-                for field in ["value", "name", "text", "label"] {
-                    if let Some(Value::String(s)) = map.get(field) {
-                        return Some(Value::String(s.clone()));
-                    }
-                }
-                // For single-field objects, use the value
-                if map.len() == 1 {
-                    if let Some((_, Value::String(s))) = map.iter().next() {
-                        return Some(Value::String(s.clone()));
-                    }
-                }
-            }
-            None
-        }
-        TransformationType::ObjectToArray => {
-            if let Value::Object(map) = value {
-                let values: Vec<Value> = map.values().cloned().collect();
-                if !values.is_empty() {
-                    return Some(Value::Array(values));
-                }
-            }
-            None
-        }
-        TransformationType::StringToObject => {
-            if let Value::String(s) = value {
-                let mut map = Map::new();
-                map.insert("value".to_string(), Value::String(s.clone()));
-                return Some(Value::Object(map));
-            }
-            None
-        }
-        TransformationType::ArrayToString => {
-            if let Value::Array(arr) = value {
-                if arr.len() == 1 {
-                    if let Value::String(s) = &arr[0] {
-                        return Some(Value::String(s.clone()));
-                    }
-                }
-            }
-            None
-        }
-        TransformationType::ArrayToObject => {
-            if let Value::Array(arr) = value {
-                let mut map = Map::new();
-                map.insert("items".to_string(), Value::Array(arr.clone()));
-                return Some(Value::Object(map));
-            }
-            None
-        }
+        TransformationType::ObjectToString => transform_object_to_string(value),
+        TransformationType::ObjectToArray => transform_object_to_array(value),
+        TransformationType::ArrayToString => transform_array_to_string(value),
+        TransformationType::ArrayToObject => transform_array_to_object(value),
     }
 }
 
@@ -1091,19 +1171,18 @@ fn get_possible_transformations(value: &Value) -> Vec<TransformationType> {
             TransformationType::ObjectToString,
             TransformationType::ObjectToArray,
         ],
-        Value::String(_) => vec![TransformationType::StringToObject],
         Value::Array(_) => vec![
             TransformationType::ArrayToString,
             TransformationType::ArrayToObject,
         ],
-        _ => vec![],
+        _ => vec![], // No transformations for strings and other types
     }
 }
 
 /// Legacy format discovery function (renamed from `try_component_format_alternatives`)
 /// Since we can't reliably parse error messages, we try all reasonable alternatives
 fn try_component_format_alternatives_legacy(
-    component_name: &str,
+    type_name: &str,
     original_value: &Value,
     _error: &BrpError,
 ) -> Option<(Value, String)> {
@@ -1115,19 +1194,16 @@ fn try_component_format_alternatives_legacy(
         if let Some(transformed_value) = apply_transformation(original_value, transformation) {
             let hint = match transformation {
                 TransformationType::ObjectToString => {
-                    type_format_error(component_name, "string", "object")
+                    type_format_error(type_name, "string", "object")
                 }
                 TransformationType::ObjectToArray => {
-                    type_format_error(component_name, "array", "object")
-                }
-                TransformationType::StringToObject => {
-                    type_format_error(component_name, "object", "string")
+                    type_format_error(type_name, "array", "object")
                 }
                 TransformationType::ArrayToString => {
-                    type_format_error(component_name, "string", "array")
+                    type_format_error(type_name, "string", "array")
                 }
                 TransformationType::ArrayToObject => {
-                    type_format_error(component_name, "object", "array")
+                    type_format_error(type_name, "object", "array")
                 }
             };
             return Some((transformed_value, hint));
@@ -1139,12 +1215,12 @@ fn try_component_format_alternatives_legacy(
 
 /// Test a component format by spawning a test entity
 async fn test_component_format_with_spawn(
-    component_name: &str,
+    type_name: &str,
     component_value: &Value,
     port: Option<u16>,
 ) -> Result<Value, McpError> {
     let mut test_components = Map::new();
-    test_components.insert(component_name.to_string(), component_value.clone());
+    test_components.insert(type_name.to_string(), component_value.clone());
 
     let test_params = serde_json::json!({
         "components": test_components
