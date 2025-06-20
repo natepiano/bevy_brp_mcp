@@ -7,11 +7,11 @@ use serde_json::{Value, json};
 
 use crate::BrpMcpService;
 use crate::brp_tools::constants::{JSON_FIELD_COUNT, JSON_FIELD_WATCHES};
+use crate::brp_tools::support::watch_manager::WATCH_MANAGER;
 use crate::constants::{DESC_BEVY_LIST_ACTIVE_WATCHES, TOOL_BEVY_LIST_ACTIVE_WATCHES};
 use crate::support::response::ResponseBuilder;
 use crate::support::schema;
 use crate::support::serialization::json_response_to_result;
-use crate::brp_tools::support::watch_manager::WATCH_MANAGER;
 
 pub fn register_tool() -> Tool {
     Tool {

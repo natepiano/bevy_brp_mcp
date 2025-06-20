@@ -32,10 +32,8 @@ pub const DESC_LAUNCH_BEVY_EXAMPLE: &str = include_help_text!("app_tools/launch_
 
 // BRP tool descriptions
 pub const DESC_BRP_LIST: &str = include_help_text!("brp_tools/brp_list.txt");
-pub const DESC_BRP_QUERY: &str = include_help_text!("brp_tools/brp_query.txt");
 pub const DESC_BRP_GET: &str = include_help_text!("brp_tools/brp_get.txt");
 pub const DESC_BRP_DESTROY: &str = include_help_text!("brp_tools/brp_destroy.txt");
-pub const DESC_BRP_SPAWN: &str = include_help_text!("brp_tools/brp_spawn.txt");
 pub const DESC_BRP_INSERT: &str = include_help_text!("brp_tools/brp_insert.txt");
 pub const DESC_BRP_REMOVE: &str = include_help_text!("brp_tools/brp_remove.txt");
 pub const DESC_BRP_LIST_RESOURCES: &str = include_help_text!("brp_tools/brp_list_resources.txt");
@@ -45,8 +43,6 @@ pub const DESC_BRP_REMOVE_RESOURCE: &str = include_help_text!("brp_tools/brp_rem
 pub const DESC_BRP_MUTATE_RESOURCE: &str = include_help_text!("brp_tools/brp_mutate_resource.txt");
 pub const DESC_BRP_MUTATE_COMPONENT: &str =
     include_help_text!("brp_tools/brp_mutate_component.txt");
-pub const DESC_BRP_REPARENT: &str = include_help_text!("brp_tools/brp_reparent.txt");
-pub const DESC_BRP_REGISTRY_SCHEMA: &str = include_help_text!("brp_tools/brp_registry_schema.txt");
 pub const DESC_BRP_RPC_DISCOVER: &str = include_help_text!("brp_tools/brp_rpc_discover.txt");
 
 // Log tool descriptions
@@ -62,12 +58,9 @@ pub const DESC_BEVY_LIST_ACTIVE_WATCHES: &str =
     include_help_text!("brp_tools/bevy_list_active_watches.txt");
 
 // Tool name constants
-pub const TOOL_BRP_EXECUTE: &str = "brp_execute";
 pub const TOOL_BRP_LIST: &str = "bevy_list";
-pub const TOOL_BRP_QUERY: &str = "bevy_query";
 pub const TOOL_BRP_GET: &str = "bevy_get";
 pub const TOOL_BRP_DESTROY: &str = "bevy_destroy";
-pub const TOOL_BRP_SPAWN: &str = "bevy_spawn";
 pub const TOOL_BRP_INSERT: &str = "bevy_insert";
 pub const TOOL_BRP_REMOVE: &str = "bevy_remove";
 pub const TOOL_BRP_LIST_RESOURCES: &str = "bevy_list_resources";
@@ -76,8 +69,6 @@ pub const TOOL_BRP_INSERT_RESOURCE: &str = "bevy_insert_resource";
 pub const TOOL_BRP_REMOVE_RESOURCE: &str = "bevy_remove_resource";
 pub const TOOL_BRP_MUTATE_RESOURCE: &str = "bevy_mutate_resource";
 pub const TOOL_BRP_MUTATE_COMPONENT: &str = "bevy_mutate_component";
-pub const TOOL_BRP_REPARENT: &str = "bevy_reparent";
-pub const TOOL_BRP_REGISTRY_SCHEMA: &str = "bevy_registry_schema";
 pub const TOOL_BRP_RPC_DISCOVER: &str = "bevy_rpc_discover";
 pub const TOOL_BRP_STATUS: &str = "brp_status";
 pub const TOOL_CLEANUP_LOGS: &str = "cleanup_logs";

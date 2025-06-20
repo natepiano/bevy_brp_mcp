@@ -1,10 +1,15 @@
 use rmcp::Error as McpError;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use super::traits::{ExtractedParams, ParamExtractor};
-use crate::brp_tools::constants::{DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT};
-use crate::support::params::{extract_any_value, extract_optional_number, extract_required_number};
+use crate::brp_tools::constants::{
+    DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT, JSON_FIELD_RESOURCE,
+};
+use crate::support::params::{
+    extract_any_value, extract_optional_number, extract_optional_string_array_from_request,
+    extract_required_number, extract_required_string,
+};
 
 /// Parameters for BRP execute tool
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,7 +18,7 @@ pub struct BrpExecuteParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub params: Option<Value>,
     #[serde(default = "default_port")]
-    pub port: u16,
+    pub port:   u16,
 }
 
 const fn default_port() -> u16 {
@@ -118,6 +123,89 @@ impl ParamExtractor for BrpExecuteExtractor {
             method: Some(params.method),
             params: params.params,
             port:   params.port,
+        })
+    }
+}
+
+/// Parameter extractor for resource-based operations
+pub struct ResourceParamExtractor;
+
+impl ParamExtractor for ResourceParamExtractor {
+    fn extract(
+        &self,
+        request: &rmcp::model::CallToolRequestParam,
+    ) -> Result<ExtractedParams, McpError> {
+        let port = extract_port(request)?;
+        let resource = extract_required_string(request, JSON_FIELD_RESOURCE)?;
+
+        let params = Some(json!({ JSON_FIELD_RESOURCE: resource }));
+
+        Ok(ExtractedParams {
+            method: None,
+            params,
+            port,
+        })
+    }
+}
+
+/// Parameter extractor for registry/schema method
+///
+/// Transforms individual filter parameters into the query structure expected by the BRP method:
+/// - `with_crates`: Include only types from specified crates
+/// - `without_crates`: Exclude types from specified crates
+/// - `with_types`: Include only types with specified reflect traits
+/// - `without_types`: Exclude types with specified reflect traits
+pub struct RegistrySchemaParamExtractor;
+
+impl ParamExtractor for RegistrySchemaParamExtractor {
+    fn extract(
+        &self,
+        request: &rmcp::model::CallToolRequestParam,
+    ) -> Result<ExtractedParams, McpError> {
+        let port = extract_port(request)?;
+
+        // Extract the individual filter parameters
+        let with_crates = extract_optional_string_array_from_request(request, "with_crates")?;
+        let without_crates = extract_optional_string_array_from_request(request, "without_crates")?;
+        let with_types = extract_optional_string_array_from_request(request, "with_types")?;
+        let without_types = extract_optional_string_array_from_request(request, "without_types")?;
+
+        // Build the query object if any filters are provided
+        // The BRP method expects a JSON object with filter fields
+        let params = if with_crates.is_some()
+            || without_crates.is_some()
+            || with_types.is_some()
+            || without_types.is_some()
+        {
+            let mut query = serde_json::Map::new();
+
+            // Add crate filters
+            if let Some(crates) = with_crates {
+                query.insert("with_crates".to_string(), json!(crates));
+            }
+            if let Some(crates) = without_crates {
+                query.insert("without_crates".to_string(), json!(crates));
+            }
+
+            // Add reflect trait filters
+            if let Some(types) = with_types {
+                query.insert("with_types".to_string(), json!(types));
+            }
+            if let Some(types) = without_types {
+                query.insert("without_types".to_string(), json!(types));
+            }
+
+            // Return the query object directly as a Value::Object
+            Some(Value::Object(query))
+        } else {
+            // No filters provided, return None to get all schemas
+            None
+        };
+
+        Ok(ExtractedParams {
+            method: None,
+            params,
+            port,
         })
     }
 }
