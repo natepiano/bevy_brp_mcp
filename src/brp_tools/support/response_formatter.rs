@@ -3,6 +3,10 @@ use serde_json::{Value, json};
 
 use super::brp_client::BrpError;
 use super::request_handler::FormatterContext;
+use crate::brp_tools::constants::{
+    JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA,
+    JSON_FIELD_METHOD, JSON_FIELD_PORT,
+};
 use crate::support::response::ResponseBuilder;
 use crate::support::serialization::json_response_to_result;
 
@@ -21,11 +25,6 @@ impl BrpMetadata {
         }
     }
 }
-
-use crate::brp_tools::constants::{
-    JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA,
-    JSON_FIELD_METHOD, JSON_FIELD_PORT,
-};
 
 /// Default error formatter implementation
 pub fn format_error_default(mut error: BrpError, metadata: &BrpMetadata) -> CallToolResult {

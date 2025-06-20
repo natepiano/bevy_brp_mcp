@@ -1,0 +1,15 @@
+//! Auto-format discovery for BRP type serialization
+//!
+//! This module provides error-driven type format auto-discovery that intercepts
+//! BRP responses and automatically detects and corrects type serialization format
+//! errors with zero boilerplate in individual tools. Works with both components and resources.
+
+mod constants;
+mod detection;
+mod engine;
+mod transformations;
+
+#[cfg(test)]
+mod tests;
+
+pub use self::engine::execute_brp_method_with_format_discovery;
