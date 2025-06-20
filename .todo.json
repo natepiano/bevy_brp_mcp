@@ -1,142 +1,310 @@
 [
   {
-    "id": "meta-todo",
-    "content": "Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "id": "meta-follow-plan",
+    "content": "META: Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "remove-string-to-object-enum",
-    "content": "Remove TransformationType::StringToObject from the enum definition",
+    "id": "impl-01-create-constants-file",
+    "content": "IMPLEMENT: Create constants.rs in request_handler module with individual field constants (FIELD_NAME, FIELD_VALUE, FIELD_TEXT, FIELD_LABEL)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "remove-string-to-object-enum-build",
-    "content": "Build and fix any compile errors and warnings after removing StringToObject from enum",
+    "id": "impl-01-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "remove-string-to-object-apply",
-    "content": "Remove the StringToObject case from apply_transformation() function",
+    "id": "impl-02-update-mod-rs",
+    "content": "IMPLEMENT: Update request_handler/mod.rs to include constants module",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "remove-string-to-object-apply-build",
-    "content": "Build and fix any compile errors and warnings after removing StringToObject from apply_transformation",
+    "id": "impl-02-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "remove-string-to-object-get-transformations",
-    "content": "Remove StringToObject from get_possible_transformations() for String values",
+    "id": "impl-03-remove-confidence-field",
+    "content": "IMPLEMENT: Remove confidence field from ErrorAnalysis struct",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "remove-string-to-object-get-transformations-build",
-    "content": "Build and fix any compile errors and warnings after removing StringToObject from get_possible_transformations",
+    "id": "impl-03-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "remove-string-to-object-hint",
-    "content": "Remove the StringToObject case from hint generation in try_component_format_alternatives_legacy()",
+    "id": "impl-04-update-analyze-error-pattern",
+    "content": "IMPLEMENT: Update analyze_error_pattern to return ErrorAnalysis without confidence scores",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "remove-string-to-object-hint-build",
-    "content": "Build and fix any compile errors and warnings after removing StringToObject hint generation",
+    "id": "impl-04-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-error-message",
-    "content": "Update the diagnostic message in analyze_schema_for_type() to clarify that both #[derive(Serialize, Deserialize)] AND #[reflect(Serialize, Deserialize)] are needed",
+    "id": "impl-05-update-tiered-discovery",
+    "content": "IMPLEMENT: Update tiered_type_format_discovery to check for pattern existence instead of confidence threshold",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-error-message-build",
-    "content": "Build and fix any compile errors and warnings after updating error message",
+    "id": "impl-05-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-error-propagation",
-    "content": "Modify tiered_type_format_discovery() to better handle and propagate serialization diagnostic errors",
+    "id": "impl-06-update-format-discovery",
+    "content": "IMPLEMENT: Update format_discovery.rs to use individual field constants",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-error-propagation-build",
-    "content": "Build and fix any compile errors and warnings after improving error propagation",
+    "id": "impl-06-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "run-clippy",
-    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata",
+    "id": "impl-07-generic-math-converter",
+    "content": "IMPLEMENT: Create convert_to_math_type_array function to replace individual Vec2/Vec3/Vec4/Quat converters",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "fix-clippy-issues",
-    "content": "Fix any issues reported by clippy",
+    "id": "impl-07-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "run-format",
-    "content": "Run cargo +nightly fmt",
+    "id": "impl-08-update-math-callers",
+    "content": "IMPLEMENT: Update all callers to use the new generic math converter function",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "run-tests",
-    "content": "Run cargo nextest run",
+    "id": "impl-08-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "review-test-issues",
-    "content": "If there are test issues, STOP and review them with the user",
+    "id": "impl-09-remove-old-math-functions",
+    "content": "IMPLEMENT: Remove the old convert_to_vec2_array, convert_to_vec3_array, convert_to_vec4_array, and convert_to_quat_array functions",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "code-review-task",
-    "content": "Task a new subagent to do a code review of the changes focusing on identifying duplication and complexity (read and analyze only, no modifications)",
+    "id": "impl-09-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "review-suggestions",
-    "content": "When code review subagent returns, STOP and review the suggested changes with the user",
+    "id": "impl-10-extract-string-value",
+    "content": "IMPLEMENT: Create extract_string_value helper function to consolidate string extraction logic",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-10-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-11-refactor-name-component-fix",
+    "content": "IMPLEMENT: Refactor apply_name_component_fix to use extract_string_value",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-11-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-12-refactor-convert-to-string",
+    "content": "IMPLEMENT: Refactor convert_to_string_format to use extract_string_value",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-12-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-13-standardize-type-name",
+    "content": "IMPLEMENT: Rename all occurrences of component_name parameter to type_name throughout the file",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-13-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-14-early-return-transform-fix",
+    "content": "IMPLEMENT: Refactor apply_transform_sequence_fix to use early return for non-object values",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-14-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-15-early-return-name-fix",
+    "content": "IMPLEMENT: Refactor apply_name_component_fix to use early returns in match arms",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-15-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-16-early-return-other-functions",
+    "content": "IMPLEMENT: Review and apply early returns to other deeply nested functions",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-16-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-17-extract-transformation-functions",
+    "content": "IMPLEMENT: Extract individual transformation logic from apply_transformation into separate functions",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-17-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-18-split-attempt-format-discovery",
+    "content": "IMPLEMENT: Split attempt_format_discovery into extraction, processing, and result building phases",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "impl-18-build",
+    "content": "BUILD: Build and fix any compile errors and warnings (no dead code, no unused vars)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "clippy-01-run",
+    "content": "CLIPPY: Run cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "clippy-02-fix",
+    "content": "CLIPPY: Fix any clippy issues (no dead code marks, no underscore prefixes)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "format-01-run",
+    "content": "FORMAT: Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "test-01-run",
+    "content": "TEST: Run cargo nextest run",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "test-02-review",
+    "content": "TEST: If there are test issues, STOP and review them with the user",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "review-01-task-agent",
+    "content": "REVIEW: Task a new subagent to do a code review of the changes focusing on duplication and complexity (read-only)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "review-02-discuss",
+    "content": "REVIEW: When subagent returns, STOP and review suggested changes with the user",
+    "status": "pending",
+    "priority": "medium",
     "notes": ""
   }
 ]
