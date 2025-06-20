@@ -20,6 +20,10 @@ pub const BRP_METHOD_MUTATE_COMPONENT: &str = "bevy/mutate_component";
 pub const BRP_METHOD_REGISTRY_SCHEMA: &str = "bevy/registry/schema";
 pub const BRP_METHOD_RPC_DISCOVER: &str = "rpc.discover";
 
+// bevy_brp_extras methods
+pub const BRP_METHOD_EXTRAS_SHUTDOWN: &str = "bevy_brp_extras/shutdown";
+pub const BRP_METHOD_EXTRAS_SCREENSHOT: &str = "bevy_brp_extras/screenshot";
+
 // Response Status Constants
 // pub const RESPONSE_STATUS_SUCCESS: &str = "success";
 // pub const RESPONSE_STATUS_ERROR: &str = "error";
@@ -87,6 +91,10 @@ pub const TOOL_BEVY_LIST_ACTIVE_WATCHES: &str = "bevy_list_active_watches";
 // Debug tool name
 pub const TOOL_SET_DEBUG_MODE: &str = "set_debug_mode";
 
+// bevy_brp_extras tool names
+pub const TOOL_BEVY_SHUTDOWN: &str = "bevy_shutdown";
+pub const TOOL_BEVY_SCREENSHOT: &str = "bevy_screenshot";
+
 // BRP tool descriptions
 pub const DESC_BRP_LIST: &str = include_help_text!("brp_tools/brp_list.txt");
 pub const DESC_BRP_GET: &str = include_help_text!("brp_tools/brp_get.txt");
@@ -108,6 +116,10 @@ pub const DESC_BRP_LIST_WATCH: &str = include_help_text!("brp_tools/brp_list_wat
 pub const DESC_BEVY_STOP_WATCH: &str = include_help_text!("brp_tools/bevy_stop_watch.txt");
 pub const DESC_BEVY_LIST_ACTIVE_WATCHES: &str =
     include_help_text!("brp_tools/bevy_list_active_watches.txt");
+
+// bevy_brp_extras tool descriptions
+pub const DESC_BEVY_SHUTDOWN: &str = include_help_text!("brp_tools/bevy_shutdown.txt");
+pub const DESC_BEVY_SCREENSHOT: &str = include_help_text!("brp_tools/bevy_screenshot.txt");
 
 // Documentation/Help Constants
 pub const PORT_DESCRIPTION: &str = "The BRP port (default: 15702)";
