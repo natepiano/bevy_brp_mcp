@@ -363,17 +363,15 @@ fn analyze_single_type_schema(type_name: &str, schema: &Value) -> SerializationC
 /// Helper functions to extract context from errors
 pub fn extract_path_from_error_context(error_message: &str) -> Option<String> {
     // Look for patterns like "at path .foo.bar" or "path '.foo.bar'"
-    error_message
-        .find("at path ")
-        .map_or_else(
-            || {
-                error_message
-                    .find("path '")
-                    .or_else(|| error_message.find("path \""))
-                    .and_then(|pos| extract_path_from_position(error_message, pos + 6))
-            },
-            |pos| extract_path_from_position(error_message, pos + 8),
-        )
+    error_message.find("at path ").map_or_else(
+        || {
+            error_message
+                .find("path '")
+                .or_else(|| error_message.find("path \""))
+                .and_then(|pos| extract_path_from_position(error_message, pos + 6))
+        },
+        |pos| extract_path_from_position(error_message, pos + 8),
+    )
 }
 
 fn extract_path_from_position(error_message: &str, start_pos: usize) -> Option<String> {

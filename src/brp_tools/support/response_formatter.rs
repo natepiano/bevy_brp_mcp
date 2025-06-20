@@ -207,6 +207,7 @@ impl ResponseFormatterFactory {
     }
 
     /// Create a formatter that passes through the response data
+    #[cfg(test)]
     pub fn pass_through() -> ResponseFormatterBuilder {
         use crate::brp_tools::constants::JSON_FIELD_DATA;
 
@@ -219,25 +220,6 @@ impl ResponseFormatterFactory {
                 )],
                 error_metadata_fields: vec![],
                 use_default_error:     true,
-            },
-        }
-    }
-
-    /// Create a formatter for generic method execution
-    pub fn method_execution() -> ResponseFormatterBuilder {
-        use crate::brp_tools::constants::JSON_FIELD_DATA;
-
-        ResponseFormatterBuilder {
-            config: FormatterConfig {
-                success_template:      Some(
-                    "Successfully executed BRP method: {method}".to_string(),
-                ),
-                success_fields:        vec![(
-                    JSON_FIELD_DATA.to_string(),
-                    extractors::conditional_data,
-                )],
-                error_metadata_fields: vec![],
-                use_default_error:     false,
             },
         }
     }
@@ -280,18 +262,6 @@ impl ResponseFormatterBuilder {
         extractor: FieldExtractor,
     ) -> Self {
         self.config.success_fields.push((name.into(), extractor));
-        self
-    }
-
-    /// Add a field to error metadata
-    pub fn with_error_metadata_field(
-        mut self,
-        name: impl Into<String>,
-        extractor: FieldExtractor,
-    ) -> Self {
-        self.config
-            .error_metadata_fields
-            .push((name.into(), extractor));
         self
     }
 
@@ -367,6 +337,7 @@ pub mod extractors {
     }
 
     /// Create a field extractor that gets components from params
+    #[cfg(test)]
     pub fn components_from_params(_data: &Value, context: &FormatterContext) -> Value {
         context
             .params
@@ -374,15 +345,6 @@ pub mod extractors {
             .and_then(|p| p.get("components"))
             .cloned()
             .unwrap_or(Value::Null)
-    }
-
-    /// Conditionally pass through data only if it's not null
-    pub fn conditional_data(data: &Value, _context: &FormatterContext) -> Value {
-        if data.is_null() {
-            Value::Null
-        } else {
-            data.clone()
-        }
     }
 }
 

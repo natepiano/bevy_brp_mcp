@@ -36,9 +36,7 @@ impl ServerHandler for BrpMcpService {
     fn get_info(&self) -> rmcp::model::ServerInfo {
         rmcp::model::ServerInfo {
             instructions: Some(BEVY_BRP_MCP_INFO.to_string()),
-            capabilities: ServerCapabilities::builder()
-                .enable_tools()
-                .build(),
+            capabilities: ServerCapabilities::builder().enable_tools().build(),
             ..Default::default()
         }
     }

@@ -6,7 +6,6 @@ pub const DEFAULT_BRP_PORT: u16 = 15702;
 
 // BRP protocol method
 pub const BRP_METHOD_LIST: &str = "bevy/list";
-pub const BRP_METHOD_QUERY: &str = "bevy/query";
 pub const BRP_METHOD_GET: &str = "bevy/get";
 pub const BRP_METHOD_DESTROY: &str = "bevy/destroy";
 pub const BRP_METHOD_SPAWN: &str = "bevy/spawn";
@@ -18,7 +17,6 @@ pub const BRP_METHOD_INSERT_RESOURCE: &str = "bevy/insert_resource";
 pub const BRP_METHOD_REMOVE_RESOURCE: &str = "bevy/remove_resource";
 pub const BRP_METHOD_MUTATE_RESOURCE: &str = "bevy/mutate_resource";
 pub const BRP_METHOD_MUTATE_COMPONENT: &str = "bevy/mutate_component";
-pub const BRP_METHOD_REPARENT: &str = "bevy/reparent";
 pub const BRP_METHOD_REGISTRY_SCHEMA: &str = "bevy/registry/schema";
 pub const BRP_METHOD_RPC_DISCOVER: &str = "rpc.discover";
 
@@ -30,27 +28,20 @@ pub const BRP_METHOD_RPC_DISCOVER: &str = "rpc.discover";
 pub const JSON_FIELD_CODE: &str = "code";
 pub const JSON_FIELD_COMPONENT: &str = "component";
 pub const JSON_FIELD_COMPONENTS: &str = "components";
-pub const JSON_FIELD_COMPONENT_COUNT: &str = "count";
 pub const JSON_FIELD_COUNT: &str = "count";
 pub const JSON_FIELD_DATA: &str = "data";
 pub const JSON_FIELD_DESTROYED_ENTITY: &str = "destroyed_entity";
-pub const JSON_FIELD_ENTITIES: &str = "entities";
 pub const JSON_FIELD_ENTITY: &str = "entity";
-pub const JSON_FIELD_ENTITY_COUNT: &str = "entity_count";
 pub const JSON_FIELD_ERROR_CODE: &str = "error_code";
 pub const JSON_FIELD_LOG_PATH: &str = "log_path";
 pub const JSON_FIELD_METADATA: &str = "metadata";
 pub const JSON_FIELD_METHOD: &str = "method";
-pub const JSON_FIELD_PARAMS: &str = "params";
-pub const JSON_FIELD_PARENT: &str = "parent";
 pub const JSON_FIELD_PATH: &str = "path";
 pub const JSON_FIELD_PORT: &str = "port";
-pub const JSON_FIELD_QUERY_PARAMS: &str = "query_params";
 pub const JSON_FIELD_RESOURCE: &str = "resource";
 pub const JSON_FIELD_RESOURCES: &str = "resources";
-pub const JSON_FIELD_SPAWNED_ENTITY: &str = "spawned_entity";
 pub const JSON_FIELD_STATUS: &str = "status";
-pub const JSON_FIELD_STRICT: &str = "strict";
+pub const JSON_FIELD_VALUE: &str = "value";
 pub const JSON_FIELD_WATCH_ID: &str = "watch_id";
 pub const JSON_FIELD_WATCHES: &str = "watches";
 
@@ -63,4 +54,4 @@ pub const JSONRPC_FIELD_METHOD: &str = "method";
 pub const JSONRPC_FIELD_PARAMS: &str = "params";
 
 // Documentation/Help Constants
-pub const MATH_TYPE_FORMAT_NOTE: &str = " Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.";
+pub const PORT_DESCRIPTION: &str = "The BRP port (default: 15702)";
