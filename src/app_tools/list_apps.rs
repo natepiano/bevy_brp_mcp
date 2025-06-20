@@ -3,9 +3,10 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
+use super::constants::{DESC_LIST_BEVY_APPS, TOOL_LIST_BEVY_APPS};
 use super::support::scanning;
 use crate::BrpMcpService;
-use crate::constants::{DESC_LIST_BEVY_APPS, PROFILE_DEBUG, PROFILE_RELEASE, TOOL_LIST_BEVY_APPS};
+use crate::constants::{PROFILE_DEBUG, PROFILE_RELEASE};
 use crate::support::{response, schema, service};
 
 pub fn register_tool() -> Tool {

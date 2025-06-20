@@ -5,10 +5,10 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::Value;
 
+use super::constants::{DESC_BRP_LIST_WATCH, TOOL_BRP_LIST_WATCH};
 use super::support;
 use crate::BrpMcpService;
 use crate::brp_tools::constants::{DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT};
-use crate::constants::{DESC_BRP_LIST_WATCH, TOOL_BRP_LIST_WATCH};
 use crate::support::{params, schema};
 
 pub fn register_tool() -> Tool {

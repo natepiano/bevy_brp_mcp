@@ -3,9 +3,9 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
+use super::constants::{DESC_LIST_LOGS, TOOL_LIST_LOGS};
 use super::support::log_utils;
 use crate::BrpMcpService;
-use crate::constants::{DESC_LIST_LOGS, TOOL_LIST_LOGS};
 use crate::support::{params, response, schema};
 
 pub fn register_tool() -> Tool {
