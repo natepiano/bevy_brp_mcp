@@ -1,0 +1,6 @@
+Discovers and lists all BRP-enabled Bevy game engine applications in your workspace. Searches through all configured directories using cargo metadata to find apps with bevy_remote feature enabled. Returns detailed information including:
+- Application names and binary paths
+- Build profiles (debug/release) and their build status
+- Full paths to help identify duplicate names
+- BRP enabled status confirmation
+Use this to see what BRP-enabled Bevy apps are available for remote protocol testing. Apps must be built before they can be launched.

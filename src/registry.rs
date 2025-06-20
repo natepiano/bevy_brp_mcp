@@ -3,10 +3,10 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
 use crate::BrpMcpService;
-use crate::app_tools::{launch_app, launch_example, list_apps, list_examples};
+use crate::app_tools::{launch_app, launch_example, list_apps, list_brp_apps, list_examples};
 use crate::brp_tools::{
-    bevy_list_active_watches, bevy_stop_watch, brp_get_watch, brp_list_watch, brp_status,
-    tool_definitions, tool_generator,
+    bevy_list_active_watches, bevy_screenshot, bevy_shutdown, bevy_stop_watch, brp_get_watch,
+    brp_list_watch, brp_status, tool_definitions, tool_generator,
 };
 // Imports removed - using fully qualified paths in match statement to avoid naming conflicts
 use crate::log_tools::{cleanup_logs, list_logs, read_log};
@@ -29,8 +29,12 @@ pub fn register_tools() -> ListToolsResult {
     tools.extend(vec![
         // Core BRP tools (with custom logic)
         brp_status::register_tool(),
+        // bevy_brp_extras tools
+        bevy_shutdown::register_tool(),
+        bevy_screenshot::register_tool(),
         // App management tools
         list_apps::register_tool(),
+        list_brp_apps::register_tool(),
         list_examples::register_tool(),
         launch_app::register_tool(),
         launch_example::register_tool(),
@@ -77,9 +81,20 @@ pub async fn handle_tool_call(
             brp_status::handle(service, request, context).await
         }
 
+        // bevy_brp_extras tools
+        name if name == crate::brp_tools::constants::TOOL_BEVY_SHUTDOWN => {
+            bevy_shutdown::handle(service, request, context).await
+        }
+        name if name == crate::brp_tools::constants::TOOL_BEVY_SCREENSHOT => {
+            bevy_screenshot::handle(service, request, context).await
+        }
+
         // App management tools
         name if name == crate::app_tools::constants::TOOL_LIST_BEVY_APPS => {
             list_apps::handle(service, context).await
+        }
+        name if name == crate::app_tools::constants::TOOL_LIST_BRP_APPS => {
+            list_brp_apps::handle(service, context).await
         }
         name if name == crate::app_tools::constants::TOOL_LIST_BEVY_EXAMPLES => {
             list_examples::handle(service, context).await

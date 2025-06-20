@@ -113,8 +113,47 @@ impl CargoDetector {
         examples
     }
 
+    /// Find all BRP-enabled Bevy applications (binaries) in the workspace/project
+    pub fn find_brp_enabled_apps(&self) -> Vec<BinaryInfo> {
+        let mut apps = Vec::new();
+
+        for package in &self.metadata.packages {
+            // Only process workspace members
+            if !self.metadata.workspace_members.contains(&package.id) {
+                continue;
+            }
+
+            // Check if this package has BRP support
+            if !Self::package_has_brp_support(package) {
+                continue;
+            }
+
+            // Find all binary targets
+            for target in &package.targets {
+                if target.is_bin() {
+                    apps.push(BinaryInfo {
+                        name:           target.name.clone(),
+                        workspace_root: self.metadata.workspace_root.clone().into(),
+                        manifest_path:  package.manifest_path.clone().into(),
+                    });
+                }
+            }
+        }
+
+        apps
+    }
+
     fn package_depends_on_bevy(package: &Package) -> bool {
         // Check direct dependencies (including workspace dependencies)
         package.dependencies.iter().any(|dep| dep.name == "bevy")
+    }
+
+    /// Check if a package has BRP (Bevy Remote Protocol) support enabled
+    fn package_has_brp_support(package: &Package) -> bool {
+        // Check if bevy dependency includes bevy_remote feature
+        package.dependencies.iter().any(|dep| {
+            dep.name == "bevy" && 
+            dep.features.iter().any(|feature| feature == "bevy_remote")
+        })
     }
 }
