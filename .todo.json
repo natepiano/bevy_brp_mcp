@@ -3,204 +3,133 @@
     "id": "meta-1",
     "content": "Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-1",
-    "content": "Consolidate token estimation - move logic from pagination.rs to response_formatter.rs, create single estimate_response_tokens() function",
+    "content": "Create types.rs with ColorField, MathField, ComponentType enums and FieldAccess struct",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-1b",
-    "content": "Build and fix any compile errors and any compile warnings for token estimation consolidation",
+    "content": "Build and fix any compile errors and warnings for types.rs creation",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-2",
-    "content": "Create pagination parameter factory - add create_pagination_params() function to eliminate duplication across tool definitions",
+    "content": "Create field_mapper.rs with field to tuple index mapping logic",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-2b",
-    "content": "Build and fix any compile errors and any compile warnings for pagination parameter factory",
+    "content": "Build and fix any compile errors and warnings for field_mapper.rs creation",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-3",
-    "content": "Update tool definitions - replace duplicated pagination parameters in bevy_registry_schema, bevy_list, bevy_list_resources, bevy_query tools with factory function calls",
+    "content": "Create path_parser.rs with path parsing logic to convert strings to FieldAccess",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-3b",
-    "content": "Build and fix any compile errors and any compile warnings for tool definition updates",
+    "content": "Build and fix any compile errors and warnings for path_parser.rs creation",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-4",
-    "content": "Extract extract_request_params() function from handle_brp_request - handle parameter extraction logic",
+    "content": "Update transformations.rs to use new type-safe system in fix_tuple_struct_path",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-4b",
-    "content": "Build and fix any compile errors and any compile warnings for extract_request_params extraction",
+    "content": "Build and fix any compile errors and warnings for transformations.rs update",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-5",
-    "content": "Extract resolve_brp_method() function from handle_brp_request - handle method resolution logic",
+    "content": "Add unit tests for types, field_mapper, and path_parser modules",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "impl-5b",
-    "content": "Build and fix any compile errors and any compile warnings for resolve_brp_method extraction",
+    "content": "Build and fix any compile errors and warnings for test additions",
     "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-6",
-    "content": "Extract add_format_corrections() function from handle_brp_request - shared format correction logic to eliminate duplication",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-6b",
-    "content": "Build and fix any compile errors and any compile warnings for add_format_corrections extraction",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-7",
-    "content": "Extract should_use_pagination() and apply_pagination() functions from handle_brp_request - pagination decision and application logic",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-7b",
-    "content": "Build and fix any compile errors and any compile warnings for pagination function extractions",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-8",
-    "content": "Extract process_success_response() function from handle_brp_request - success response handling",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-8b",
-    "content": "Build and fix any compile errors and any compile warnings for process_success_response extraction",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-9",
-    "content": "Extract process_error_response() function from handle_brp_request - error response handling",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-9b",
-    "content": "Build and fix any compile errors and any compile warnings for process_error_response extraction",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-10",
-    "content": "Create PaginationEngine abstraction - separate pagination logic from core request handling",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "impl-10b",
-    "content": "Build and fix any compile errors and any compile warnings for PaginationEngine creation",
-    "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "clippy-1",
     "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "clippy-2",
     "content": "Fix any clippy issues following rules: do not mark code as dead, remove unused variables instead of prefixing with _",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "format-1",
     "content": "Run cargo +nightly fmt",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "test-1",
     "content": "Run cargo nextest run",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "test-2",
     "content": "If there are test issues, STOP and review them with the user",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "review-1",
     "content": "STOP work here and return control to main agent",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "review-2",
     "content": "Task a new subagent to do a code review of the changes in the worktree - focus on identifying duplication and complexity, emphasize read-only analysis",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   },
   {
     "id": "review-3",
     "content": "When code review subagent returns, STOP and review the suggested changes with the user",
     "status": "pending",
-    "priority": "medium",
+    "priority": "high",
     "notes": ""
   }
 ]
-EOF < /dev/null
