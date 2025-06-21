@@ -3,12 +3,12 @@ use serde_json::{Value, json};
 
 use super::brp_client::BrpError;
 use super::request_handler::FormatterContext;
-use crate::brp_tools::constants::{
+use crate::support::response::ResponseBuilder;
+use crate::support::serialization::json_response_to_result;
+use crate::tools::{
     JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA,
     JSON_FIELD_METHOD, JSON_FIELD_PORT,
 };
-use crate::support::response::ResponseBuilder;
-use crate::support::serialization::json_response_to_result;
 
 /// Metadata about a BRP request for response formatting
 #[derive(Debug, Clone)]
@@ -174,7 +174,7 @@ pub struct ResponseFormatterFactory {
 impl ResponseFormatterFactory {
     /// Create a formatter for simple entity operations (destroy, etc.)
     pub fn entity_operation(_entity_field: &str) -> ResponseFormatterBuilder {
-        use crate::brp_tools::constants::JSON_FIELD_ENTITY;
+        use crate::tools::JSON_FIELD_ENTITY;
 
         ResponseFormatterBuilder {
             config: FormatterConfig {
@@ -191,7 +191,7 @@ impl ResponseFormatterFactory {
 
     /// Create a formatter for resource operations
     pub fn resource_operation(_resource_field: &str) -> ResponseFormatterBuilder {
-        use crate::brp_tools::constants::JSON_FIELD_RESOURCE;
+        use crate::tools::JSON_FIELD_RESOURCE;
 
         ResponseFormatterBuilder {
             config: FormatterConfig {
@@ -209,7 +209,7 @@ impl ResponseFormatterFactory {
     /// Create a formatter that passes through the response data
     #[cfg(test)]
     pub fn pass_through() -> ResponseFormatterBuilder {
-        use crate::brp_tools::constants::JSON_FIELD_DATA;
+        use crate::tools::JSON_FIELD_DATA;
 
         ResponseFormatterBuilder {
             config: FormatterConfig {
@@ -306,7 +306,7 @@ fn substitute_template(template: &str, params: Option<&Value>) -> String {
 // Helper functions for common field extractors
 pub mod extractors {
     use super::{FormatterContext, Value};
-    use crate::brp_tools::constants::{JSON_FIELD_ENTITY, JSON_FIELD_RESOURCE};
+    use crate::tools::{JSON_FIELD_ENTITY, JSON_FIELD_RESOURCE};
 
     /// Extract entity ID from context params
     pub fn entity_from_params(_data: &Value, context: &FormatterContext) -> Value {
@@ -375,7 +375,7 @@ mod tests {
 
     #[test]
     fn test_configurable_formatter_success() {
-        use crate::brp_tools::constants::JSON_FIELD_DESTROYED_ENTITY;
+        use crate::tools::JSON_FIELD_DESTROYED_ENTITY;
 
         let config = FormatterConfig {
             success_template:      Some("Successfully destroyed entity {entity}".to_string()),
@@ -403,7 +403,7 @@ mod tests {
 
     #[test]
     fn test_configurable_formatter_error_with_metadata() {
-        use crate::brp_tools::constants::JSON_FIELD_ENTITY;
+        use crate::tools::JSON_FIELD_ENTITY;
 
         let config = FormatterConfig {
             success_template:      None,
@@ -462,7 +462,7 @@ mod tests {
 
     #[test]
     fn test_entity_operation_builder() {
-        use crate::brp_tools::constants::JSON_FIELD_DESTROYED_ENTITY;
+        use crate::tools::JSON_FIELD_DESTROYED_ENTITY;
 
         let factory = ResponseFormatterFactory::entity_operation(JSON_FIELD_DESTROYED_ENTITY)
             .with_template("Successfully destroyed entity {entity}")

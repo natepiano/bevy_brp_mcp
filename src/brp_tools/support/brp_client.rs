@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::BrpJsonRpcBuilder;
-use crate::brp_tools::constants::DEFAULT_BRP_PORT;
+use crate::tools::{BRP_EXTRAS_PREFIX, DEFAULT_BRP_PORT};
 
 /// Result of a BRP operation
 #[derive(Debug, Clone)]
@@ -108,9 +108,19 @@ pub async fn execute_brp_method(
 
     // Convert to structured result
     if let Some(error) = brp_response.error {
+        // Check if this is a bevy_brp_extras method that's not found
+        let enhanced_message = if error.code == -32601 && method.starts_with(BRP_EXTRAS_PREFIX) {
+            format!(
+                "{}. This method requires the bevy_brp_extras crate to be added to your Bevy app with the BrpExtrasPlugin",
+                error.message
+            )
+        } else {
+            error.message
+        };
+
         Ok(BrpResult::Error(BrpError {
             code:    error.code,
-            message: error.message,
+            message: enhanced_message,
             data:    error.data,
         }))
     } else {

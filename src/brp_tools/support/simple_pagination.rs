@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde_json::Value;
 
-use crate::brp_tools::constants::MAX_RESPONSE_TOKENS;
+use crate::tools::MAX_RESPONSE_TOKENS;
 
 const CHARS_PER_TOKEN: usize = 3; // Simple heuristic: ~3 chars per token
 
@@ -41,9 +41,13 @@ pub fn paginate_if_needed(data: Value, page: usize) -> Result<PaginatedResponse,
         serde_json::to_string(&data).map_err(|e| format!("JSON serialization failed: {e}"))?;
     let estimated_tokens = json_str.len() / CHARS_PER_TOKEN;
 
-    // If small enough, return everything
+    // If small enough, check if user requested a valid page
     if estimated_tokens <= MAX_RESPONSE_TOKENS {
-        return Ok(PaginatedResponse::complete(data));
+        if page == 0 {
+            return Ok(PaginatedResponse::complete(data));
+        }
+        // User requested page 1+ but data only has 1 page
+        return Err(format!("Page {page} not found. Total pages: 1"));
     }
 
     // Need to paginate - split the data
@@ -228,10 +232,19 @@ mod tests {
     #[test]
     fn test_page_bounds() {
         let data = json!([1, 2, 3]);
-        let result = paginate_if_needed(data, 999);
 
-        // Small data shouldn't paginate, so any page should work
+        // Page 0 should work for small data
+        let result = paginate_if_needed(data.clone(), 0);
         assert!(result.is_ok());
+
+        // Page 999 should fail for small data (only 1 page exists)
+        let result = paginate_if_needed(data, 999);
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .contains("Page 999 not found. Total pages: 1")
+        );
     }
 
     #[test]

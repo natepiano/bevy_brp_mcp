@@ -9,15 +9,15 @@ use super::format_discovery::{
 };
 use super::traits::ExtractedParams;
 use crate::BrpMcpService;
-use crate::brp_tools::constants::{
-    JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO, JSON_FIELD_FORMAT_CORRECTIONS,
-    JSON_FIELD_ORIGINAL_ERROR,
-};
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult};
 use crate::brp_tools::support::paginate_if_needed;
 use crate::brp_tools::support::response_formatter::{BrpMetadata, ResponseFormatter};
 use crate::support::debug_tools;
 use crate::support::params::extract_optional_u32;
+use crate::tools::{
+    JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO, JSON_FIELD_FORMAT_CORRECTIONS,
+    JSON_FIELD_ORIGINAL_ERROR,
+};
 
 /// Result of parameter extraction from a request
 pub struct RequestParams {
