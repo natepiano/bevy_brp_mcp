@@ -1,133 +1,56 @@
 [
   {
-    "id": "meta-1",
-    "content": "Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "id": "fix_pagination_logic",
+    "content": "Fix the inverted pagination logic in pagination_engine.rs should_use_pagination method",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-1",
-    "content": "Create types.rs with ColorField, MathField, ComponentType enums and FieldAccess struct",
+    "id": "update_pagination_structs",
+    "content": "Update pagination parameter structs to use paginate instead of auto_paginate",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-1b",
-    "content": "Build and fix any compile errors and warnings for types.rs creation",
+    "id": "update_bevy_list_tool",
+    "content": "Update bevy_list.rs tool to use paginate parameter instead of auto_paginate",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-2",
-    "content": "Create field_mapper.rs with field to tuple index mapping logic",
+    "id": "update_bevy_query_tool",
+    "content": "Update bevy_query.rs tool to use paginate parameter instead of auto_paginate",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-2b",
-    "content": "Build and fix any compile errors and warnings for field_mapper.rs creation",
+    "id": "update_bevy_list_resources_tool",
+    "content": "Update bevy_list_resources.rs tool to use paginate parameter instead of auto_paginate",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-3",
-    "content": "Create path_parser.rs with path parsing logic to convert strings to FieldAccess",
+    "id": "update_bevy_registry_schema_tool",
+    "content": "Update bevy_registry_schema.rs tool to use paginate parameter instead of auto_paginate",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-3b",
-    "content": "Build and fix any compile errors and warnings for path_parser.rs creation",
+    "id": "add_error_handling",
+    "content": "Add proper error handling when paginate=false and response exceeds token limits",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-4",
-    "content": "Update transformations.rs to use new type-safe system in fix_tuple_struct_path",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-4b",
-    "content": "Build and fix any compile errors and warnings for transformations.rs update",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-5",
-    "content": "Add unit tests for types, field_mapper, and path_parser modules",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-5b",
-    "content": "Build and fix any compile errors and warnings for test additions",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "clippy-1",
-    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "clippy-2",
-    "content": "Fix any clippy issues following rules: do not mark code as dead, remove unused variables instead of prefixing with _",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "format-1",
-    "content": "Run cargo +nightly fmt",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "test-1",
-    "content": "Run cargo nextest run",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "test-2",
-    "content": "If there are test issues, STOP and review them with the user",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-1",
-    "content": "STOP work here and return control to main agent",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-2",
-    "content": "Task a new subagent to do a code review of the changes in the worktree - focus on identifying duplication and complexity, emphasize read-only analysis",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-3",
-    "content": "When code review subagent returns, STOP and review the suggested changes with the user",
+    "id": "update_tests",
+    "content": "Update tests to use new paginate parameter instead of auto_paginate",
     "status": "pending",
     "priority": "high",
     "notes": ""
