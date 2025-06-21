@@ -675,9 +675,9 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
     vec![
         // bevy_query - has custom extractors for component counts
         BrpToolDef {
-            name:            "mcp__brp__bevy_query",
+            name:            crate::tools::TOOL_BEVY_QUERY,
             description:     "Query entities using the bevy/query BRP method. This powerful tool allows you to search for entities based on their components, applying filters and returning component data. This tool wraps the bevy/query method for easier use.",
-            method:          "bevy/query",
+            method:          crate::tools::BRP_METHOD_QUERY,
             params:          vec![
                 ParamDef {
                     name:        PARAM_DATA,
@@ -730,9 +730,9 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         },
         // bevy_spawn - has dynamic entity extraction from response
         BrpToolDef {
-            name:            "mcp__brp__bevy_spawn",
+            name:            crate::tools::TOOL_BEVY_SPAWN,
             description:     "Spawn a new entity with components using the bevy/spawn BRP method. Creates a new entity in the Bevy world with the specified components.",
-            method:          "bevy/spawn",
+            method:          crate::tools::BRP_METHOD_SPAWN,
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_COMPONENTS,
@@ -765,7 +765,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         },
         // brp_execute - has dynamic method selection
         BrpToolDef {
-            name:            "mcp__brp__brp_execute",
+            name:            crate::tools::TOOL_BRP_EXECUTE,
             description:     "Execute any Bevy Remote Protocol (BRP) method on a running Bevy app. This tool allows you to send arbitrary BRP commands and receive responses.",
             method:          "", // Dynamic method
             params:          vec![
@@ -800,9 +800,9 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         },
         // bevy_registry_schema - has complex parameter transformation
         BrpToolDef {
-            name:            "mcp__brp__bevy_registry_schema",
+            name:            crate::tools::TOOL_BEVY_REGISTRY_SCHEMA,
             description:     "Get JSON schema information for registered types using the bevy/registry/schema BRP method. Retrieves type schema definitions from the Bevy app's reflection registry.",
-            method:          "bevy/registry/schema",
+            method:          crate::tools::BRP_METHOD_REGISTRY_SCHEMA,
             params:          vec![
                 ParamDef {
                     name:        PARAM_WITH_CRATES,
@@ -847,9 +847,9 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         },
         // bevy_reparent - has array parameter handling
         BrpToolDef {
-            name:            "mcp__brp__bevy_reparent",
+            name:            crate::tools::TOOL_BEVY_REPARENT,
             description:     "Change the parent of an entity using the bevy/reparent BRP method. Modifies the hierarchical relationship between entities by setting or removing parent-child relationships.",
-            method:          "bevy/reparent",
+            method:          crate::tools::BRP_METHOD_REPARENT,
             params:          vec![
                 ParamDef {
                     name:        PARAM_ENTITIES,

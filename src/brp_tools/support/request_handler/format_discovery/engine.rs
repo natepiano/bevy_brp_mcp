@@ -10,6 +10,7 @@ use super::constants::{
 use super::detection::{TierInfo, TierManager, analyze_error_pattern, check_type_serialization};
 use super::transformations::{apply_pattern_fix, try_component_format_alternatives_legacy};
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
+use crate::error::BrpMcpError;
 use crate::tools::{
     BRP_METHOD_DESTROY, BRP_METHOD_EXTRAS_DISCOVER_FORMAT, BRP_METHOD_INSERT,
     BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_MUTATE_COMPONENT, BRP_METHOD_MUTATE_RESOURCE,
@@ -613,10 +614,7 @@ async fn test_component_format_with_spawn(
             }
             Ok(component_value.clone())
         }
-        _ => Err(McpError::from(rmcp::model::ErrorData::internal_error(
-            "Component format test failed".to_string(),
-            None,
-        ))),
+        _ => Err(BrpMcpError::failed_to("test component format", "validation failed").into()),
     }
 }
 

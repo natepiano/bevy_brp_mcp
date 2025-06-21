@@ -9,6 +9,7 @@ use serde_json::json;
 use super::support::{logging, process, scanning};
 use crate::BrpMcpService;
 use crate::constants::{DEFAULT_PROFILE, PARAM_PROFILE, PROFILE_RELEASE};
+use crate::error::BrpMcpError;
 use crate::support::{params, response, schema, service};
 use crate::tools::{DESC_LAUNCH_BEVY_APP, PARAM_APP_NAME, TOOL_LAUNCH_BEVY_APP};
 
@@ -57,25 +58,22 @@ pub fn launch_bevy_app(
 
     // Check if the binary exists
     if !binary_path.exists() {
-        return Err(McpError::invalid_params(
-            format!(
-                "Binary not found at {}. Please build the app with 'cargo build{}' first.",
-                binary_path.display(),
-                if profile == PROFILE_RELEASE {
-                    " --release"
-                } else {
-                    ""
-                }
-            ),
-            None,
-        ));
+        return Err(BrpMcpError::missing(&format!(
+            "binary at {}. Please build the app with 'cargo build{}' first",
+            binary_path.display(),
+            if profile == PROFILE_RELEASE {
+                " --release"
+            } else {
+                ""
+            }
+        ))
+        .into());
     }
 
     // Get the manifest directory (parent of Cargo.toml)
-    let manifest_dir = app
-        .manifest_path
-        .parent()
-        .ok_or_else(|| McpError::invalid_params("Invalid manifest path", None))?;
+    let manifest_dir = app.manifest_path.parent().ok_or_else(|| -> McpError {
+        BrpMcpError::invalid("manifest path", "no parent directory").into()
+    })?;
 
     eprintln!("Launching {} from {}", app_name, manifest_dir.display());
     eprintln!("Binary path: {}", binary_path.display());

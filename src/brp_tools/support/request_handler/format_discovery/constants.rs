@@ -1,6 +1,7 @@
 //! Constants and static regex patterns for format discovery
 
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
+
 use regex::Regex;
 
 use crate::tools::{
@@ -30,34 +31,37 @@ pub const FORMAT_DISCOVERY_METHODS: &[&str] = &[
 ];
 
 /// Static regex patterns for error analysis - Based on exact Bevy error strings
-pub static TRANSFORM_SEQUENCE_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"expected a sequence of (\d+) f32 values").expect("Invalid regex"));
-pub static EXPECTED_TYPE_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"expected `([a-zA-Z_:]+(?::[a-zA-Z_:]+)*)`").expect("Invalid regex"));
-pub static ACCESS_ERROR_REGEX: Lazy<Regex> = Lazy::new(|| {
+pub static TRANSFORM_SEQUENCE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"expected a sequence of (\d+) f32 values").expect("Invalid regex")
+});
+pub static EXPECTED_TYPE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"expected `([a-zA-Z_:]+(?::[a-zA-Z_:]+)*)`").expect("Invalid regex")
+});
+pub static ACCESS_ERROR_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Error accessing element with `([^`]+)` access(?:\s*\(offset \d+\))?: (.+)")
         .expect("Invalid regex")
 });
-pub static TYPE_MISMATCH_REGEX: Lazy<Regex> = Lazy::new(|| {
+pub static TYPE_MISMATCH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Expected ([a-zA-Z0-9_\[\]]+) access to access a ([a-zA-Z0-9_]+), found a ([a-zA-Z0-9_]+) instead\.")
         .expect("Invalid regex")
 });
-pub static VARIANT_TYPE_MISMATCH_REGEX: Lazy<Regex> = Lazy::new(|| {
+pub static VARIANT_TYPE_MISMATCH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Expected variant ([a-zA-Z0-9_\[\]]+) access to access a ([a-zA-Z0-9_]+) variant, found a ([a-zA-Z0-9_]+) variant instead\.")
         .expect("Invalid regex")
 });
-pub static MISSING_FIELD_REGEX: Lazy<Regex> = Lazy::new(|| {
+pub static MISSING_FIELD_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"The ([a-zA-Z0-9_]+) accessed doesn't have (?:an? )?[`"]([^`"]+)[`"] field"#)
         .expect("Invalid regex")
 });
-pub static UNKNOWN_COMPONENT_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"Unknown component type: `([^`]+)`").expect("Invalid regex"));
-pub static TUPLE_STRUCT_PATH_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r#"(?:at path|path)\s+[`"]?([^`"\s]+)[`"]?"#).expect("Invalid regex"));
-pub static MATH_TYPE_ARRAY_REGEX: Lazy<Regex> = Lazy::new(|| {
+pub static UNKNOWN_COMPONENT_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"Unknown component type: `([^`]+)`").expect("Invalid regex"));
+pub static TUPLE_STRUCT_PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?:at path|path)\s+[`"]?([^`"\s]+)[`"]?"#).expect("Invalid regex")
+});
+pub static MATH_TYPE_ARRAY_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(Vec2|Vec3|Vec4|Quat)\s+(?:expects?|requires?|needs?)\s+array")
         .expect("Invalid regex")
 });
-pub static UNKNOWN_COMPONENT_TYPE_REGEX: Lazy<Regex> = Lazy::new(|| {
+pub static UNKNOWN_COMPONENT_TYPE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Unknown component type(?::\s*)?[`']?([^`'\s]+)[`']?").expect("Invalid regex")
 });

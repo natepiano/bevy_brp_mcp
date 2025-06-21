@@ -8,12 +8,12 @@ use crate::error::BrpMcpError;
 
 /// Helper function to create a `BrpMcpError` for log file write failures
 fn log_write_error<E: std::fmt::Display>(err: E) -> BrpMcpError {
-    BrpMcpError::ProcessManagement(format!("Failed to write to log file: {err}"))
+    BrpMcpError::io_failed("write to log file", std::path::Path::new("<log>"), err)
 }
 
 /// Helper function to create a `BrpMcpError` for log file sync failures
 fn log_sync_error<E: std::fmt::Display>(err: E) -> BrpMcpError {
-    BrpMcpError::ProcessManagement(format!("Failed to sync log file: {err}"))
+    BrpMcpError::io_failed("sync log file", std::path::Path::new("<log>"), err)
 }
 
 /// Create a log file for a Bevy app launch
@@ -26,14 +26,14 @@ pub fn create_log_file(
     // Generate unique log file name in temp directory
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| BrpMcpError::ProcessManagement(format!("Failed to get timestamp: {e}")))?
+        .map_err(|e| BrpMcpError::failed_to("get timestamp", e))?
         .as_millis();
     let log_file_path =
         std::env::temp_dir().join(format!("bevy_brp_mcp_{app_name}_{timestamp}.log"));
 
     // Create log file
     let mut log_file = File::create(&log_file_path)
-        .map_err(|e| BrpMcpError::ProcessManagement(format!("Failed to create log file: {e}")))?;
+        .map_err(|e| BrpMcpError::io_failed("create", &log_file_path, e))?;
 
     // Write header
     writeln!(log_file, "=== Bevy BRP MCP Launch Log ===")
@@ -61,9 +61,11 @@ pub fn open_log_file_for_redirect(log_file_path: &Path) -> Result<File, McpError
         .append(true)
         .open(log_file_path)
         .map_err(|e| {
-            McpError::from(BrpMcpError::ProcessManagement(format!(
-                "Failed to open log file for redirect: {e}"
-            )))
+            McpError::from(BrpMcpError::io_failed(
+                "open log file for redirect",
+                log_file_path,
+                e,
+            ))
         })
 }
 
@@ -73,9 +75,11 @@ pub fn append_to_log_file(log_file_path: &Path, content: &str) -> Result<(), Mcp
         .append(true)
         .open(log_file_path)
         .map_err(|e| {
-            McpError::from(BrpMcpError::ProcessManagement(format!(
-                "Failed to open log file for appending: {e}"
-            )))
+            McpError::from(BrpMcpError::io_failed(
+                "open log file for appending",
+                log_file_path,
+                e,
+            ))
         })?;
 
     write!(file, "{content}").map_err(|e| McpError::from(log_write_error(e)))?;

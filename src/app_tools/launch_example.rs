@@ -9,6 +9,7 @@ use serde_json::json;
 use super::support::{logging, process, scanning};
 use crate::BrpMcpService;
 use crate::constants::{DEFAULT_PROFILE, PARAM_PROFILE, PROFILE_RELEASE};
+use crate::error::BrpMcpError;
 use crate::support::{params, response, schema, service};
 use crate::tools::{DESC_LAUNCH_BEVY_EXAMPLE, PARAM_EXAMPLE_NAME, TOOL_LAUNCH_BEVY_EXAMPLE};
 
@@ -52,10 +53,9 @@ pub fn launch_bevy_example(
     let example = scanning::find_required_example(example_name, search_paths)?;
 
     // Get the manifest directory (parent of Cargo.toml)
-    let manifest_dir = example
-        .manifest_path
-        .parent()
-        .ok_or_else(|| McpError::invalid_params("Invalid manifest path", None))?;
+    let manifest_dir = example.manifest_path.parent().ok_or_else(|| -> McpError {
+        BrpMcpError::invalid("manifest path", "no parent directory").into()
+    })?;
 
     eprintln!(
         "Launching example {} from package {}",

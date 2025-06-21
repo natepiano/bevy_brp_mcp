@@ -18,6 +18,7 @@ use crate::brp_tools::constants::{
 };
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult};
 use crate::brp_tools::support::response_formatter::{BrpMetadata, ResponseFormatter};
+use crate::error::BrpMcpError;
 use crate::support::debug_tools;
 use crate::tools::MAX_RESPONSE_TOKENS;
 
@@ -50,9 +51,7 @@ fn resolve_brp_method(
         .as_deref()
         .or(config.method)
         .map(String::from)
-        .ok_or_else(|| {
-            McpError::invalid_params("No method specified for BRP call".to_string(), None)
-        })
+        .ok_or_else(|| BrpMcpError::missing("BRP method specification").into())
 }
 
 /// Check if response exceeds token limit and save to file if needed
@@ -60,9 +59,8 @@ fn handle_large_response(
     response_data: &Value,
     method_name: &str,
 ) -> Result<Option<Value>, McpError> {
-    let response_json = serde_json::to_string(response_data).map_err(|e| {
-        McpError::internal_error(format!("Failed to serialize response: {e}"), None)
-    })?;
+    let response_json = serde_json::to_string(response_data)
+        .map_err(|e| -> McpError { BrpMcpError::failed_to("serialize response", e).into() })?;
 
     let estimated_tokens = response_json.len() / CHARS_PER_TOKEN;
 
@@ -70,7 +68,7 @@ fn handle_large_response(
         // Generate timestamp for unique filename
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map_err(|e| McpError::internal_error(format!("Failed to get timestamp: {e}"), None))?
+            .map_err(|e| -> McpError { BrpMcpError::failed_to("get timestamp", e).into() })?
             .as_secs();
 
         let sanitized_method = method_name.replace('/', "_");
@@ -78,15 +76,8 @@ fn handle_large_response(
         let filepath = std::env::temp_dir().join(&filename);
 
         // Save response to file
-        fs::write(&filepath, &response_json).map_err(|e| {
-            McpError::internal_error(
-                format!(
-                    "Failed to write response to file {}: {}",
-                    filepath.display(),
-                    e
-                ),
-                None,
-            )
+        fs::write(&filepath, &response_json).map_err(|e| -> McpError {
+            BrpMcpError::io_failed("write response", &filepath, e).into()
         })?;
 
         // Return fallback response with file information

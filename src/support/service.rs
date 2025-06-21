@@ -22,7 +22,7 @@ pub async fn fetch_roots_and_get_paths(
     Ok(service
         .roots
         .lock()
-        .map_err(|e| BrpMcpError::MutexPoisoned(format!("Failed to acquire roots lock: {}", e)))?
+        .map_err(|e| BrpMcpError::failed_to("acquire roots lock", e))?
         .clone())
 }
 

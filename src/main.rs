@@ -102,9 +102,10 @@ impl BrpMcpService {
                     .collect();
 
                 // Update our roots
-                let mut roots = self.roots.lock().map_err(|e| {
-                    BrpMcpError::MutexPoisoned(format!("Failed to lock roots mutex: {}", e))
-                })?;
+                let mut roots = self
+                    .roots
+                    .lock()
+                    .map_err(|e| BrpMcpError::failed_to("lock roots mutex", e))?;
                 *roots = paths;
                 tracing::debug!("Processed roots: {:?}", *roots);
             }

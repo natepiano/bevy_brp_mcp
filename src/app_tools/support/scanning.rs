@@ -75,9 +75,7 @@ pub fn find_example_by_name(
 /// This eliminates the duplicated pattern of finding an app with error handling
 pub fn find_required_app(app_name: &str, search_paths: &[PathBuf]) -> Result<BinaryInfo, McpError> {
     find_app_by_name(app_name, search_paths).ok_or_else(|| {
-        McpError::from(BrpMcpError::ProcessManagement(format!(
-            "Bevy app '{app_name}' not found in any search path"
-        )))
+        BrpMcpError::missing(&format!("Bevy app '{app_name}' in search paths")).into()
     })
 }
 
@@ -88,8 +86,6 @@ pub fn find_required_example(
     search_paths: &[PathBuf],
 ) -> Result<ExampleInfo, McpError> {
     find_example_by_name(example_name, search_paths).ok_or_else(|| {
-        McpError::from(BrpMcpError::ProcessManagement(format!(
-            "Bevy example '{example_name}' not found in any search path"
-        )))
+        BrpMcpError::missing(&format!("Bevy example '{example_name}' in search paths")).into()
     })
 }

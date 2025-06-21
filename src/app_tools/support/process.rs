@@ -14,9 +14,9 @@ pub fn launch_detached_process(
     process_name: &str,
 ) -> Result<u32, McpError> {
     // Clone the log file handle for stderr
-    let log_file_for_stderr = log_file.try_clone().map_err(|e| {
-        BrpMcpError::ProcessManagement(format!("Failed to clone log file handle: {e}"))
-    })?;
+    let log_file_for_stderr = log_file
+        .try_clone()
+        .map_err(|e| BrpMcpError::failed_to("clone log file handle", e))?;
 
     // Set up the command
     cmd.current_dir(working_dir)
@@ -31,8 +31,6 @@ pub fn launch_detached_process(
             // Get the process ID
             Ok(child.id())
         }
-        Err(e) => Err(McpError::from(BrpMcpError::ProcessManagement(format!(
-            "Failed to launch '{process_name}': {e}"
-        )))),
+        Err(e) => Err(BrpMcpError::process_failed("launch", process_name, e).into()),
     }
 }

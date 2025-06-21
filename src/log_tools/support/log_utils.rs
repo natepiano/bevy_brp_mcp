@@ -125,14 +125,13 @@ where
     let mut log_entries = Vec::new();
 
     // Read the temp directory
-    let entries = fs::read_dir(&temp_dir)
-        .map_err(|e| BrpMcpError::LogOperation(format!("Failed to read temp directory: {e}")))?;
+    let entries =
+        fs::read_dir(&temp_dir).map_err(|e| BrpMcpError::io_failed("read", &temp_dir, e))?;
 
     // Process each entry
     for entry in entries {
-        let entry = entry.map_err(|e| {
-            BrpMcpError::LogOperation(format!("Failed to read directory entry: {e}"))
-        })?;
+        let entry =
+            entry.map_err(|e| BrpMcpError::io_failed("read directory entry", &temp_dir, e))?;
 
         let path = entry.path();
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -140,9 +139,9 @@ where
         // Parse the filename
         if let Some((app_name, timestamp)) = parse_log_filename(filename) {
             // Get file metadata
-            let metadata = entry.metadata().map_err(|e| {
-                BrpMcpError::LogOperation(format!("Failed to get file metadata: {e}"))
-            })?;
+            let metadata = entry
+                .metadata()
+                .map_err(|e| BrpMcpError::io_failed("get file metadata", &path, e))?;
 
             let log_entry = LogFileEntry {
                 filename: filename.to_string(),

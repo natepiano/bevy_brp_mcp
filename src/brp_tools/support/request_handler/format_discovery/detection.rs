@@ -9,6 +9,7 @@ use super::constants::{
     UNKNOWN_COMPONENT_REGEX, UNKNOWN_COMPONENT_TYPE_REGEX, VARIANT_TYPE_MISMATCH_REGEX,
 };
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
+use crate::error::BrpMcpError;
 use crate::tools::BRP_METHOD_REGISTRY_SCHEMA;
 
 /// Known error patterns that can be deterministically handled
@@ -96,7 +97,7 @@ pub struct TierManager {
 
 impl TierManager {
     /// Create a new `TierManager`
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             tier_info: Vec::new(),
         }
@@ -319,10 +320,11 @@ fn analyze_schema_for_type(
             }
         }
     } else {
-        return Err(McpError::from(rmcp::model::ErrorData::internal_error(
-            "Schema response is neither an array nor an object".to_string(),
-            None,
-        )));
+        return Err(BrpMcpError::unexpected(
+            "schema response format",
+            "neither an array nor an object",
+        )
+        .into());
     }
 
     // Type not found in schema
