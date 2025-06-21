@@ -7,120 +7,85 @@
     "notes": ""
   },
   {
-    "id": "impl-1",
-    "content": "Add BRP_EXTRAS_PREFIX constant to constants.rs",
+    "id": "refactor-1",
+    "content": "Create custom parameter extractor for shutdown tool that handles process kill fallback",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-2",
-    "content": "Fix BRP_METHOD_EXTRAS_SHUTDOWN to use 'brp_extras/shutdown' in constants.rs",
+    "id": "refactor-2",
+    "content": "Add BrpToolDef for bevy_shutdown to tool_definitions.rs using custom extractor",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-3",
-    "content": "Fix BRP_METHOD_EXTRAS_SCREENSHOT to use 'brp_extras/screenshot' in constants.rs",
+    "id": "refactor-3",
+    "content": "Add BrpToolDef for bevy_screenshot to tool_definitions.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-4",
-    "content": "Fix BRP_METHOD_EXTRAS_DISCOVER_FORMAT to use 'brp_extras/discover_format' in constants.rs",
+    "id": "refactor-4",
+    "content": "Update registry.rs to use declarative tools instead of custom handlers for shutdown and screenshot",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-5",
-    "content": "Add comment explaining the constants use BRP_EXTRAS_PREFIX + method name",
+    "id": "refactor-5",
+    "content": "Remove bevy_shutdown.rs and bevy_screenshot.rs files",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-6",
-    "content": "build and fix any compile errors and any compile warnings for constants changes",
+    "id": "refactor-6",
+    "content": "Update mod.rs to remove shutdown and screenshot module declarations",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-7",
-    "content": "Import BRP_EXTRAS_PREFIX in brp_client.rs",
+    "id": "refactor-7",
+    "content": "build and fix any compile errors and any compile warnings for refactoring changes",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-8",
-    "content": "Add bevy_brp_extras awareness to execute_brp_method error handling",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-9",
-    "content": "build and fix any compile errors and any compile warnings for brp_client changes",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "clippy-1",
+    "id": "refactor-8",
     "content": "run `cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata`",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "clippy-2",
+    "id": "refactor-9",
     "content": "fix any clippy issues following rules: do not mark code as dead, remove unused variables instead of prefixing with _",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "format-1",
+    "id": "refactor-10",
     "content": "run `cargo +nightly fmt`",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "test-1",
+    "id": "refactor-11",
     "content": "run 'cargo nextest run'",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "test-2",
+    "id": "refactor-12",
     "content": "If there are test issues, STOP and review them with the user",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-1",
-    "content": "STOP work here and return control to main agent",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-2",
-    "content": "task a new subagent to do a code review of the changes in the worktree - tell it to focus on identifying duplication and complexity. emphasize that it should only read and analyze, not modify anything.",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-3",
-    "content": "when this new subagent returns, STOP and review the suggested changes with the user",
     "status": "pending",
     "priority": "high",
     "notes": ""
