@@ -3,12 +3,16 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use super::traits::{ExtractedParams, ParamExtractor};
+use crate::brp_tools::constants::{
+    JSON_FIELD_ENTITY, JSON_FIELD_PORT, JSON_FIELD_RESOURCE, PARAM_WITH_CRATES, PARAM_WITH_TYPES,
+    PARAM_WITHOUT_CRATES, PARAM_WITHOUT_TYPES,
+};
 use crate::error::BrpMcpError;
 use crate::support::params::{
     extract_any_value, extract_optional_number, extract_optional_string_array_from_request,
     extract_required_number, extract_required_string,
 };
-use crate::tools::{DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT, JSON_FIELD_RESOURCE};
+use crate::tools::DEFAULT_BRP_PORT;
 
 /// Parameters for BRP execute tool
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -167,10 +171,12 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
         let port = extract_port(request)?;
 
         // Extract the individual filter parameters
-        let with_crates = extract_optional_string_array_from_request(request, "with_crates")?;
-        let without_crates = extract_optional_string_array_from_request(request, "without_crates")?;
-        let with_types = extract_optional_string_array_from_request(request, "with_types")?;
-        let without_types = extract_optional_string_array_from_request(request, "without_types")?;
+        let with_crates = extract_optional_string_array_from_request(request, PARAM_WITH_CRATES)?;
+        let without_crates =
+            extract_optional_string_array_from_request(request, PARAM_WITHOUT_CRATES)?;
+        let with_types = extract_optional_string_array_from_request(request, PARAM_WITH_TYPES)?;
+        let without_types =
+            extract_optional_string_array_from_request(request, PARAM_WITHOUT_TYPES)?;
 
         // Build the query object if any filters are provided
         // The BRP method expects a JSON object with filter fields
@@ -183,18 +189,18 @@ impl ParamExtractor for RegistrySchemaParamExtractor {
 
             // Add crate filters
             if let Some(crates) = with_crates {
-                query.insert("with_crates".to_string(), json!(crates));
+                query.insert(PARAM_WITH_CRATES.to_string(), json!(crates));
             }
             if let Some(crates) = without_crates {
-                query.insert("without_crates".to_string(), json!(crates));
+                query.insert(PARAM_WITHOUT_CRATES.to_string(), json!(crates));
             }
 
             // Add reflect trait filters
             if let Some(types) = with_types {
-                query.insert("with_types".to_string(), json!(types));
+                query.insert(PARAM_WITH_TYPES.to_string(), json!(types));
             }
             if let Some(types) = without_types {
-                query.insert("without_types".to_string(), json!(types));
+                query.insert(PARAM_WITHOUT_TYPES.to_string(), json!(types));
             }
 
             // Return the query object directly as a Value::Object

@@ -7,10 +7,9 @@ use serde_json::Value;
 
 use super::support;
 use crate::BrpMcpService;
+use crate::brp_tools::constants::{JSON_FIELD_ENTITY, JSON_FIELD_PORT};
 use crate::support::{params, schema};
-use crate::tools::{
-    DEFAULT_BRP_PORT, DESC_BRP_LIST_WATCH, JSON_FIELD_ENTITY, JSON_FIELD_PORT, TOOL_BRP_LIST_WATCH,
-};
+use crate::tools::{DEFAULT_BRP_PORT, DESC_BRP_LIST_WATCH, TOOL_BRP_LIST_WATCH};
 
 pub fn register_tool() -> Tool {
     Tool {

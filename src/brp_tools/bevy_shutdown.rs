@@ -9,10 +9,11 @@ use tokio::time::timeout;
 
 use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
+use crate::brp_tools::constants::{JSON_FIELD_PORT, JSON_FIELD_STATUS};
 use crate::support::{params, response, schema};
 use crate::tools::{
-    BRP_METHOD_EXTRAS_SHUTDOWN, DEFAULT_BRP_PORT, DESC_BEVY_SHUTDOWN, JSON_FIELD_PORT,
-    JSON_FIELD_STATUS, PARAM_APP_NAME, PARAM_PORT, TOOL_BRP_EXTRAS_SHUTDOWN,
+    BRP_METHOD_EXTRAS_SHUTDOWN, DEFAULT_BRP_PORT, DESC_BEVY_SHUTDOWN, PARAM_APP_NAME, PARAM_PORT,
+    TOOL_BRP_EXTRAS_SHUTDOWN,
 };
 
 pub fn register_tool() -> Tool {

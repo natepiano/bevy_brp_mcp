@@ -63,6 +63,10 @@ pub const BRP_METHOD_MUTATE_RESOURCE: &str = "bevy/mutate_resource";
 pub const BRP_METHOD_MUTATE_COMPONENT: &str = "bevy/mutate_component";
 pub const BRP_METHOD_REGISTRY_SCHEMA: &str = "bevy/registry/schema";
 pub const BRP_METHOD_RPC_DISCOVER: &str = "rpc.discover";
+pub const BRP_METHOD_QUERY: &str = "bevy/query";
+pub const BRP_METHOD_REPARENT: &str = "bevy/reparent";
+pub const BRP_METHOD_GET_WATCH: &str = "bevy/get+watch";
+pub const BRP_METHOD_LIST_WATCH: &str = "bevy/list+watch";
 
 /// `bevy_brp_extras` methods
 pub const BRP_METHOD_EXTRAS_SHUTDOWN: &str = "brp_extras/shutdown";
@@ -92,6 +96,11 @@ pub const TOOL_BEVY_REMOVE_RESOURCE: &str = "mcp__brp__bevy_remove_resource";
 pub const TOOL_BEVY_MUTATE_RESOURCE: &str = "mcp__brp__bevy_mutate_resource";
 pub const TOOL_BEVY_MUTATE_COMPONENT: &str = "mcp__brp__bevy_mutate_component";
 pub const TOOL_BEVY_RPC_DISCOVER: &str = "mcp__brp__bevy_rpc_discover";
+pub const TOOL_BEVY_QUERY: &str = "mcp__brp__bevy_query";
+pub const TOOL_BEVY_SPAWN: &str = "mcp__brp__bevy_spawn";
+pub const TOOL_BRP_EXECUTE: &str = "mcp__brp__brp_execute";
+pub const TOOL_BEVY_REGISTRY_SCHEMA: &str = "mcp__brp__bevy_registry_schema";
+pub const TOOL_BEVY_REPARENT: &str = "mcp__brp__bevy_reparent";
 
 // -----------------------------------------------------------------------------
 // BRP Extras Tools (bevy_brp_extras plugin methods)
@@ -198,36 +207,6 @@ pub const DESC_CLEANUP_LOGS: &str = include_help_text!("log_tools/cleanup_logs.t
 pub const PARAM_PORT: &str = "port";
 pub const PARAM_APP_NAME: &str = "app_name";
 pub const PARAM_EXAMPLE_NAME: &str = "example_name";
-
-// ============================================================================
-// JSON FIELD CONSTANTS
-// ============================================================================
-
-/// JSON field name constants for BRP responses
-pub const JSON_FIELD_CODE: &str = "code";
-pub const JSON_FIELD_COMPONENT: &str = "component";
-pub const JSON_FIELD_COMPONENTS: &str = "components";
-pub const JSON_FIELD_COUNT: &str = "count";
-pub const JSON_FIELD_DATA: &str = "data";
-pub const JSON_FIELD_DEBUG_INFO: &str = "debug_info";
-pub const JSON_FIELD_DESTROYED_ENTITY: &str = "destroyed_entity";
-pub const JSON_FIELD_ENTITIES: &str = "entities";
-pub const JSON_FIELD_ENTITY: &str = "entity";
-pub const JSON_FIELD_ERROR_CODE: &str = "error_code";
-pub const JSON_FIELD_FORMAT_CORRECTIONS: &str = "format_corrections";
-pub const JSON_FIELD_LOG_PATH: &str = "log_path";
-pub const JSON_FIELD_METADATA: &str = "metadata";
-pub const JSON_FIELD_METHOD: &str = "method";
-pub const JSON_FIELD_ORIGINAL_ERROR: &str = "original_error";
-pub const JSON_FIELD_PARENT: &str = "parent";
-pub const JSON_FIELD_PATH: &str = "path";
-pub const JSON_FIELD_PORT: &str = "port";
-pub const JSON_FIELD_RESOURCE: &str = "resource";
-pub const JSON_FIELD_RESOURCES: &str = "resources";
-pub const JSON_FIELD_STATUS: &str = "status";
-pub const JSON_FIELD_VALUE: &str = "value";
-pub const JSON_FIELD_WATCH_ID: &str = "watch_id";
-pub const JSON_FIELD_WATCHES: &str = "watches";
 
 // ============================================================================
 // JSON-RPC CONSTANTS

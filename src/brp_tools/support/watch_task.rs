@@ -9,6 +9,7 @@ use tracing::{debug, error, info};
 use super::watch_manager::{WATCH_MANAGER, WatchInfo};
 use crate::brp_tools::support::json_rpc_builder::BrpJsonRpcBuilder;
 use crate::brp_tools::support::watch_logger::{self, BufferedWatchLogger};
+use crate::tools::{BRP_METHOD_GET_WATCH, BRP_METHOD_LIST_WATCH};
 
 /// Process the watch stream from the BRP server
 async fn process_watch_stream(
@@ -255,7 +256,7 @@ pub async fn start_entity_watch_task(
         "components": components
     });
 
-    start_watch_task(entity_id, "get", "bevy/get+watch", params, port).await
+    start_watch_task(entity_id, "get", BRP_METHOD_GET_WATCH, params, port).await
 }
 
 /// Start a background task for entity list watching
@@ -264,5 +265,5 @@ pub async fn start_list_watch_task(entity_id: u64, port: u16) -> Result<(u32, Pa
         "entity": entity_id
     });
 
-    start_watch_task(entity_id, "list", "bevy/list+watch", params, port).await
+    start_watch_task(entity_id, "list", BRP_METHOD_LIST_WATCH, params, port).await
 }
