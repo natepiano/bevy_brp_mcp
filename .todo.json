@@ -7,155 +7,71 @@
     "notes": ""
   },
   {
-    "id": "restore-1",
-    "content": "Add back BRP_EXTRAS_PREFIX constant to bevy_brp_mcp constants.rs (was deleted by another agent)",
+    "id": "impl-1",
+    "content": "Create help text file /help_text/brp_tools/brp_extras_discover_format.txt with tool description",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "restore-1b",
-    "content": "build and fix any compile errors and any compile warnings for restored prefix constant",
+    "id": "impl-1b",
+    "content": "build and fix any compile errors and any compile warnings for help text file creation",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "restore-2",
-    "content": "Add back bevy_brp_extras method constants to bevy_brp_mcp: BRP_METHOD_EXTRAS_SHUTDOWN, BRP_METHOD_EXTRAS_SCREENSHOT using BRP_EXTRAS_PREFIX",
+    "id": "impl-2",
+    "content": "Add tool constants TOOL_BRP_EXTRAS_DISCOVER_FORMAT and DESC_BRP_EXTRAS_DISCOVER_FORMAT to /src/brp_tools/constants.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "restore-2b",
-    "content": "build and fix any compile errors and any compile warnings for restored method constants",
+    "id": "impl-2b",
+    "content": "build and fix any compile errors and any compile warnings for tool constants",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "restore-3",
-    "content": "Add back BRP_METHOD_EXTRAS_DISCOVER_FORMAT constant using BRP_EXTRAS_PREFIX in bevy_brp_mcp",
+    "id": "impl-3",
+    "content": "Add BrpToolDef for discover_format to get_standard_tools() in /src/brp_tools/tool_definitions.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "restore-3b",
-    "content": "build and fix any compile errors and any compile warnings for restored discover format constant",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "mcp-1",
-    "content": "Standardize all MCP tool names to use mcp__brp__ prefix consistently in bevy_brp_mcp",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "mcp-1b",
-    "content": "build and fix any compile errors and any compile warnings for MCP tool naming",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "mcp-2",
-    "content": "Add mcp__brp__brp_extras_discover_format tool constants to bevy_brp_mcp (if needed for external access)",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "mcp-2b",
-    "content": "build and fix any compile errors and any compile warnings for MCP tool constants",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "engine-1",
-    "content": "Enhance existing format_discovery/engine.rs to add Tier 2 direct discovery by calling brp_extras/discover_format using existing BRP client infrastructure",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "engine-1b",
-    "content": "build and fix any compile errors and any compile warnings for engine enhancement",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "engine-2",
-    "content": "Ensure Tier 2 direct discovery still returns format_corrections field even when providing perfect formats",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "engine-2b",
-    "content": "build and fix any compile errors and any compile warnings for format_corrections preservation",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "mcp-3",
-    "content": "Add format discovery tool definition to MCP tool registry (if needed for external access)",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "mcp-3b",
+    "id": "impl-3b",
     "content": "build and fix any compile errors and any compile warnings for tool definition",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "test-1",
-    "content": "Test enhanced tier system with both direct discovery (bevy_brp_extras format_test.rs) and fallback scenarios (nateroids)",
+    "id": "impl-4",
+    "content": "Update engine.rs Tier 2 discovery to use execute_brp_method directly instead of call_brp_extras_discover_format",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "test-1b",
-    "content": "build and fix any compile errors and any compile warnings for tier system testing",
+    "id": "impl-4b",
+    "content": "build and fix any compile errors and any compile warnings for engine.rs tier 2 update",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "test-2",
-    "content": "Test end-to-end workflows with intentionally wrong formats on both test apps to validate format correction responses",
+    "id": "impl-5",
+    "content": "Remove the call_brp_extras_discover_format() function from engine.rs (lines ~602-633)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "test-2b",
-    "content": "build and fix any compile errors and any compile warnings for end-to-end testing",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "brp-test-1",
-    "content": "Update rust/.claude/commands/brp_test.md to include minimal high-level integration testing with bevy_brp_extras format_test.rs example (Tier 2 validation) and nateroids (Tier 3 fallback validation)",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "brp-test-1b",
-    "content": "build and fix any compile errors and any compile warnings for brp_test.md updates",
+    "id": "impl-5b",
+    "content": "build and fix any compile errors and any compile warnings for function removal",
     "status": "pending",
     "priority": "high",
     "notes": ""
@@ -182,14 +98,14 @@
     "notes": ""
   },
   {
-    "id": "test-3",
+    "id": "test-1",
     "content": "run 'cargo nextest run'",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "test-4",
+    "id": "test-2",
     "content": "If there are test issues, STOP and review them with the user",
     "status": "pending",
     "priority": "high",
