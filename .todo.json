@@ -7,7 +7,7 @@
     "notes": ""
   },
   {
-    "id": "update_pagination_structs",
+    "id": "update_pagination_structs", 
     "content": "Update pagination parameter structs to use paginate instead of auto_paginate",
     "status": "pending",
     "priority": "high",
@@ -16,7 +16,7 @@
   {
     "id": "update_bevy_list_tool",
     "content": "Update bevy_list.rs tool to use paginate parameter instead of auto_paginate",
-    "status": "pending",
+    "status": "pending", 
     "priority": "high",
     "notes": ""
   },
@@ -24,12 +24,12 @@
     "id": "update_bevy_query_tool",
     "content": "Update bevy_query.rs tool to use paginate parameter instead of auto_paginate",
     "status": "pending",
-    "priority": "high",
+    "priority": "high", 
     "notes": ""
   },
   {
     "id": "update_bevy_list_resources_tool",
-    "content": "Update bevy_list_resources.rs tool to use paginate parameter instead of auto_paginate",
+    "content": "Update bevy_list_resources.rs tool to use paginate parameter instead of auto_paginate", 
     "status": "pending",
     "priority": "high",
     "notes": ""
