@@ -1,0 +1,13 @@
+Discover component format information for use with BRP operations.
+
+This tool queries a Bevy app with bevy_brp_extras to get the exact JSON format needed for spawn, insert, and mutation operations.
+
+Parameters:
+- types (required): Array of fully-qualified component type names (e.g., "bevy_transform::components::transform::Transform")
+- port (optional): The BRP port (default: 15702)
+
+Returns format information including:
+- spawn_format: Example JSON structure for bevy/spawn operations
+- mutation_info: Available mutation paths for bevy/mutate_component operations
+
+Note: Requires the target Bevy app to have bevy_brp_extras plugin installed.

@@ -6,11 +6,11 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
-use super::constants::{DESC_CLEANUP_LOGS, TOOL_CLEANUP_LOGS};
 use super::support::log_utils;
 use crate::BrpMcpService;
 use crate::support::schema::SchemaBuilder;
 use crate::support::{params, response};
+use crate::tools::{DESC_CLEANUP_LOGS, TOOL_CLEANUP_LOGS};
 
 pub fn register_tool() -> Tool {
     Tool {

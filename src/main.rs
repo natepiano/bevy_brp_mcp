@@ -16,8 +16,7 @@ mod constants;
 mod log_tools;
 mod registry;
 mod support;
-
-use constants::BEVY_BRP_MCP_INFO;
+mod tools;
 
 #[derive(Clone)]
 pub struct BrpMcpService {
@@ -35,7 +34,6 @@ impl BrpMcpService {
 impl ServerHandler for BrpMcpService {
     fn get_info(&self) -> rmcp::model::ServerInfo {
         rmcp::model::ServerInfo {
-            instructions: Some(BEVY_BRP_MCP_INFO.to_string()),
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             ..Default::default()
         }
