@@ -1,84 +1,7 @@
 [
   {
-    "id": "terminal-1",
-    "content": "run `echo -e \"\\e]2;Implementation: Consolidate tool names and help text\\007\"` to set terminal title",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
     "id": "meta-1",
     "content": "Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "audit-1",
-    "content": "Audit all current TOOL_* constants in brp_tools/constants.rs and app_tools/constants.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "audit-2",
-    "content": "Audit all current DESC_* description constants across codebase",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "audit-3",
-    "content": "Audit all current help text files in help_text/ directory structure",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "create-1",
-    "content": "Create src/tools.rs with clear sections and naming convention documentation",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "create-1b",
-    "content": "build and fix any compile errors and any compile warnings for tools.rs creation",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "move-macro-1",
-    "content": "Move include_help_text! macro from constants.rs to tools.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "move-macro-1b",
-    "content": "build and fix any compile errors and any compile warnings for macro move",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "rename-help-1",
-    "content": "Rename help text files to match tool names (strip mcp__brp__ prefix)",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "rename-help-2",
-    "content": "Update help text file paths in any existing include_help_text! calls",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "rename-help-2b",
-    "content": "build and fix any compile errors and any compile warnings for help text renames",
     "status": "pending",
     "priority": "high",
     "notes": ""
@@ -88,7 +11,7 @@
     "content": "Move all TOOL_* constants from brp_tools/constants.rs to tools.rs",
     "status": "pending",
     "priority": "high",
-    "notes": ""
+    "notes": "READY TO START: tools.rs created with all constants, now need to update imports across codebase to remove duplication"
   },
   {
     "id": "move-tools-2",
@@ -212,20 +135,6 @@
   {
     "id": "review-1",
     "content": "STOP work here and return control to main agent",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-2",
-    "content": "task a new subagent to do a code review of the changes in the worktree - tell it to focus on identifying duplication and complexity. emphasize that it should only read and analyze, not modify anything.",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-3",
-    "content": "when this new subagent returns, STOP and review the suggested changes with the user",
     "status": "pending",
     "priority": "high",
     "notes": ""
