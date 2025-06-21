@@ -1,3 +1,6 @@
+use std::fs;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use rmcp::model::CallToolResult;
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
@@ -10,21 +13,17 @@ use super::format_discovery::{
 use super::traits::ExtractedParams;
 use crate::BrpMcpService;
 use crate::brp_tools::constants::{
-    JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO, JSON_FIELD_FORMAT_CORRECTIONS,
-    JSON_FIELD_ORIGINAL_ERROR,
+    CHARS_PER_TOKEN, JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO, JSON_FIELD_FORMAT_CORRECTIONS,
+    JSON_FIELD_ORIGINAL_ERROR, MAX_RESPONSE_TOKENS,
 };
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult};
-use crate::brp_tools::support::paginate_if_needed;
 use crate::brp_tools::support::response_formatter::{BrpMetadata, ResponseFormatter};
 use crate::support::debug_tools;
-use crate::support::params::extract_optional_u32;
 
 /// Result of parameter extraction from a request
 pub struct RequestParams {
     /// Extracted parameters from the configured extractor
     pub extracted: ExtractedParams,
-    /// Page number for pagination (0-based)
-    pub page:      usize,
 }
 
 /// Extract and validate all parameters from a BRP request
@@ -35,10 +34,7 @@ fn extract_request_params(
     // Extract parameters using the configured extractor
     let extracted = config.param_extractor.extract(request)?;
 
-    // Extract page parameter (defaults to 0)
-    let page = extract_optional_u32(request, "page", 0)? as usize;
-
-    Ok(RequestParams { extracted, page })
+    Ok(RequestParams { extracted })
 }
 
 /// Resolve the actual BRP method name to call
@@ -54,6 +50,54 @@ fn resolve_brp_method(
         .ok_or_else(|| {
             McpError::invalid_params("No method specified for BRP call".to_string(), None)
         })
+}
+
+/// Check if response exceeds token limit and save to file if needed
+fn handle_large_response(
+    response_data: &Value,
+    method_name: &str,
+) -> Result<Option<Value>, McpError> {
+    let response_json = serde_json::to_string(response_data).map_err(|e| {
+        McpError::internal_error(format!("Failed to serialize response: {e}"), None)
+    })?;
+
+    let estimated_tokens = response_json.len() / CHARS_PER_TOKEN;
+
+    if estimated_tokens > MAX_RESPONSE_TOKENS {
+        // Generate timestamp for unique filename
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|e| McpError::internal_error(format!("Failed to get timestamp: {e}"), None))?
+            .as_secs();
+
+        let sanitized_method = method_name.replace('/', "_");
+        let filename = format!("brp_response_{sanitized_method}_{timestamp}.json");
+        let filepath = std::env::temp_dir().join(&filename);
+
+        // Save response to file
+        fs::write(&filepath, &response_json).map_err(|e| {
+            McpError::internal_error(
+                format!(
+                    "Failed to write response to file {}: {}",
+                    filepath.display(),
+                    e
+                ),
+                None,
+            )
+        })?;
+
+        // Return fallback response with file information
+        let fallback_response = json!({
+            "status": "success",
+            "message": format!("Response too large ({} tokens). Saved to {}", estimated_tokens, filepath.display()),
+            "filepath": filepath.to_string_lossy(),
+            "instructions": "Use Read tool to examine, Grep to search, or jq commands to filter the data."
+        });
+
+        Ok(Some(fallback_response))
+    } else {
+        Ok(None)
+    }
 }
 
 /// Add format corrections and debug info to response data
@@ -123,7 +167,7 @@ struct ResponseContext<'a> {
 fn process_success_response(
     data: Option<Value>,
     enhanced_result: &EnhancedBrpResult,
-    page: usize,
+    method_name: &str,
     context: ResponseContext<'_>,
 ) -> Result<CallToolResult, McpError> {
     let mut response_data = data.unwrap_or(Value::Null);
@@ -135,23 +179,9 @@ fn process_success_response(
         &enhanced_result.debug_info,
     );
 
-    // Use simple pagination
-    let paginated =
-        paginate_if_needed(response_data, page).map_err(|e| McpError::internal_error(e, None))?;
-
-    // Format the paginated response
-    let final_data = if paginated.has_more {
-        serde_json::json!({
-            "data": paginated.data,
-            "pagination": {
-                "page": paginated.page,
-                "has_more": paginated.has_more,
-                "total_pages": paginated.total_pages
-            }
-        })
-    } else {
-        paginated.data
-    };
+    // Check if response is too large and use file fallback if needed
+    let final_data = handle_large_response(&response_data, method_name)?
+        .map_or(response_data, |fallback_response| fallback_response);
 
     Ok(context
         .formatter
@@ -241,7 +271,6 @@ pub async fn handle_brp_request(
     // Extract all parameters from the request
     let params = extract_request_params(&request, config)?;
     let extracted = params.extracted;
-    let page = params.page;
 
     // Determine the actual method to call
     let method_name = resolve_brp_method(&extracted, config)?;
@@ -275,7 +304,7 @@ pub async fn handle_brp_request(
                 formatter: &formatter,
                 metadata,
             };
-            process_success_response(data.clone(), &enhanced_result, page, context)
+            process_success_response(data.clone(), &enhanced_result, &method_name, context)
         }
         BrpResult::Error(error_info) => Ok(process_error_response(
             error_info.clone(),

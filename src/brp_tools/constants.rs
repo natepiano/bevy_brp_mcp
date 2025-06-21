@@ -5,7 +5,14 @@
 pub const DEFAULT_BRP_PORT: u16 = 15702;
 
 // Response size limits
-pub const MAX_RESPONSE_TOKENS: usize = 20_000;
+// Claude's MCP token limit - responses exceeding this will be saved to temp files
+// This threshold was determined through testing where Claude hits its processing limit
+// around 25,000 tokens and returns "exceeds maximum allowed tokens" errors
+pub const MAX_RESPONSE_TOKENS: usize = 25_000;
+
+// Token estimation heuristic - approximately 4 characters per token
+// Used to proactively detect when responses would exceed Claude's token limit
+pub const CHARS_PER_TOKEN: usize = 4;
 
 // BRP protocol method
 pub const BRP_METHOD_LIST: &str = "bevy/list";
