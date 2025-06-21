@@ -7,7 +7,7 @@ use super::constants::{
     COMPONENT_FORMAT_ERROR_CODE, FORMAT_DISCOVERY_METHODS, RESOURCE_FORMAT_ERROR_CODE,
     TIER_DETERMINISTIC, TIER_DIRECT_DISCOVERY, TIER_GENERIC_FALLBACK, TIER_SERIALIZATION,
 };
-use super::detection::{ErrorPattern, TierInfo, analyze_error_pattern, check_type_serialization};
+use super::detection::{TierInfo, analyze_error_pattern, check_type_serialization};
 use super::transformations::{apply_pattern_fix, try_component_format_alternatives_legacy};
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
 use crate::tools::{

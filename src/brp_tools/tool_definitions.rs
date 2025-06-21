@@ -46,7 +46,6 @@
 //!    formatters
 //! 3. **Register in generator** (automatic if added to `get_standard_tools()`)
 
-use super::support::create_pagination_params;
 use crate::tools::{
     BRP_METHOD_DESTROY, BRP_METHOD_EXTRAS_DISCOVER_FORMAT, BRP_METHOD_EXTRAS_SCREENSHOT,
     BRP_METHOD_GET, BRP_METHOD_GET_RESOURCE, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE,
