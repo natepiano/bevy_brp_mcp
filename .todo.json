@@ -1,0 +1,114 @@
+[
+  {
+    "id": "meta",
+    "content": "Do not deviate from the plan - if deviations needed, STOP and ask user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "1",
+    "content": "Convert 2 format! calls in bevy_shutdown.rs to use error builders",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "2",
+    "content": "Build and fix any compile errors/warnings after bevy_shutdown.rs changes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "3",
+    "content": "Convert 2 format! calls in watch_response.rs to use error builders",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "4",
+    "content": "Build and fix any compile errors/warnings after watch_response.rs changes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "5",
+    "content": "Convert 1 format! call in watch_task.rs to use error builders",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "6",
+    "content": "Build and fix any compile errors/warnings after watch_task.rs changes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "7",
+    "content": "Convert 1 format! call in format_discovery/engine.rs to use error builders",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "8",
+    "content": "Build and fix any compile errors/warnings after engine.rs changes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "9",
+    "content": "Run cargo clippy with strict settings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "10",
+    "content": "Fix any clippy issues found",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "11",
+    "content": "Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "12",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "13",
+    "content": "If test issues found, STOP and review with user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "14",
+    "content": "Task subagent for final code review to confirm 100% completion",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "15",
+    "content": "Review subagent findings with user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
