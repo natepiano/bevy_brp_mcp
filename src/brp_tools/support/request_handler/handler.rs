@@ -83,7 +83,7 @@ fn handle_large_response(
         // Return fallback response with file information
         let fallback_response = json!({
             "status": "success",
-            "message": format!("Response too large ({} tokens). Saved to {}", estimated_tokens, filepath.display()),
+            "message": format!("Response too large ({estimated_tokens} tokens). Saved to {}", filepath.display()),
             "filepath": filepath.to_string_lossy(),
             "instructions": "Use Read tool to examine, Grep to search, or jq commands to filter the data."
         });

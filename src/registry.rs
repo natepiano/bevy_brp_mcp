@@ -131,6 +131,9 @@ pub async fn handle_tool_call(
             debug_tools::handle_set_debug_mode(service, request, context)
         }
 
-        _ => Err(BrpMcpError::invalid("tool", format!("unknown: {}", request.name)).into()),
+        _ => {
+            let tool_name = &request.name;
+            Err(BrpMcpError::invalid("tool", format!("unknown: {tool_name}")).into())
+        }
     }
 }

@@ -117,7 +117,8 @@ pub fn parse_generic_enum_field_access(path: &str) -> Option<String> {
         _ => {
             // Generic enum variant field access -> use tuple index 0 and preserve field path
             if parts.len() > 3 {
-                Some(format!(".0.{}", parts[2..].join(".")))
+                let remaining = parts[2..].join(".");
+                Some(format!(".0.{remaining}"))
             } else {
                 Some(format!(".0.{field_name}"))
             }
