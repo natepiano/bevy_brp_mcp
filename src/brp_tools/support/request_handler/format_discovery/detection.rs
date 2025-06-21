@@ -9,8 +9,8 @@ use super::constants::{
     TRANSFORM_SEQUENCE_REGEX, TUPLE_STRUCT_PATH_REGEX, TYPE_MISMATCH_REGEX,
     UNKNOWN_COMPONENT_REGEX, UNKNOWN_COMPONENT_TYPE_REGEX, VARIANT_TYPE_MISMATCH_REGEX,
 };
-use crate::brp_tools::constants::BRP_METHOD_REGISTRY_SCHEMA;
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
+use crate::tools::BRP_METHOD_REGISTRY_SCHEMA;
 
 /// Known error patterns that can be deterministically handled
 #[derive(Debug, Clone, PartialEq, Eq)]
