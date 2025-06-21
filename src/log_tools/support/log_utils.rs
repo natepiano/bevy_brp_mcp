@@ -5,7 +5,7 @@ use std::time::SystemTime;
 use rmcp::Error as McpError;
 use serde_json::json;
 
-use crate::log_tools::constants::FILE_PATH;
+use crate::tools::FILE_PATH;
 
 // Constants
 pub const LOG_PREFIX: &str = "bevy_brp_mcp_";

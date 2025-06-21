@@ -5,15 +5,16 @@ use serde_json::{Map, Value};
 
 use super::constants::{
     COMPONENT_FORMAT_ERROR_CODE, FORMAT_DISCOVERY_METHODS, RESOURCE_FORMAT_ERROR_CODE,
-    TIER_DETERMINISTIC, TIER_GENERIC_FALLBACK, TIER_SERIALIZATION,
+    TIER_DETERMINISTIC, TIER_DIRECT_DISCOVERY, TIER_GENERIC_FALLBACK, TIER_SERIALIZATION,
 };
 use super::detection::{ErrorPattern, TierInfo, analyze_error_pattern, check_type_serialization};
 use super::transformations::{apply_pattern_fix, try_component_format_alternatives_legacy};
-use crate::brp_tools::constants::{
-    BRP_METHOD_DESTROY, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_MUTATE_COMPONENT,
-    BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_SPAWN,
-};
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
+use crate::tools::{
+    BRP_METHOD_DESTROY, BRP_METHOD_EXTRAS_DISCOVER_FORMAT, BRP_METHOD_INSERT,
+    BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_MUTATE_COMPONENT, BRP_METHOD_MUTATE_RESOURCE,
+    BRP_METHOD_SPAWN,
+};
 
 /// Location of type items in method parameters
 #[derive(Debug, Clone, Copy)]
@@ -437,6 +438,46 @@ async fn process_single_type_item(
     }
 }
 
+/// Try direct discovery using `bevy_brp_extras/discover_format`
+async fn try_direct_discovery(
+    type_name: &str,
+    port: Option<u16>,
+    tier_info: &mut Vec<TierInfo>,
+) -> Option<(Value, String)> {
+    tier_info.push(TierInfo {
+        tier:      TIER_DIRECT_DISCOVERY,
+        tier_name: "Direct Discovery".to_string(),
+        action:    format!("Calling brp_extras/discover_format for type: {type_name}"),
+        success:   false,
+    });
+
+    let params = serde_json::json!({
+        "types": [type_name]
+    });
+
+    if let Ok(BrpResult::Success(Some(data))) =
+        execute_brp_method(BRP_METHOD_EXTRAS_DISCOVER_FORMAT, Some(params), port).await
+    {
+        if let Some(formats) = data.get("formats").and_then(|f| f.as_object()) {
+            if let Some(format_info) = formats.get(type_name) {
+                // Extract spawn_format and convert to corrected value
+                if let Some(spawn_format) = format_info
+                    .get("spawn_format")
+                    .and_then(|sf| sf.get("example"))
+                {
+                    tier_info.last_mut().unwrap().success = true;
+                    tier_info.last_mut().unwrap().action =
+                        format!("Direct discovery successful: found format for {type_name}");
+                    let hint = "Direct discovery from bevy_brp_extras".to_string();
+                    return Some((spawn_format.clone(), hint));
+                }
+            }
+        }
+    }
+    tier_info.last_mut().unwrap().action = "Direct discovery unavailable or failed".to_string();
+    None
+}
+
 /// Tiered format discovery dispatcher - replaces `try_component_format_alternatives`
 /// Uses intelligent pattern matching with fallback to generic approaches
 async fn tiered_type_format_discovery(
@@ -449,15 +490,16 @@ async fn tiered_type_format_discovery(
     let mut tier_info = Vec::new();
 
     // ========== TIER 1: Serialization Diagnostics ==========
-    // For UnknownComponentType and UnknownComponent errors, queries BRP to check if types
+    // For ANY error on spawn/insert operations, queries BRP to check if types
     // support required reflection traits (Serialize/Deserialize)
     // Only check for spawn/insert operations as mutations don't require Serialize/Deserialize
     let error_analysis = analyze_error_pattern(error);
-    if (method == BRP_METHOD_INSERT || method == BRP_METHOD_SPAWN)
-        && matches!(
-            &error_analysis.pattern,
-            Some(ErrorPattern::UnknownComponentType { .. } | ErrorPattern::UnknownComponent { .. })
-        )
+    if method == BRP_METHOD_INSERT || method == BRP_METHOD_SPAWN
+    // COMMENTED OUT: Old pattern-specific logic - testing if ALL spawn/insert errors should check traits
+    // && matches!(
+    //     &error_analysis.pattern,
+    //     Some(ErrorPattern::UnknownComponentType { .. } | ErrorPattern::UnknownComponent { .. })
+    // )
     {
         tier_info.push(TierInfo {
             tier:      TIER_SERIALIZATION,
@@ -505,7 +547,13 @@ async fn tiered_type_format_discovery(
         }
     }
 
-    // ========== TIER 2: Deterministic Pattern Matching ==========
+    // ========== TIER 2: Direct Discovery ==========
+    // Calls bevy_brp_extras/discover_format to get correct format directly from the Bevy app
+    if let Some(result) = try_direct_discovery(type_name, port, &mut tier_info).await {
+        return (Some(result), tier_info);
+    }
+
+    // ========== TIER 3: Deterministic Pattern Matching ==========
     // Uses error message patterns to determine exact format mismatches
     // and applies targeted fixes with high confidence
     if let Some(pattern) = &error_analysis.pattern {
@@ -524,7 +572,7 @@ async fn tiered_type_format_discovery(
         }
     }
 
-    // ========== TIER 3: Generic Fallback ==========
+    // ========== TIER 4: Generic Fallback ==========
     // Falls back to legacy transformation logic trying various
     // format conversions (object->array, array->string, etc.)
     tier_info.push(TierInfo {

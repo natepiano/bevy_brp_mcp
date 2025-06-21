@@ -7,14 +7,13 @@ use serde_json::json;
 use sysinfo::{Signal, System};
 use tokio::time::timeout;
 
-use super::constants::{
-    BRP_METHOD_EXTRAS_SHUTDOWN, DEFAULT_BRP_PORT, DESC_BEVY_SHUTDOWN, JSON_FIELD_PORT,
-    JSON_FIELD_STATUS, PARAM_PORT, TOOL_BRP_EXTRAS_SHUTDOWN,
-};
 use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
-use crate::app_tools::constants::PARAM_APP_NAME;
 use crate::support::{params, response, schema};
+use crate::tools::{
+    BRP_METHOD_EXTRAS_SHUTDOWN, DEFAULT_BRP_PORT, DESC_BEVY_SHUTDOWN, JSON_FIELD_PORT,
+    JSON_FIELD_STATUS, PARAM_APP_NAME, PARAM_PORT, TOOL_BRP_EXTRAS_SHUTDOWN,
+};
 
 pub fn register_tool() -> Tool {
     Tool {

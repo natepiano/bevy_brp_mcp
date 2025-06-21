@@ -46,17 +46,20 @@
 //!    formatters
 //! 3. **Register in generator** (automatic if added to `get_standard_tools()`)
 
-use super::constants::{
-    BRP_METHOD_DESTROY, BRP_METHOD_GET, BRP_METHOD_GET_RESOURCE, BRP_METHOD_INSERT,
-    BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_LIST, BRP_METHOD_LIST_RESOURCES,
-    BRP_METHOD_MUTATE_COMPONENT, BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_REMOVE,
-    BRP_METHOD_REMOVE_RESOURCE, BRP_METHOD_RPC_DISCOVER, DESC_BRP_DESTROY, DESC_BRP_GET,
-    DESC_BRP_GET_RESOURCE, DESC_BRP_INSERT, DESC_BRP_INSERT_RESOURCE, DESC_BRP_LIST,
-    DESC_BRP_LIST_RESOURCES, DESC_BRP_MUTATE_COMPONENT, DESC_BRP_MUTATE_RESOURCE, DESC_BRP_REMOVE,
-    DESC_BRP_REMOVE_RESOURCE, DESC_BRP_RPC_DISCOVER, JSON_FIELD_COMPONENT, JSON_FIELD_COMPONENTS,
-    JSON_FIELD_COUNT, JSON_FIELD_DATA, JSON_FIELD_DESTROYED_ENTITY, JSON_FIELD_ENTITY,
-    JSON_FIELD_METADATA, JSON_FIELD_PATH, JSON_FIELD_PORT, JSON_FIELD_RESOURCE,
-    JSON_FIELD_RESOURCES, JSON_FIELD_VALUE, PORT_DESCRIPTION, TOOL_BRP_DESTROY, TOOL_BRP_GET,
+use super::support::create_pagination_params;
+use crate::tools::{
+    BRP_METHOD_DESTROY, BRP_METHOD_EXTRAS_DISCOVER_FORMAT, BRP_METHOD_EXTRAS_SCREENSHOT,
+    BRP_METHOD_GET, BRP_METHOD_GET_RESOURCE, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE,
+    BRP_METHOD_LIST, BRP_METHOD_LIST_RESOURCES, BRP_METHOD_MUTATE_COMPONENT,
+    BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_REMOVE, BRP_METHOD_REMOVE_RESOURCE,
+    BRP_METHOD_RPC_DISCOVER, DESC_BEVY_SCREENSHOT, DESC_BRP_DESTROY,
+    DESC_BRP_EXTRAS_DISCOVER_FORMAT, DESC_BRP_GET, DESC_BRP_GET_RESOURCE, DESC_BRP_INSERT,
+    DESC_BRP_INSERT_RESOURCE, DESC_BRP_LIST, DESC_BRP_LIST_RESOURCES, DESC_BRP_MUTATE_COMPONENT,
+    DESC_BRP_MUTATE_RESOURCE, DESC_BRP_REMOVE, DESC_BRP_REMOVE_RESOURCE, DESC_BRP_RPC_DISCOVER,
+    JSON_FIELD_COMPONENT, JSON_FIELD_COMPONENTS, JSON_FIELD_COUNT, JSON_FIELD_DATA,
+    JSON_FIELD_DESTROYED_ENTITY, JSON_FIELD_ENTITY, JSON_FIELD_METADATA, JSON_FIELD_PATH,
+    JSON_FIELD_PORT, JSON_FIELD_RESOURCE, JSON_FIELD_RESOURCES, JSON_FIELD_VALUE, PORT_DESCRIPTION,
+    TOOL_BRP_DESTROY, TOOL_BRP_EXTRAS_DISCOVER_FORMAT, TOOL_BRP_EXTRAS_SCREENSHOT, TOOL_BRP_GET,
     TOOL_BRP_GET_RESOURCE, TOOL_BRP_INSERT, TOOL_BRP_INSERT_RESOURCE, TOOL_BRP_LIST,
     TOOL_BRP_LIST_RESOURCES, TOOL_BRP_MUTATE_COMPONENT, TOOL_BRP_MUTATE_RESOURCE, TOOL_BRP_REMOVE,
     TOOL_BRP_REMOVE_RESOURCE, TOOL_BRP_RPC_DISCOVER,
@@ -594,6 +597,70 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 }],
             },
         },
+        // bevy_brp_extras/discover_format
+        BrpToolDef {
+            name:            TOOL_BRP_EXTRAS_DISCOVER_FORMAT,
+            description:     DESC_BRP_EXTRAS_DISCOVER_FORMAT,
+            method:          BRP_METHOD_EXTRAS_DISCOVER_FORMAT,
+            params:          vec![
+                ParamDef {
+                    name:        "types",
+                    description: "Array of fully-qualified component type names to discover formats for",
+                    required:    true,
+                    param_type:  ParamType::StringArray,
+                },
+                ParamDef {
+                    name:        JSON_FIELD_PORT,
+                    description: PORT_DESCRIPTION,
+                    required:    false,
+                    param_type:  ParamType::Number,
+                },
+            ],
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef {
+                formatter_type:  FormatterType::Simple,
+                template:        "Format discovery completed",
+                response_fields: vec![ResponseField {
+                    name:      "formats",
+                    extractor: ExtractorType::PassThroughData,
+                }],
+            },
+        },
+        // bevy_screenshot
+        BrpToolDef {
+            name:            TOOL_BRP_EXTRAS_SCREENSHOT,
+            description:     DESC_BEVY_SCREENSHOT,
+            method:          BRP_METHOD_EXTRAS_SCREENSHOT,
+            params:          vec![
+                ParamDef {
+                    name:        JSON_FIELD_PATH,
+                    description: "File path where the screenshot should be saved",
+                    required:    true,
+                    param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        JSON_FIELD_PORT,
+                    description: PORT_DESCRIPTION,
+                    required:    false,
+                    param_type:  ParamType::Number,
+                },
+            ],
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef {
+                formatter_type:  FormatterType::Simple,
+                template:        "Successfully captured screenshot and saved to {path}",
+                response_fields: vec![
+                    ResponseField {
+                        name:      JSON_FIELD_PATH,
+                        extractor: ExtractorType::ParamFromContext(JSON_FIELD_PATH),
+                    },
+                    ResponseField {
+                        name:      JSON_FIELD_PORT,
+                        extractor: ExtractorType::ParamFromContext(JSON_FIELD_PORT),
+                    },
+                ],
+            },
+        },
     ]
 }
 
@@ -603,7 +670,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
     vec![
         // bevy_query - has custom extractors for component counts
         BrpToolDef {
-            name:            "bevy_query",
+            name:            "mcp__brp__bevy_query",
             description:     "Query entities using the bevy/query BRP method. This powerful tool allows you to search for entities based on their components, applying filters and returning component data. This tool wraps the bevy/query method for easier use.",
             method:          "bevy/query",
             params:          vec![
@@ -658,7 +725,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         },
         // bevy_spawn - has dynamic entity extraction from response
         BrpToolDef {
-            name:            "bevy_spawn",
+            name:            "mcp__brp__bevy_spawn",
             description:     "Spawn a new entity with components using the bevy/spawn BRP method. Creates a new entity in the Bevy world with the specified components.",
             method:          "bevy/spawn",
             params:          vec![
@@ -693,7 +760,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         },
         // brp_execute - has dynamic method selection
         BrpToolDef {
-            name:            "brp_execute",
+            name:            "mcp__brp__brp_execute",
             description:     "Execute any Bevy Remote Protocol (BRP) method on a running Bevy app. This tool allows you to send arbitrary BRP commands and receive responses.",
             method:          "", // Dynamic method
             params:          vec![
@@ -728,7 +795,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         },
         // bevy_registry_schema - has complex parameter transformation
         BrpToolDef {
-            name:            "bevy_registry_schema",
+            name:            "mcp__brp__bevy_registry_schema",
             description:     "Get JSON schema information for registered types using the bevy/registry/schema BRP method. Retrieves type schema definitions from the Bevy app's reflection registry.",
             method:          "bevy/registry/schema",
             params:          vec![
@@ -775,7 +842,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         },
         // bevy_reparent - has array parameter handling
         BrpToolDef {
-            name:            "bevy_reparent",
+            name:            "mcp__brp__bevy_reparent",
             description:     "Change the parent of an entity using the bevy/reparent BRP method. Modifies the hierarchical relationship between entities by setting or removing parent-child relationships.",
             method:          "bevy/reparent",
             params:          vec![

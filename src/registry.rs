@@ -5,8 +5,8 @@ use rmcp::{Error as McpError, RoleServer};
 use crate::BrpMcpService;
 use crate::app_tools::{launch_app, launch_example, list_apps, list_brp_apps, list_examples};
 use crate::brp_tools::{
-    bevy_list_active_watches, bevy_screenshot, bevy_shutdown, bevy_stop_watch, brp_get_watch,
-    brp_list_watch, brp_status, tool_definitions, tool_generator,
+    bevy_list_active_watches, bevy_shutdown, bevy_stop_watch, brp_get_watch, brp_list_watch,
+    brp_status, tool_definitions, tool_generator,
 };
 // Imports removed - using fully qualified paths in match statement to avoid naming conflicts
 use crate::log_tools::{cleanup_logs, list_logs, read_log};
@@ -31,7 +31,6 @@ pub fn register_tools() -> ListToolsResult {
         brp_status::register_tool(),
         // bevy_brp_extras tools
         bevy_shutdown::register_tool(),
-        bevy_screenshot::register_tool(),
         // App management tools
         list_apps::register_tool(),
         list_brp_apps::register_tool(),
@@ -77,62 +76,57 @@ pub async fn handle_tool_call(
     // Handle remaining tools
     match request.name.as_ref() {
         // Core BRP tools (with custom logic)
-        name if name == crate::brp_tools::constants::TOOL_BRP_STATUS => {
+        name if name == crate::tools::TOOL_BRP_STATUS => {
             brp_status::handle(service, request, context).await
         }
 
         // bevy_brp_extras tools
-        name if name == crate::brp_tools::constants::TOOL_BRP_EXTRAS_SHUTDOWN => {
+        name if name == crate::tools::TOOL_BRP_EXTRAS_SHUTDOWN => {
             bevy_shutdown::handle(service, request, context).await
-        }
-        name if name == crate::brp_tools::constants::TOOL_BRP_EXTRAS_SCREENSHOT => {
-            bevy_screenshot::handle(service, request, context).await
         }
 
         // App management tools
-        name if name == crate::app_tools::constants::TOOL_LIST_BEVY_APPS => {
+        name if name == crate::tools::TOOL_LIST_BEVY_APPS => {
             list_apps::handle(service, context).await
         }
-        name if name == crate::app_tools::constants::TOOL_LIST_BRP_APPS => {
+        name if name == crate::tools::TOOL_LIST_BRP_APPS => {
             list_brp_apps::handle(service, context).await
         }
-        name if name == crate::app_tools::constants::TOOL_LIST_BEVY_EXAMPLES => {
+        name if name == crate::tools::TOOL_LIST_BEVY_EXAMPLES => {
             list_examples::handle(service, context).await
         }
-        name if name == crate::app_tools::constants::TOOL_LAUNCH_BEVY_APP => {
+        name if name == crate::tools::TOOL_LAUNCH_BEVY_APP => {
             launch_app::handle(service, request, context).await
         }
-        name if name == crate::app_tools::constants::TOOL_LAUNCH_BEVY_EXAMPLE => {
+        name if name == crate::tools::TOOL_LAUNCH_BEVY_EXAMPLE => {
             launch_example::handle(service, request, context).await
         }
 
         // Log management tools
-        name if name == crate::log_tools::constants::TOOL_LIST_LOGS => {
+        name if name == crate::tools::TOOL_LIST_LOGS => {
             list_logs::handle(service, &request, context)
         }
-        name if name == crate::log_tools::constants::TOOL_READ_LOG => {
-            read_log::handle(service, &request, context)
-        }
-        name if name == crate::log_tools::constants::TOOL_CLEANUP_LOGS => {
+        name if name == crate::tools::TOOL_READ_LOG => read_log::handle(service, &request, context),
+        name if name == crate::tools::TOOL_CLEANUP_LOGS => {
             cleanup_logs::handle(service, &request, context)
         }
 
         // Streaming/watch tools (custom logic)
-        name if name == crate::brp_tools::constants::TOOL_BRP_GET_WATCH => {
+        name if name == crate::tools::TOOL_BRP_GET_WATCH => {
             brp_get_watch::handle(service, request, context).await
         }
-        name if name == crate::brp_tools::constants::TOOL_BRP_LIST_WATCH => {
+        name if name == crate::tools::TOOL_BRP_LIST_WATCH => {
             brp_list_watch::handle(service, request, context).await
         }
-        name if name == crate::brp_tools::constants::TOOL_BEVY_STOP_WATCH => {
+        name if name == crate::tools::TOOL_BEVY_STOP_WATCH => {
             bevy_stop_watch::handle(service, request, context).await
         }
-        name if name == crate::brp_tools::constants::TOOL_BEVY_LIST_ACTIVE_WATCHES => {
+        name if name == crate::tools::TOOL_BEVY_LIST_ACTIVE_WATCHES => {
             bevy_list_active_watches::handle(service, request, context).await
         }
 
         // Debug tools
-        name if name == crate::brp_tools::constants::TOOL_SET_DEBUG_MODE => {
+        name if name == crate::tools::TOOL_SET_DEBUG_MODE => {
             debug_tools::handle_set_debug_mode(service, request, context)
         }
 

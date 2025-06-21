@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 use rmcp::model::CallToolResult;
 
-use crate::brp_tools::constants::{JSON_FIELD_LOG_PATH, JSON_FIELD_WATCH_ID};
 use crate::support::response::ResponseBuilder;
 use crate::support::serialization::json_response_to_result;
+use crate::tools::{JSON_FIELD_LOG_PATH, JSON_FIELD_WATCH_ID};
 
 pub fn format_watch_start_response(
     result: Result<(u32, PathBuf), String>,

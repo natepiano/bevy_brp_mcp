@@ -51,7 +51,7 @@ pub fn handle_set_debug_mode(
 
 /// Register the `set_debug_mode` tool
 pub fn register_tool() -> Tool {
-    use crate::brp_tools::constants::TOOL_SET_DEBUG_MODE;
+    use crate::tools::TOOL_SET_DEBUG_MODE;
 
     Tool {
         name: TOOL_SET_DEBUG_MODE.into(),

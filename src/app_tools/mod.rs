@@ -1,6 +1,5 @@
 // App tools module
 
-pub mod constants;
 pub mod launch_app;
 pub mod launch_example;
 pub mod list_apps;
