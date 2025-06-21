@@ -7,9 +7,14 @@
 mod constants;
 mod detection;
 mod engine;
+mod field_mapper;
+mod path_parser;
 mod transformations;
+mod types;
 
 #[cfg(test)]
 mod tests;
 
-pub use self::engine::execute_brp_method_with_format_discovery;
+pub use self::engine::{
+    EnhancedBrpResult, FormatCorrection, execute_brp_method_with_format_discovery,
+};

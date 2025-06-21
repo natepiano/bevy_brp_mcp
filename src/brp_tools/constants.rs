@@ -4,6 +4,10 @@
 // Network/Port Constants
 pub const DEFAULT_BRP_PORT: u16 = 15702;
 
+// Response size limits
+pub const MAX_RESPONSE_TOKENS: usize = 20_000;
+
+
 // BRP protocol method
 pub const BRP_METHOD_LIST: &str = "bevy/list";
 pub const BRP_METHOD_GET: &str = "bevy/get";
@@ -34,12 +38,17 @@ pub const JSON_FIELD_COMPONENT: &str = "component";
 pub const JSON_FIELD_COMPONENTS: &str = "components";
 pub const JSON_FIELD_COUNT: &str = "count";
 pub const JSON_FIELD_DATA: &str = "data";
+pub const JSON_FIELD_DEBUG_INFO: &str = "debug_info";
 pub const JSON_FIELD_DESTROYED_ENTITY: &str = "destroyed_entity";
+pub const JSON_FIELD_ENTITIES: &str = "entities";
 pub const JSON_FIELD_ENTITY: &str = "entity";
 pub const JSON_FIELD_ERROR_CODE: &str = "error_code";
+pub const JSON_FIELD_FORMAT_CORRECTIONS: &str = "format_corrections";
 pub const JSON_FIELD_LOG_PATH: &str = "log_path";
 pub const JSON_FIELD_METADATA: &str = "metadata";
 pub const JSON_FIELD_METHOD: &str = "method";
+pub const JSON_FIELD_ORIGINAL_ERROR: &str = "original_error";
+pub const JSON_FIELD_PARENT: &str = "parent";
 pub const JSON_FIELD_PATH: &str = "path";
 pub const JSON_FIELD_PORT: &str = "port";
 pub const JSON_FIELD_RESOURCE: &str = "resource";

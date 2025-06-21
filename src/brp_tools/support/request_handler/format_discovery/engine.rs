@@ -10,7 +10,7 @@ use super::constants::{
 use super::detection::{ErrorPattern, TierInfo, analyze_error_pattern, check_type_serialization};
 use super::transformations::{apply_pattern_fix, try_component_format_alternatives_legacy};
 use crate::brp_tools::constants::{
-    BRP_METHOD_DESTROY, BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_MUTATE_COMPONENT,
+    BRP_METHOD_DESTROY, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_MUTATE_COMPONENT,
     BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_SPAWN,
 };
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
@@ -406,7 +406,7 @@ async fn process_single_type_item(
     ));
 
     let (discovery_result, mut tier_info) =
-        tiered_type_format_discovery(type_name, type_value, original_error, port).await;
+        tiered_type_format_discovery(type_name, type_value, method, original_error, port).await;
 
     // Add type context to tier info
     for info in &mut tier_info {
@@ -442,16 +442,22 @@ async fn process_single_type_item(
 async fn tiered_type_format_discovery(
     type_name: &str,
     original_value: &Value,
+    method: &str,
     error: &BrpError,
     port: Option<u16>,
 ) -> (Option<(Value, String)>, Vec<TierInfo>) {
     let mut tier_info = Vec::new();
 
     // ========== TIER 1: Serialization Diagnostics ==========
-    // For UnknownComponentType errors, queries BRP to check if types
+    // For UnknownComponentType and UnknownComponent errors, queries BRP to check if types
     // support required reflection traits (Serialize/Deserialize)
+    // Only check for spawn/insert operations as mutations don't require Serialize/Deserialize
     let error_analysis = analyze_error_pattern(error);
-    if let Some(ErrorPattern::UnknownComponentType { component_type: _ }) = &error_analysis.pattern
+    if (method == BRP_METHOD_INSERT || method == BRP_METHOD_SPAWN)
+        && matches!(
+            &error_analysis.pattern,
+            Some(ErrorPattern::UnknownComponentType { .. } | ErrorPattern::UnknownComponent { .. })
+        )
     {
         tier_info.push(TierInfo {
             tier:      TIER_SERIALIZATION,

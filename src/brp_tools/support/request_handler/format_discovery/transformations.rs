@@ -3,6 +3,8 @@
 use serde_json::{Map, Value};
 
 use super::detection::{ErrorPattern, extract_path_from_error_context};
+use super::field_mapper::map_field_to_tuple_index;
+use super::path_parser::{parse_generic_enum_field_access, parse_path_to_field_access};
 use crate::brp_tools::support::brp_client::BrpError;
 use crate::brp_tools::support::request_handler::constants::{
     FIELD_LABEL, FIELD_NAME, FIELD_TEXT, FIELD_VALUE,
@@ -19,105 +21,30 @@ pub fn type_expects_array(type_name: &str, array_type: &str) -> String {
 }
 
 /// Helper function to fix tuple struct paths for all enum tuple variants
+/// Uses the new type-safe system for better maintainability and correctness
 pub fn fix_tuple_struct_path(path: &str) -> String {
+    // First, try the type-safe approach using our new parsing system
+    if let Some(field_access) = parse_path_to_field_access(path) {
+        return map_field_to_tuple_index(&field_access);
+    }
+
+    // Fallback: handle simple field access patterns
     match path {
-        // ===== All Index 0 Mappings (.0.0) =====
-        // Color: red, hue, lightness, x | Math: x components
-        ".LinearRgba.red" | ".LinearRgba.r" | ".Srgba.red" | ".Srgba.r" | ".Hsla.hue"
-        | ".Hsla.h" | ".Hsva.hue" | ".Hsva.h" | ".Hwba.hue" | ".Hwba.h" | ".Laba.lightness"
-        | ".Laba.l" | ".Lcha.lightness" | ".Lcha.l" | ".Oklaba.lightness" | ".Oklaba.l"
-        | ".Oklcha.lightness" | ".Oklcha.l" | ".Xyza.x" | ".Vec2.x" | ".Vec3.x" | ".Vec4.x"
-        | ".Quat.x" | ".IVec2.x" | ".IVec3.x" | ".IVec4.x" | ".UVec2.x" | ".UVec3.x"
-        | ".UVec4.x" | ".DVec2.x" | ".DVec3.x" | ".DVec4.x" => ".0.0".to_string(),
-
-        // ===== All Index 1 Mappings (.0.1) =====
-        // Color: green, saturation, whiteness, Lab 'a', chroma, y | Math: y components
-        ".LinearRgba.green" | ".LinearRgba.g" | ".Srgba.green" | ".Srgba.g"
-        | ".Hsla.saturation" | ".Hsla.s" | ".Hsva.saturation" | ".Hsva.s" | ".Hwba.whiteness"
-        | ".Hwba.w" | ".Laba.a" | ".Oklaba.a" | ".Lcha.chroma" | ".Lcha.c" | ".Oklcha.chroma"
-        | ".Oklcha.c" | ".Xyza.y" | ".Vec2.y" | ".Vec3.y" | ".Vec4.y" | ".Quat.y" | ".IVec2.y"
-        | ".IVec3.y" | ".IVec4.y" | ".UVec2.y" | ".UVec3.y" | ".UVec4.y" | ".DVec2.y"
-        | ".DVec3.y" | ".DVec4.y" => ".0.1".to_string(),
-
-        // ===== All Index 2 Mappings (.0.2) =====
-        // Color: blue, lightness, value, blackness, Lab 'b', hue for Lab variants, z | Math: z
-        // components
-        ".LinearRgba.blue" | ".LinearRgba.b" | ".Srgba.blue" | ".Srgba.b" | ".Hsla.lightness"
-        | ".Hsla.l" | ".Hsva.value" | ".Hsva.v" | ".Hwba.blackness" | ".Hwba.b" | ".Laba.b"
-        | ".Oklaba.b" | ".Lcha.hue" | ".Lcha.h" | ".Oklcha.hue" | ".Oklcha.h" | ".Xyza.z"
-        | ".Vec3.z" | ".Vec4.z" | ".Quat.z" | ".IVec3.z" | ".IVec4.z" | ".UVec3.z" | ".UVec4.z"
-        | ".DVec3.z" | ".DVec4.z" => ".0.2".to_string(),
-
-        // ===== All Index 3 Mappings (.0.3) =====
-        // Color: alpha | Math: w components
-        ".LinearRgba.alpha" | ".LinearRgba.a" | ".Srgba.alpha" | ".Srgba.a" | ".Hsla.alpha"
-        | ".Hsla.a" | ".Hsva.alpha" | ".Hsva.a" | ".Hwba.alpha" | ".Hwba.a" | ".Laba.alpha"
-        | ".Lcha.alpha" | ".Lcha.a" | ".Oklaba.alpha" | ".Oklcha.alpha" | ".Oklcha.a"
-        | ".Xyza.alpha" | ".Xyza.a" | ".Vec4.w" | ".Quat.w" | ".IVec4.w" | ".UVec4.w"
-        | ".DVec4.w" => ".0.3".to_string(),
-
-        // ===== Simple Tuple Struct Field Access =====
-        // Direct field access on tuple structs (not nested)
+        // Simple tuple struct field access (not nested) - these remain direct indices
         ".x" => ".0".to_string(),
         ".y" => ".1".to_string(),
         ".z" => ".2".to_string(),
 
-        // ===== Generic Patterns =====
-        // Generic field access patterns for tuple structs and enum variants
-        p if p.starts_with('.') && p.contains('.') => {
-            // Try to convert nested field access to tuple access
-            // e.g., ".SomeEnum.field" -> ".0.field" or ".SomeColor.red" -> ".0.0"
-            let parts: Vec<&str> = p.split('.').collect();
-            if parts.len() >= 3 && !parts[1].is_empty() && !parts[2].is_empty() {
-                let variant_name = parts[1];
-                let field_name = parts[2];
-
-                // Check if the second part looks like an enum variant (starts with uppercase)
-                if variant_name
-                    .chars()
-                    .next()
-                    .is_some_and(|c| c.is_ascii_uppercase())
-                {
-                    // For color enum variants, try to map common field names to indices
-                    match field_name {
-                        // Index 0: First position fields
-                        "red" | "r" | "hue" | "h" | "lightness" | "l" | "x" => ".0.0".to_string(),
-                        // Index 1: Second position fields (including special cases)
-                        "green" | "g" | "saturation" | "s" | "y" | "whiteness" | "chroma" | "c" => {
-                            ".0.1".to_string()
-                        }
-                        // Index 2: Third position fields
-                        "blue" | "b" | "value" | "v" | "z" | "blackness" => ".0.2".to_string(),
-                        // Index 3: Fourth position fields
-                        "alpha" | "w" => ".0.3".to_string(),
-                        // Special case for 'a' - could be alpha or Lab 'a' component
-                        "a" => {
-                            if variant_name.contains("Lab") {
-                                ".0.1".to_string() // Lab 'a' component
-                            } else {
-                                ".0.3".to_string() // Alpha component
-                            }
-                        }
-                        _ => {
-                            // Generic enum variant field access -> use tuple index 0 and preserve
-                            // field path
-                            if parts.len() > 3 {
-                                format!(".0.{}", parts[2..].join("."))
-                            } else {
-                                format!(".0.{field_name}")
-                            }
-                        }
-                    }
-                } else {
-                    // Not an enum variant, keep original path
-                    path.to_string()
-                }
-            } else {
-                // Not enough parts, keep original path
-                path.to_string()
+        // Generic patterns for unknown enum variants
+        _ => {
+            // Try generic enum field access parsing as fallback
+            if let Some(fixed_path) = parse_generic_enum_field_access(path) {
+                return fixed_path;
             }
+
+            // Ultimate fallback: return original path
+            path.to_string()
         }
-        _ => path.to_string(),
     }
 }
 

@@ -88,6 +88,9 @@ use super::tool_definitions::{
     BrpToolDef, ExtractorType, FormatterType, ParamExtractorType, ParamType,
 };
 use crate::BrpMcpService;
+use crate::brp_tools::constants::{
+    JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITIES, JSON_FIELD_ENTITY, JSON_FIELD_PARENT,
+};
 use crate::support::schema;
 
 /// Generate tool registration from a declarative definition
@@ -185,9 +188,15 @@ fn convert_extractor_type(extractor_type: &ExtractorType) -> super::support::Fie
         ExtractorType::QueryComponentCount => extract_query_component_count,
         ExtractorType::QueryParamsFromContext => extract_query_params_from_context,
         ExtractorType::ParamFromContext(param_name) => match *param_name {
-            "components" => extract_components_param,
-            "entities" => extract_entities_param,
-            "parent" => extract_parent_param,
+            "components" => {
+                |data, context| extract_field_from_context(JSON_FIELD_COMPONENTS, data, context)
+            }
+            "entities" => {
+                |data, context| extract_field_from_context(JSON_FIELD_ENTITIES, data, context)
+            }
+            "parent" => {
+                |data, context| extract_field_from_context(JSON_FIELD_PARENT, data, context)
+            }
             _ => |_data, _context| serde_json::Value::Null,
         },
     }
@@ -198,7 +207,7 @@ fn extract_entity_from_response(
     data: &serde_json::Value,
     _context: &FormatterContext,
 ) -> serde_json::Value {
-    data.get("entity")
+    data.get(JSON_FIELD_ENTITY)
         .cloned()
         .unwrap_or_else(|| serde_json::Value::Number(serde_json::Number::from(0)))
 }
@@ -226,41 +235,16 @@ fn extract_query_params_from_context(
     context.params.clone().unwrap_or(serde_json::Value::Null)
 }
 
-/// Extract components parameter from context
-fn extract_components_param(
+/// Generic field extraction from context parameters
+fn extract_field_from_context(
+    field_name: &str,
     _data: &serde_json::Value,
     context: &FormatterContext,
 ) -> serde_json::Value {
     context
         .params
         .as_ref()
-        .and_then(|p| p.get("components"))
-        .cloned()
-        .unwrap_or(serde_json::Value::Null)
-}
-
-/// Extract entities parameter from context
-fn extract_entities_param(
-    _data: &serde_json::Value,
-    context: &FormatterContext,
-) -> serde_json::Value {
-    context
-        .params
-        .as_ref()
-        .and_then(|p| p.get("entities"))
-        .cloned()
-        .unwrap_or(serde_json::Value::Null)
-}
-
-/// Extract parent parameter from context
-fn extract_parent_param(
-    _data: &serde_json::Value,
-    context: &FormatterContext,
-) -> serde_json::Value {
-    context
-        .params
-        .as_ref()
-        .and_then(|p| p.get("parent"))
+        .and_then(|p| p.get(field_name))
         .cloned()
         .unwrap_or(serde_json::Value::Null)
 }
