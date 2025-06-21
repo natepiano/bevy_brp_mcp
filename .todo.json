@@ -1,147 +1,84 @@
 [
   {
-    "id": "meta-1",
-    "content": "Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "id": "improve-1",
+    "content": "Extract duplicated page index calculation logic into a helper function calculate_start_index()",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-1",
-    "content": "Replace fixed page_size approach with dynamic page building in paginate_array - scan from start for each page request",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-1b",
-    "content": "build and fix any compile errors and any compile warnings for paginate_array changes",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-2",
-    "content": "Replace fixed page_size approach with dynamic page building in paginate_object - scan from start for each page request",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-2b",
-    "content": "build and fix any compile errors and any compile warnings for paginate_object changes",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-3",
-    "content": "Update both functions to calculate total_pages by scanning entire dataset once",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-3b",
-    "content": "build and fix any compile errors and any compile warnings for total_pages calculation",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-4",
-    "content": "Extract common dynamic page-building logic into a generic helper function",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-4b",
+    "id": "improve-1b",
     "content": "build and fix any compile errors and any compile warnings for helper extraction",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-5",
-    "content": "Refactor paginate_array to use the new generic helper",
+    "id": "improve-2",
+    "content": "Rename trait method iter_with_size to iter_with_json_and_context for clarity",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-5b",
-    "content": "build and fix any compile errors and any compile warnings for paginate_array refactor",
+    "id": "improve-2b",
+    "content": "build and fix any compile errors and any compile warnings for trait method rename",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-6",
-    "content": "Refactor paginate_object to use the new generic helper",
+    "id": "improve-3",
+    "content": "Add detailed comments explaining why we subtract 2 for object braces in the container overhead logic",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-6b",
-    "content": "build and fix any compile errors and any compile warnings for paginate_object refactor",
+    "id": "improve-3b",
+    "content": "build and fix any compile errors and any compile warnings for comment addition",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-7",
-    "content": "Enhance error messages to include item index/key when item is too large",
+    "id": "improve-4",
+    "content": "Replace usize::from(current_page_count != 0) with clearer if/else for separator size calculation",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-7b",
+    "id": "improve-4b",
+    "content": "build and fix any compile errors and any compile warnings for separator logic change",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "improve-5",
+    "content": "Enhance error messages to include actual size vs limit for oversized items",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "improve-5b",
     "content": "build and fix any compile errors and any compile warnings for error message enhancement",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-8",
-    "content": "Add test for array with variable-sized items (small at start, large in middle)",
+    "id": "improve-6",
+    "content": "Add test for exact boundary case where item just fits within token limit",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "impl-8b",
-    "content": "build and fix any compile errors and any compile warnings for variable-sized array test",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-9",
-    "content": "Add test for object with variable-sized items",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-9b",
-    "content": "build and fix any compile errors and any compile warnings for variable-sized object test",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-10",
-    "content": "Add test for oversized single item error scenario",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "impl-10b",
-    "content": "build and fix any compile errors and any compile warnings for oversized item test",
+    "id": "improve-6b",
+    "content": "build and fix any compile errors and any compile warnings for boundary test",
     "status": "pending",
     "priority": "high",
     "notes": ""
@@ -177,27 +114,6 @@
   {
     "id": "test-2",
     "content": "If there are test issues, STOP and review them with the user",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-1",
-    "content": "STOP work here and return control to main agent",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-2",
-    "content": "task a new subagent to do a code review of the changes in the worktree - tell it to focus on identifying duplication and complexity. emphasize that it should only read and analyze, not modify anything.",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-3",
-    "content": "when this new subagent returns, STOP and review the suggested changes with the user",
     "status": "pending",
     "priority": "high",
     "notes": ""
