@@ -150,18 +150,52 @@ fn test_apply_pattern_fix_linear_rgba_case() {
     let result = apply_pattern_fix(&pattern, "bevy_render::color::Color", &original_value);
     assert!(result.is_some());
 
-    let (corrected_value, hint) = result.unwrap();
+    let (corrected_value, hint) = result.expect("Pattern fix should return a result");
     // Should extract the nested object since we're accessing a tuple variant
     assert!(corrected_value.is_object());
     assert!(hint.contains("tuple struct"));
     assert!(hint.contains("numeric indices"));
 
     // Verify the extracted object has the correct color fields
-    let obj = corrected_value.as_object().unwrap();
-    assert!((obj.get("red").unwrap().as_f64().unwrap() - 1.0).abs() < f64::EPSILON);
-    assert!((obj.get("green").unwrap().as_f64().unwrap() - 0.0).abs() < f64::EPSILON);
-    assert!((obj.get("blue").unwrap().as_f64().unwrap() - 0.0).abs() < f64::EPSILON);
-    assert!((obj.get("alpha").unwrap().as_f64().unwrap() - 1.0).abs() < f64::EPSILON);
+    let obj = corrected_value
+        .as_object()
+        .expect("Corrected value should be an object");
+    assert!(
+        (obj.get("red")
+            .expect("Should have red field")
+            .as_f64()
+            .expect("Red should be f64")
+            - 1.0)
+            .abs()
+            < f64::EPSILON
+    );
+    assert!(
+        (obj.get("green")
+            .expect("Should have green field")
+            .as_f64()
+            .expect("Green should be f64")
+            - 0.0)
+            .abs()
+            < f64::EPSILON
+    );
+    assert!(
+        (obj.get("blue")
+            .expect("Should have blue field")
+            .as_f64()
+            .expect("Blue should be f64")
+            - 0.0)
+            .abs()
+            < f64::EPSILON
+    );
+    assert!(
+        (obj.get("alpha")
+            .expect("Should have alpha field")
+            .as_f64()
+            .expect("Alpha should be f64")
+            - 1.0)
+            .abs()
+            < f64::EPSILON
+    );
 }
 
 #[test]
@@ -181,16 +215,20 @@ fn test_apply_pattern_fix_transform_sequence() {
     );
     assert!(result.is_some());
 
-    let (corrected_value, hint) = result.unwrap();
+    let (corrected_value, hint) = result.expect("Pattern fix should return a result");
     assert!(corrected_value.is_object());
     assert!(hint.contains("Transform"));
     assert!(hint.contains("array format"));
 
     // Check that math types were converted to arrays
-    let corrected_obj = corrected_value.as_object().unwrap();
+    let corrected_obj = corrected_value
+        .as_object()
+        .expect("Corrected value should be an object");
     if let Some(translation) = corrected_obj.get("translation") {
         assert!(translation.is_array());
-        let arr = translation.as_array().unwrap();
+        let arr = translation
+            .as_array()
+            .expect("Translation should be an array");
         assert_eq!(arr.len(), 3);
     }
 }
@@ -206,7 +244,7 @@ fn test_apply_pattern_fix_expected_type_name() {
     let result = apply_pattern_fix(&pattern, "bevy_ecs::name::Name", &original_value);
     assert!(result.is_some());
 
-    let (corrected_value, hint) = result.unwrap();
+    let (corrected_value, hint) = result.expect("Pattern fix should return a result");
     assert_eq!(corrected_value, json!("TestEntity"));
     assert!(hint.contains("Name component"));
     assert!(hint.contains("string format"));
@@ -223,7 +261,7 @@ fn test_apply_pattern_fix_math_type_array() {
     let result = apply_pattern_fix(&pattern, "bevy_math::vector::Vec3", &original_value);
     assert!(result.is_some());
 
-    let (corrected_value, hint) = result.unwrap();
+    let (corrected_value, hint) = result.expect("Pattern fix should return a result");
     assert_eq!(corrected_value, json!([1.0, 2.0, 3.0]));
     assert!(hint.contains("Vec3"));
     assert!(hint.contains("array format"));
@@ -337,7 +375,7 @@ fn test_fix_access_error_path_suggestions() {
     );
 
     assert!(result.is_some());
-    let (returned_value, hint) = result.unwrap();
+    let (returned_value, hint) = result.expect("Pattern fix should return a result");
 
     // Value should be returned unchanged for path suggestions
     assert_eq!(returned_value, original_value);
@@ -359,7 +397,7 @@ fn test_fix_access_error_math_field_suggestions() {
     );
 
     assert!(result.is_some());
-    let (returned_value, hint) = result.unwrap();
+    let (returned_value, hint) = result.expect("Pattern fix should return a result");
 
     // Value should be returned unchanged for path suggestions
     assert_eq!(returned_value, original_value);
@@ -382,7 +420,7 @@ fn test_fix_access_error_generic_enum_suggestions() {
     );
 
     assert!(result.is_some());
-    let (returned_value, hint) = result.unwrap();
+    let (returned_value, hint) = result.expect("Pattern fix should return a result");
 
     // Value should be returned unchanged for path suggestions
     assert_eq!(returned_value, original_value);
@@ -425,7 +463,7 @@ fn test_fix_access_error_simple_field_path() {
     );
 
     assert!(result.is_some());
-    let (returned_value, hint) = result.unwrap();
+    let (returned_value, hint) = result.expect("Pattern fix should return a result");
 
     // Value should be returned unchanged for path suggestions
     assert_eq!(returned_value, original_value);
@@ -453,7 +491,10 @@ fn test_fix_access_error_integration_with_pattern_matching() {
 
     // Then test the fix application
     let original_value = json!({"red": 1.0, "green": 0.5, "blue": 0.2, "alpha": 1.0});
-    let pattern = analysis.pattern.as_ref().unwrap();
+    let pattern = analysis
+        .pattern
+        .as_ref()
+        .expect("Analysis should have a pattern");
     let result = apply_pattern_fix(
         pattern,
         "bevy_color::linear_rgba::LinearRgba",
@@ -461,7 +502,7 @@ fn test_fix_access_error_integration_with_pattern_matching() {
     );
 
     assert!(result.is_some());
-    let (returned_value, hint) = result.unwrap();
+    let (returned_value, hint) = result.expect("Pattern fix should return a result");
 
     // Should return original value with path suggestion
     assert_eq!(returned_value, original_value);

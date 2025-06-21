@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use super::traits::{ExtractedParams, ParamExtractor};
+use crate::error::BrpMcpError;
 use crate::support::params::{
     extract_any_value, extract_optional_number, extract_optional_string_array_from_request,
     extract_required_number, extract_required_string,
@@ -30,7 +31,11 @@ fn extract_port(request: &rmcp::model::CallToolRequestParam) -> Result<u16, McpE
         JSON_FIELD_PORT,
         u64::from(DEFAULT_BRP_PORT),
     )?)
-    .map_err(|_| McpError::invalid_params("Port number must be a valid u16".to_string(), None))
+    .map_err(|_| {
+        McpError::from(BrpMcpError::ParameterExtraction(
+            "Port number must be a valid u16".to_string(),
+        ))
+    })
 }
 
 /// Simple parameter extractor that just extracts port
@@ -111,10 +116,9 @@ impl ParamExtractor for BrpExecuteExtractor {
             request.arguments.clone().unwrap_or_default(),
         ))
         .map_err(|e| {
-            McpError::from(rmcp::model::ErrorData::invalid_params(
-                format!("Invalid parameters: {e}"),
-                None,
-            ))
+            McpError::from(BrpMcpError::ParameterExtraction(format!(
+                "Invalid parameters: {e}"
+            )))
         })?;
 
         Ok(ExtractedParams {

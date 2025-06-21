@@ -125,8 +125,8 @@ async fn write_task(log_path: PathBuf, mut rx: mpsc::Receiver<LogEntry>) -> std:
 pub fn get_watch_log_path(watch_id: u32, entity_id: u64, watch_type: &str) -> PathBuf {
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
 
     let filename =
         format!("bevy_brp_mcp_watch_{watch_id}_{watch_type}_{entity_id}_{timestamp}.log");

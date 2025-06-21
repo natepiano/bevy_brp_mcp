@@ -5,6 +5,7 @@ use std::time::SystemTime;
 use rmcp::Error as McpError;
 use serde_json::json;
 
+use crate::error::BrpMcpError;
 use crate::tools::FILE_PATH;
 
 // Constants
@@ -124,14 +125,13 @@ where
     let mut log_entries = Vec::new();
 
     // Read the temp directory
-    let entries = fs::read_dir(&temp_dir).map_err(|e| {
-        McpError::internal_error(format!("Failed to read temp directory: {e}"), None)
-    })?;
+    let entries = fs::read_dir(&temp_dir)
+        .map_err(|e| BrpMcpError::LogOperation(format!("Failed to read temp directory: {e}")))?;
 
     // Process each entry
     for entry in entries {
         let entry = entry.map_err(|e| {
-            McpError::internal_error(format!("Failed to read directory entry: {e}"), None)
+            BrpMcpError::LogOperation(format!("Failed to read directory entry: {e}"))
         })?;
 
         let path = entry.path();
@@ -141,7 +141,7 @@ where
         if let Some((app_name, timestamp)) = parse_log_filename(filename) {
             // Get file metadata
             let metadata = entry.metadata().map_err(|e| {
-                McpError::internal_error(format!("Failed to get file metadata: {e}"), None)
+                BrpMcpError::LogOperation(format!("Failed to get file metadata: {e}"))
             })?;
 
             let log_entry = LogFileEntry {

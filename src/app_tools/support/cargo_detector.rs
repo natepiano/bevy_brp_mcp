@@ -187,7 +187,9 @@ impl CargoDetector {
     /// Check if a package uses `RemotePlugin` or `BrpExtrasPlugin` in its source code
     fn package_uses_brp_plugins(package: &Package) -> bool {
         // Get the package directory
-        let package_dir = package.manifest_path.parent().unwrap();
+        let Some(package_dir) = package.manifest_path.parent() else {
+            return false;
+        };
 
         // Check all .rs files in src/ directory
         let src_dir = package_dir.join("src");
