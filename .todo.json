@@ -1,121 +1,114 @@
 [
   {
-    "id": "improve-1",
-    "content": "Extract duplicated page index calculation logic into a helper function calculate_start_index()",
+    "id": "1",
+    "content": "Set terminal title to indicate current work",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-1b",
-    "content": "build and fix any compile errors and any compile warnings for helper extraction",
+    "id": "2",
+    "content": "Update constants: change MAX_RESPONSE_TOKENS to 25000 and add CHARS_PER_TOKEN = 4",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-2",
-    "content": "Rename trait method iter_with_size to iter_with_json_and_context for clarity",
+    "id": "3",
+    "content": "Build and fix any compile errors and warnings from constants update",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-2b",
-    "content": "build and fix any compile errors and any compile warnings for trait method rename",
+    "id": "4",
+    "content": "Implement file fallback logic in request_handler/handler.rs to replace pagination",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-3",
-    "content": "Add detailed comments explaining why we subtract 2 for object braces in the container overhead logic",
+    "id": "5",
+    "content": "Build and fix any compile errors and warnings from handler changes",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-3b",
-    "content": "build and fix any compile errors and any compile warnings for comment addition",
+    "id": "6",
+    "content": "Remove page parameter from all tool definitions (bevy_list, bevy_list_resources, bevy_registry_schema, bevy_rpc_discover, bevy_query)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-4",
-    "content": "Replace usize::from(current_page_count != 0) with clearer if/else for separator size calculation",
+    "id": "7",
+    "content": "Build and fix any compile errors and warnings from tool definition changes",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-4b",
-    "content": "build and fix any compile errors and any compile warnings for separator logic change",
+    "id": "8",
+    "content": "Remove unused pagination code (simple_pagination.rs and related imports)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-5",
-    "content": "Enhance error messages to include actual size vs limit for oversized items",
+    "id": "9",
+    "content": "Build and fix any compile errors and warnings from pagination code removal",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-5b",
-    "content": "build and fix any compile errors and any compile warnings for error message enhancement",
+    "id": "10",
+    "content": "Run clippy with strict settings",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-6",
-    "content": "Add test for exact boundary case where item just fits within token limit",
+    "id": "11",
+    "content": "Fix any clippy issues (remove dead code, remove unused variables)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "improve-6b",
-    "content": "build and fix any compile errors and any compile warnings for boundary test",
+    "id": "12",
+    "content": "Run cargo +nightly fmt",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "clippy-1",
-    "content": "run cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata",
+    "id": "13",
+    "content": "Run cargo nextest run",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "clippy-2",
-    "content": "fix any clippy issues following rules: do not mark code as dead, remove unused variables instead of prefixing with _",
+    "id": "14",
+    "content": "If test issues exist, STOP and review with user",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "format-1",
-    "content": "run cargo +nightly fmt",
+    "id": "15",
+    "content": "Task subagent for code review focusing on duplication and complexity",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "test-1",
-    "content": "run cargo nextest run",
+    "id": "16",
+    "content": "STOP and review subagent suggestions with user",
     "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "test-2",
-    "content": "If there are test issues, STOP and review them with the user",
-    "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   }
 ]
