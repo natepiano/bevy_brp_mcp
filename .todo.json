@@ -1,0 +1,156 @@
+[
+  {
+    "id": "meta",
+    "content": "Do not deviate from the plan - if deviations needed, STOP and ask user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "1",
+    "content": "Add once_cell dependency to Cargo.toml for Lazy<Regex> support",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "2",
+    "content": "Build and fix any compile errors/warnings after adding dependency",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "3",
+    "content": "Create src/error.rs with BrpMcpError types and McpError conversions",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "4",
+    "content": "Build and fix any compile errors/warnings after creating error module",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "5",
+    "content": "Add error module to main.rs and create helper macros",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "6",
+    "content": "Build and fix any compile errors/warnings after adding error module",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "7",
+    "content": "Fix mutex unwrap in main.rs:102 with proper error handling",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "8",
+    "content": "Build and fix any compile errors/warnings after mutex fix",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "9",
+    "content": "Replace all unwraps in format_discovery/engine.rs with proper error handling",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "10",
+    "content": "Build and fix any compile errors/warnings after engine fixes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "11",
+    "content": "Convert regex compilation in detection.rs to Lazy<Regex> pattern",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "12",
+    "content": "Build and fix any compile errors/warnings after regex fixes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "13",
+    "content": "Fix file path unwraps in cargo_detector.rs and watch_logger.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "14",
+    "content": "Build and fix any compile errors/warnings after file operation fixes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "15",
+    "content": "Convert test unwraps in format_discovery tests to proper assertions",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "16",
+    "content": "Build and fix any compile errors/warnings after test fixes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "17",
+    "content": "Run cargo clippy with strict settings and fix all issues",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "18",
+    "content": "Run cargo +nightly fmt to format all code",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "19",
+    "content": "Run cargo nextest run and review any test failures",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "20",
+    "content": "Task subagent for code review focusing on duplication and complexity",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "21",
+    "content": "Review subagent suggestions with user before proceeding",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
