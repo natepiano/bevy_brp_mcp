@@ -64,10 +64,10 @@ use crate::tools::{
     DESC_BRP_EXTRAS_DISCOVER_FORMAT, DESC_BRP_GET, DESC_BRP_GET_RESOURCE, DESC_BRP_INSERT,
     DESC_BRP_INSERT_RESOURCE, DESC_BRP_LIST, DESC_BRP_LIST_RESOURCES, DESC_BRP_MUTATE_COMPONENT,
     DESC_BRP_MUTATE_RESOURCE, DESC_BRP_REMOVE, DESC_BRP_REMOVE_RESOURCE, DESC_BRP_RPC_DISCOVER,
-    PORT_DESCRIPTION, TOOL_BRP_DESTROY, TOOL_BRP_EXTRAS_DISCOVER_FORMAT,
-    TOOL_BRP_EXTRAS_SCREENSHOT, TOOL_BRP_GET, TOOL_BRP_GET_RESOURCE, TOOL_BRP_INSERT,
-    TOOL_BRP_INSERT_RESOURCE, TOOL_BRP_LIST, TOOL_BRP_LIST_RESOURCES, TOOL_BRP_MUTATE_COMPONENT,
-    TOOL_BRP_MUTATE_RESOURCE, TOOL_BRP_REMOVE, TOOL_BRP_REMOVE_RESOURCE, TOOL_BRP_RPC_DISCOVER,
+    DESC_PORT, TOOL_BRP_DESTROY, TOOL_BRP_EXTRAS_DISCOVER_FORMAT, TOOL_BRP_EXTRAS_SCREENSHOT,
+    TOOL_BRP_GET, TOOL_BRP_GET_RESOURCE, TOOL_BRP_INSERT, TOOL_BRP_INSERT_RESOURCE, TOOL_BRP_LIST,
+    TOOL_BRP_LIST_RESOURCES, TOOL_BRP_MUTATE_COMPONENT, TOOL_BRP_MUTATE_RESOURCE, TOOL_BRP_REMOVE,
+    TOOL_BRP_REMOVE_RESOURCE, TOOL_BRP_RPC_DISCOVER,
 };
 
 /// Represents a parameter definition for a BRP tool
@@ -206,7 +206,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -241,7 +241,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -276,7 +276,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -317,7 +317,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -352,7 +352,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -381,7 +381,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -422,7 +422,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -451,7 +451,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -498,7 +498,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -539,7 +539,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -561,7 +561,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             method:          BRP_METHOD_LIST_RESOURCES,
             params:          vec![ParamDef {
                 name:        JSON_FIELD_PORT,
-                description: PORT_DESCRIPTION,
+                description: DESC_PORT,
                 required:    false,
                 param_type:  ParamType::Number,
             }],
@@ -588,7 +588,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             method:          BRP_METHOD_RPC_DISCOVER,
             params:          vec![ParamDef {
                 name:        JSON_FIELD_PORT,
-                description: PORT_DESCRIPTION,
+                description: DESC_PORT,
                 required:    false,
                 param_type:  ParamType::Number,
             }],
@@ -616,7 +616,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -645,7 +645,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -699,7 +699,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -742,7 +742,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -783,7 +783,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -830,7 +830,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },
@@ -865,7 +865,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 },
                 ParamDef {
                     name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
+                    description: DESC_PORT,
                     required:    false,
                     param_type:  ParamType::Number,
                 },

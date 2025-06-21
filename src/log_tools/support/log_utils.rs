@@ -6,7 +6,7 @@ use rmcp::Error as McpError;
 use serde_json::json;
 
 use crate::error::BrpMcpError;
-use crate::tools::FILE_PATH;
+use crate::tools::PARAM_FILE_PATH;
 
 // Constants
 pub const LOG_PREFIX: &str = "bevy_brp_mcp_";
@@ -110,7 +110,7 @@ impl LogFileEntry {
             "size_human": format_bytes(size),
             "last_modified": modified_str,
             "last_modified_timestamp": modified,
-            FILE_PATH: self.path.display().to_string(),
+            PARAM_FILE_PATH: self.path.display().to_string(),
         })
     }
 }

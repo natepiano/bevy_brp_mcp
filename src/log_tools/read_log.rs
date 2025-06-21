@@ -11,7 +11,7 @@ use super::support::log_utils;
 use crate::BrpMcpService;
 use crate::error::BrpMcpError;
 use crate::support::{params, response, schema};
-use crate::tools::{DESC_READ_LOG, FILE_PATH, TOOL_READ_LOG};
+use crate::tools::{DESC_READ_LOG, PARAM_FILE_PATH, TOOL_READ_LOG};
 
 pub fn register_tool() -> Tool {
     Tool {
@@ -74,7 +74,7 @@ pub fn handle(
         format!("Successfully read log file: {filename}"),
         json!({
             "filename": filename,
-            FILE_PATH: log_path.display().to_string(),
+            PARAM_FILE_PATH: log_path.display().to_string(),
             "size_bytes": metadata.len(),
             "size_human": log_utils::format_bytes(metadata.len()),
             "lines_read": content.lines().count(),

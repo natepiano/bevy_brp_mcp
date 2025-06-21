@@ -56,3 +56,35 @@ pub const PARAM_ENTITY_COUNT: &str = "entity_count";
 pub const PARAM_COMPONENT_COUNT: &str = "component_count";
 pub const PARAM_QUERY_PARAMS: &str = "query_params";
 pub const PARAM_SPAWNED_ENTITY: &str = "spawned_entity";
+
+// ============================================================================
+// NETWORK CONSTANTS
+// ============================================================================
+
+/// JSON-RPC path for BRP requests
+pub const BRP_JSONRPC_PATH: &str = "/jsonrpc";
+
+/// Default host for BRP connections
+pub const BRP_DEFAULT_HOST: &str = "localhost";
+
+/// HTTP protocol for BRP connections
+pub const BRP_HTTP_PROTOCOL: &str = "http";
+
+// ============================================================================
+// ERROR CONSTANTS
+// ============================================================================
+
+/// BRP error code for invalid request
+pub const BRP_ERROR_CODE_INVALID_REQUEST: i32 = -23402;
+
+// ============================================================================
+// JSON-RPC CONSTANTS
+// ============================================================================
+
+/// JSON-RPC protocol constants
+pub const JSONRPC_VERSION: &str = "2.0";
+pub const JSONRPC_DEFAULT_ID: u64 = 1;
+pub const JSONRPC_FIELD: &str = "jsonrpc";
+pub const JSONRPC_FIELD_ID: &str = "id";
+pub const JSONRPC_FIELD_METHOD: &str = "method";
+pub const JSONRPC_FIELD_PARAMS: &str = "params";
