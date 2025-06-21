@@ -88,10 +88,10 @@ use super::tool_definitions::{
     BrpToolDef, ExtractorType, FormatterType, ParamExtractorType, ParamType,
 };
 use crate::BrpMcpService;
-use crate::support::schema;
-use crate::tools::{
+use crate::brp_tools::constants::{
     JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITIES, JSON_FIELD_ENTITY, JSON_FIELD_PARENT,
 };
+use crate::support::schema;
 
 /// Generate tool registration from a declarative definition
 pub fn generate_tool_registration(def: &BrpToolDef) -> Tool {

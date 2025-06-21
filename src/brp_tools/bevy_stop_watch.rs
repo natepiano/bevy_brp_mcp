@@ -7,9 +7,10 @@ use serde_json::Value;
 
 use super::support;
 use crate::BrpMcpService;
+use crate::brp_tools::constants::JSON_FIELD_WATCH_ID;
 use crate::brp_tools::support::watch_manager::WATCH_MANAGER;
 use crate::support::{params, schema};
-use crate::tools::{DESC_BEVY_STOP_WATCH, JSON_FIELD_WATCH_ID, TOOL_BEVY_STOP_WATCH};
+use crate::tools::{DESC_BEVY_STOP_WATCH, TOOL_BEVY_STOP_WATCH};
 
 pub fn register_tool() -> Tool {
     Tool {

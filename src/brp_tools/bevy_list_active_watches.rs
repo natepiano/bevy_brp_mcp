@@ -6,14 +6,12 @@ use rmcp::{Error as McpError, RoleServer};
 use serde_json::{Value, json};
 
 use crate::BrpMcpService;
+use crate::brp_tools::constants::{JSON_FIELD_COUNT, JSON_FIELD_WATCHES};
 use crate::brp_tools::support::watch_manager::WATCH_MANAGER;
 use crate::support::response::ResponseBuilder;
 use crate::support::schema;
 use crate::support::serialization::json_response_to_result;
-use crate::tools::{
-    DESC_BEVY_LIST_ACTIVE_WATCHES, JSON_FIELD_COUNT, JSON_FIELD_WATCHES,
-    TOOL_BEVY_LIST_ACTIVE_WATCHES,
-};
+use crate::tools::{DESC_BEVY_LIST_ACTIVE_WATCHES, TOOL_BEVY_LIST_ACTIVE_WATCHES};
 
 pub fn register_tool() -> Tool {
     Tool {

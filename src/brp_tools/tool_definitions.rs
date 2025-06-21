@@ -46,6 +46,15 @@
 //!    formatters
 //! 3. **Register in generator** (automatic if added to `get_standard_tools()`)
 
+use crate::brp_tools::constants::{
+    JSON_FIELD_COMPONENT, JSON_FIELD_COMPONENTS, JSON_FIELD_COUNT, JSON_FIELD_DATA,
+    JSON_FIELD_DESTROYED_ENTITY, JSON_FIELD_ENTITY, JSON_FIELD_METADATA, JSON_FIELD_PATH,
+    JSON_FIELD_PORT, JSON_FIELD_RESOURCE, JSON_FIELD_RESOURCES, JSON_FIELD_VALUE,
+    PARAM_COMPONENT_COUNT, PARAM_DATA, PARAM_ENTITIES, PARAM_ENTITY_COUNT, PARAM_FILTER,
+    PARAM_FORMATS, PARAM_METHOD, PARAM_PARAMS, PARAM_PARENT, PARAM_QUERY_PARAMS, PARAM_RESULT,
+    PARAM_SPAWNED_ENTITY, PARAM_STRICT, PARAM_TYPES, PARAM_WITH_CRATES, PARAM_WITH_TYPES,
+    PARAM_WITHOUT_CRATES, PARAM_WITHOUT_TYPES,
+};
 use crate::tools::{
     BRP_METHOD_DESTROY, BRP_METHOD_EXTRAS_DISCOVER_FORMAT, BRP_METHOD_EXTRAS_SCREENSHOT,
     BRP_METHOD_GET, BRP_METHOD_GET_RESOURCE, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE,
@@ -55,13 +64,10 @@ use crate::tools::{
     DESC_BRP_EXTRAS_DISCOVER_FORMAT, DESC_BRP_GET, DESC_BRP_GET_RESOURCE, DESC_BRP_INSERT,
     DESC_BRP_INSERT_RESOURCE, DESC_BRP_LIST, DESC_BRP_LIST_RESOURCES, DESC_BRP_MUTATE_COMPONENT,
     DESC_BRP_MUTATE_RESOURCE, DESC_BRP_REMOVE, DESC_BRP_REMOVE_RESOURCE, DESC_BRP_RPC_DISCOVER,
-    JSON_FIELD_COMPONENT, JSON_FIELD_COMPONENTS, JSON_FIELD_COUNT, JSON_FIELD_DATA,
-    JSON_FIELD_DESTROYED_ENTITY, JSON_FIELD_ENTITY, JSON_FIELD_METADATA, JSON_FIELD_PATH,
-    JSON_FIELD_PORT, JSON_FIELD_RESOURCE, JSON_FIELD_RESOURCES, JSON_FIELD_VALUE, PORT_DESCRIPTION,
-    TOOL_BRP_DESTROY, TOOL_BRP_EXTRAS_DISCOVER_FORMAT, TOOL_BRP_EXTRAS_SCREENSHOT, TOOL_BRP_GET,
-    TOOL_BRP_GET_RESOURCE, TOOL_BRP_INSERT, TOOL_BRP_INSERT_RESOURCE, TOOL_BRP_LIST,
-    TOOL_BRP_LIST_RESOURCES, TOOL_BRP_MUTATE_COMPONENT, TOOL_BRP_MUTATE_RESOURCE, TOOL_BRP_REMOVE,
-    TOOL_BRP_REMOVE_RESOURCE, TOOL_BRP_RPC_DISCOVER,
+    PORT_DESCRIPTION, TOOL_BRP_DESTROY, TOOL_BRP_EXTRAS_DISCOVER_FORMAT,
+    TOOL_BRP_EXTRAS_SCREENSHOT, TOOL_BRP_GET, TOOL_BRP_GET_RESOURCE, TOOL_BRP_INSERT,
+    TOOL_BRP_INSERT_RESOURCE, TOOL_BRP_LIST, TOOL_BRP_LIST_RESOURCES, TOOL_BRP_MUTATE_COMPONENT,
+    TOOL_BRP_MUTATE_RESOURCE, TOOL_BRP_REMOVE, TOOL_BRP_REMOVE_RESOURCE, TOOL_BRP_RPC_DISCOVER,
 };
 
 /// Represents a parameter definition for a BRP tool
@@ -603,7 +609,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             method:          BRP_METHOD_EXTRAS_DISCOVER_FORMAT,
             params:          vec![
                 ParamDef {
-                    name:        "types",
+                    name:        PARAM_TYPES,
                     description: "Array of fully-qualified component type names to discover formats for",
                     required:    true,
                     param_type:  ParamType::StringArray,
@@ -620,7 +626,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 formatter_type:  FormatterType::Simple,
                 template:        "Format discovery completed",
                 response_fields: vec![ResponseField {
-                    name:      "formats",
+                    name:      PARAM_FORMATS,
                     extractor: ExtractorType::PassThroughData,
                 }],
             },
@@ -674,19 +680,19 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             method:          "bevy/query",
             params:          vec![
                 ParamDef {
-                    name:        "data",
+                    name:        PARAM_DATA,
                     description: "Object specifying what component data to retrieve. Properties: components (array), option (array), has (array)",
                     required:    true,
                     param_type:  ParamType::Any,
                 },
                 ParamDef {
-                    name:        "filter",
+                    name:        PARAM_FILTER,
                     description: "Object specifying which entities to query. Properties: with (array), without (array)",
                     required:    true,
                     param_type:  ParamType::Any,
                 },
                 ParamDef {
-                    name:        "strict",
+                    name:        PARAM_STRICT,
                     description: "If true, returns error on unknown component types (default: false)",
                     required:    false,
                     param_type:  ParamType::Boolean,
@@ -704,19 +710,19 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 template:        "Query completed successfully",
                 response_fields: vec![
                     ResponseField {
-                        name:      "data",
+                        name:      JSON_FIELD_DATA,
                         extractor: ExtractorType::PassThroughData,
                     },
                     ResponseField {
-                        name:      "entity_count",
+                        name:      PARAM_ENTITY_COUNT,
                         extractor: ExtractorType::EntityCountFromData,
                     },
                     ResponseField {
-                        name:      "component_count",
+                        name:      PARAM_COMPONENT_COUNT,
                         extractor: ExtractorType::QueryComponentCount,
                     },
                     ResponseField {
-                        name:      "query_params",
+                        name:      PARAM_QUERY_PARAMS,
                         extractor: ExtractorType::QueryParamsFromContext,
                     },
                 ],
@@ -729,7 +735,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             method:          "bevy/spawn",
             params:          vec![
                 ParamDef {
-                    name:        "components",
+                    name:        JSON_FIELD_COMPONENTS,
                     description: "Object containing component data to spawn with. Keys are component types, values are component data. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
                     required:    false,
                     param_type:  ParamType::Any,
@@ -743,16 +749,16 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
-                formatter_type:  FormatterType::EntityOperation("spawned_entity"),
+                formatter_type:  FormatterType::EntityOperation(PARAM_SPAWNED_ENTITY),
                 template:        "Successfully spawned entity",
                 response_fields: vec![
                     ResponseField {
-                        name:      "spawned_entity",
+                        name:      PARAM_SPAWNED_ENTITY,
                         extractor: ExtractorType::EntityFromResponse,
                     },
                     ResponseField {
-                        name:      "components",
-                        extractor: ExtractorType::ParamFromContext("components"),
+                        name:      JSON_FIELD_COMPONENTS,
+                        extractor: ExtractorType::ParamFromContext(JSON_FIELD_COMPONENTS),
                     },
                 ],
             },
@@ -764,13 +770,13 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             method:          "", // Dynamic method
             params:          vec![
                 ParamDef {
-                    name:        "method",
+                    name:        PARAM_METHOD,
                     description: "The BRP method to execute (e.g., 'rpc.discover', 'bevy/get', 'bevy/query')",
                     required:    true,
                     param_type:  ParamType::String,
                 },
                 ParamDef {
-                    name:        "params",
+                    name:        PARAM_PARAMS,
                     description: "Optional parameters for the method, as a JSON object or array",
                     required:    false,
                     param_type:  ParamType::Any,
@@ -787,7 +793,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 formatter_type:  FormatterType::Simple,
                 template:        "Method executed successfully",
                 response_fields: vec![ResponseField {
-                    name:      "result",
+                    name:      PARAM_RESULT,
                     extractor: ExtractorType::PassThroughResult,
                 }],
             },
@@ -799,25 +805,25 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             method:          "bevy/registry/schema",
             params:          vec![
                 ParamDef {
-                    name:        "with_crates",
+                    name:        PARAM_WITH_CRATES,
                     description: "Include only types from these crates (e.g., [\"bevy_transform\", \"my_game\"])",
                     required:    false,
                     param_type:  ParamType::StringArray,
                 },
                 ParamDef {
-                    name:        "without_crates",
+                    name:        PARAM_WITHOUT_CRATES,
                     description: "Exclude types from these crates (e.g., [\"bevy_render\", \"bevy_pbr\"])",
                     required:    false,
                     param_type:  ParamType::StringArray,
                 },
                 ParamDef {
-                    name:        "with_types",
+                    name:        PARAM_WITH_TYPES,
                     description: "Include only types with these reflect traits (e.g., [\"Component\", \"Resource\"])",
                     required:    false,
                     param_type:  ParamType::StringArray,
                 },
                 ParamDef {
-                    name:        "without_types",
+                    name:        PARAM_WITHOUT_TYPES,
                     description: "Exclude types with these reflect traits (e.g., [\"RenderResource\"])",
                     required:    false,
                     param_type:  ParamType::StringArray,
@@ -834,7 +840,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 formatter_type:  FormatterType::Simple,
                 template:        "Retrieved schema information",
                 response_fields: vec![ResponseField {
-                    name:      "data",
+                    name:      JSON_FIELD_DATA,
                     extractor: ExtractorType::PassThroughData,
                 }],
             },
@@ -846,13 +852,13 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             method:          "bevy/reparent",
             params:          vec![
                 ParamDef {
-                    name:        "entities",
+                    name:        PARAM_ENTITIES,
                     description: "Array of entity IDs to reparent",
                     required:    true,
                     param_type:  ParamType::Any,
                 },
                 ParamDef {
-                    name:        "parent",
+                    name:        PARAM_PARENT,
                     description: "The new parent entity ID (omit to remove parent)",
                     required:    false,
                     param_type:  ParamType::Number,
@@ -870,12 +876,12 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 template:        "Successfully reparented entities",
                 response_fields: vec![
                     ResponseField {
-                        name:      "entities",
-                        extractor: ExtractorType::ParamFromContext("entities"),
+                        name:      PARAM_ENTITIES,
+                        extractor: ExtractorType::ParamFromContext(PARAM_ENTITIES),
                     },
                     ResponseField {
-                        name:      "parent",
-                        extractor: ExtractorType::ParamFromContext("parent"),
+                        name:      PARAM_PARENT,
+                        extractor: ExtractorType::ParamFromContext(PARAM_PARENT),
                     },
                 ],
             },
