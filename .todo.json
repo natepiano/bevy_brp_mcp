@@ -1,0 +1,135 @@
+[
+  {
+    "id": "meta",
+    "content": "Do not deviate from the plan - if deviations needed, STOP and ask user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "1",
+    "content": "Add error message constants to src/error.rs (MSG_FAILED_TO_PREFIX, etc.)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "2",
+    "content": "Add builder methods to BrpMcpError (failed_to, cannot, invalid, etc.)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "3",
+    "content": "Build and fix any compile errors after error.rs changes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "4",
+    "content": "Convert error patterns in src/support/params.rs to use new helpers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "5",
+    "content": "Build and test after params.rs conversion",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "6",
+    "content": "Convert error patterns in src/support/logging.rs to use new helpers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "7",
+    "content": "Build and test after logging.rs conversion",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "8",
+    "content": "Convert error patterns in src/support/process.rs to use new helpers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "9",
+    "content": "Build and test after process.rs conversion",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "10",
+    "content": "Convert error patterns in brp_tools parameter extractors to use new helpers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "11",
+    "content": "Build and test after brp_tools conversion",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "12",
+    "content": "Convert remaining error patterns in other files to use new helpers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "13",
+    "content": "Build and test after remaining conversions",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "14",
+    "content": "Run cargo clippy with strict settings and fix all issues",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "15",
+    "content": "Run cargo +nightly fmt to format all code",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "16",
+    "content": "Run cargo nextest run and ensure all tests pass",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "17",
+    "content": "Task subagent to review error message consistency",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "18",
+    "content": "Review subagent findings and create summary for user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
