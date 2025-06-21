@@ -1,0 +1,184 @@
+[
+  {
+    "id": "meta-1",
+    "content": "MetaTodo: Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-1",
+    "content": "Add 5 missing tool name constants to src/tools.rs (TOOL_BEVY_QUERY, TOOL_BEVY_SPAWN, TOOL_BRP_EXECUTE, TOOL_BEVY_REGISTRY_SCHEMA, TOOL_BEVY_REPARENT)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-2",
+    "content": "Build and fix any compile errors and warnings after adding tool name constants",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-3",
+    "content": "Add 6 missing BRP method constants to src/tools.rs (BRP_METHOD_QUERY, BRP_METHOD_SPAWN, BRP_METHOD_REGISTRY_SCHEMA, BRP_METHOD_REPARENT, BRP_METHOD_GET_WATCH, BRP_METHOD_LIST_WATCH)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-4",
+    "content": "Build and fix any compile errors and warnings after adding method constants",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-5",
+    "content": "Create src/brp_tools/constants.rs and move all 24 JSON_FIELD_* constants from src/tools.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-6",
+    "content": "Add 19 new parameter constants to src/brp_tools/constants.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-7",
+    "content": "Update src/brp_tools/mod.rs to export the constants module",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-8",
+    "content": "Build and fix any compile errors and warnings after creating constants module",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-9",
+    "content": "Update imports in src/brp_tools/tool_definitions.rs to use the new constants module",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-10",
+    "content": "Replace ~38 hardcoded strings in src/brp_tools/tool_definitions.rs with constant references",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-11",
+    "content": "Build and fix any compile errors and warnings after updating tool_definitions.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-12",
+    "content": "Update src/brp_tools/support/watch_task.rs to use BRP method constants",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-13",
+    "content": "Update src/brp_tools/brp_status.rs to use BRP_METHOD_LIST constant",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-14",
+    "content": "Update src/brp_tools/support/request_handler/extractors.rs to use parameter constants",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-15",
+    "content": "Update src/brp_tools/tool_generator.rs imports to use brp_tools::constants",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-16",
+    "content": "Update imports in remaining ~10 brp_tools files to use brp_tools::constants instead of tools::JSON_FIELD_*",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "impl-17",
+    "content": "Build and fix any compile errors and warnings after all import updates",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "clippy-1",
+    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "clippy-2",
+    "content": "Fix any clippy issues (remove dead code, don't use _ prefixes)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "format-1",
+    "content": "Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-1",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-2",
+    "content": "If there are test issues, STOP and review them with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-1",
+    "content": "STOP work and prepare for code review subagent task",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-2",
+    "content": "Task new subagent to review changes focusing on duplication and complexity (read-only)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-3",
+    "content": "When subagent returns, STOP and review suggested changes with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
