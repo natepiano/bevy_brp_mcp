@@ -14,17 +14,17 @@ use crate::brp_tools::constants::{
     JSON_FIELD_ORIGINAL_ERROR,
 };
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult};
-use crate::brp_tools::support::response_formatter::{BrpMetadata, ResponseFormatter};
 use crate::brp_tools::support::paginate_if_needed;
+use crate::brp_tools::support::response_formatter::{BrpMetadata, ResponseFormatter};
 use crate::support::debug_tools;
 use crate::support::params::extract_optional_u32;
 
 /// Result of parameter extraction from a request
 pub struct RequestParams {
     /// Extracted parameters from the configured extractor
-    pub extracted:  ExtractedParams,
+    pub extracted: ExtractedParams,
     /// Page number for pagination (0-based)
-    pub page: usize,
+    pub page:      usize,
 }
 
 /// Extract and validate all parameters from a BRP request
@@ -38,10 +38,7 @@ fn extract_request_params(
     // Extract page parameter (defaults to 0)
     let page = extract_optional_u32(request, "page", 0)? as usize;
 
-    Ok(RequestParams {
-        extracted,
-        page,
-    })
+    Ok(RequestParams { extracted, page })
 }
 
 /// Resolve the actual BRP method name to call
@@ -139,9 +136,9 @@ fn process_success_response(
     );
 
     // Use simple pagination
-    let paginated = paginate_if_needed(response_data, page)
-        .map_err(|e| McpError::internal_error(e, None))?;
-    
+    let paginated =
+        paginate_if_needed(response_data, page).map_err(|e| McpError::internal_error(e, None))?;
+
     // Format the paginated response
     let final_data = if paginated.has_more {
         serde_json::json!({
@@ -155,8 +152,10 @@ fn process_success_response(
     } else {
         paginated.data
     };
-    
-    Ok(context.formatter.format_success(&final_data, context.metadata))
+
+    Ok(context
+        .formatter
+        .format_success(&final_data, context.metadata))
 }
 
 /// Process an error BRP response

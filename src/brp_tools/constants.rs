@@ -7,7 +7,6 @@ pub const DEFAULT_BRP_PORT: u16 = 15702;
 // Response size limits
 pub const MAX_RESPONSE_TOKENS: usize = 20_000;
 
-
 // BRP protocol method
 pub const BRP_METHOD_LIST: &str = "bevy/list";
 pub const BRP_METHOD_GET: &str = "bevy/get";

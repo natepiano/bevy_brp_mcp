@@ -9,6 +9,7 @@ use super::transformations::{
     apply_pattern_fix, convert_to_math_type_array, extract_string_value, fix_tuple_struct_path,
 };
 use crate::brp_tools::support::brp_client::BrpError;
+use crate::brp_tools::support::request_handler::format_discovery::transformations::fix_access_error;
 
 #[test]
 fn test_fix_tuple_struct_path_linear_rgba() {
@@ -321,4 +322,148 @@ fn test_is_type_format_error() {
         data:    None,
     };
     assert!(!is_type_format_error(&other_error));
+}
+
+#[test]
+fn test_fix_access_error_path_suggestions() {
+    // Test path suggestion for color field access
+    let original_value = json!({"red": 1.0, "green": 0.5, "blue": 0.2, "alpha": 1.0});
+
+    let result = fix_access_error(
+        "bevy_color::linear_rgba::LinearRgba",
+        &original_value,
+        "Field",
+        "Error accessing element with Field access at path .LinearRgba.red",
+    );
+
+    assert!(result.is_some());
+    let (returned_value, hint) = result.unwrap();
+
+    // Value should be returned unchanged for path suggestions
+    assert_eq!(returned_value, original_value);
+
+    // Hint should suggest the correct path
+    assert!(hint.contains("try using path `.0.0` instead of `.LinearRgba.red`"));
+}
+
+#[test]
+fn test_fix_access_error_math_field_suggestions() {
+    // Test path suggestion for math vector field access
+    let original_value = json!([1.0, 2.0, 3.0]);
+
+    let result = fix_access_error(
+        "bevy_math::vec3::Vec3",
+        &original_value,
+        "Field",
+        "Error accessing element with Field access at path .Vec3.x",
+    );
+
+    assert!(result.is_some());
+    let (returned_value, hint) = result.unwrap();
+
+    // Value should be returned unchanged for path suggestions
+    assert_eq!(returned_value, original_value);
+
+    // Hint should suggest the correct path
+    assert!(hint.contains("try using path `.0.0` instead of `.Vec3.x`"));
+}
+
+#[test]
+fn test_fix_access_error_generic_enum_suggestions() {
+    // Test path suggestion for generic enum variants
+    let original_value =
+        json!({"SomeColor": {"red": 1.0, "green": 0.5, "blue": 0.0, "alpha": 1.0}});
+
+    let result = fix_access_error(
+        "some_crate::SomeEnum",
+        &original_value,
+        "Field",
+        "Error accessing element with Field access at path .SomeColor.green",
+    );
+
+    assert!(result.is_some());
+    let (returned_value, hint) = result.unwrap();
+
+    // Value should be returned unchanged for path suggestions
+    assert_eq!(returned_value, original_value);
+
+    // Hint should suggest the correct path
+    assert!(hint.contains("try using path `.0.1` instead of `.SomeColor.green`"));
+}
+
+#[test]
+fn test_fix_access_error_fallback_to_value_fixes() {
+    // Test that when path suggestions don't work, it falls back to value format fixes
+    let original_value = json!({"field_name": "some_value"});
+
+    let result = fix_access_error(
+        "some_type::SomeType",
+        &original_value,
+        "Field",
+        "Error accessing element with Field access at path .unknown_path",
+    );
+
+    // This should still return a result with the existing fallback logic
+    // The exact behavior depends on the existing logic, but it should not crash
+    // and should provide some kind of transformation or hint
+    if let Some((_, hint)) = result {
+        // Should provide some form of assistance, either path suggestion or value transformation
+        assert!(!hint.is_empty());
+    }
+}
+
+#[test]
+fn test_fix_access_error_simple_field_path() {
+    // Test simple field path conversion (like .x -> .0)
+    let original_value = json!([1.0, 2.0, 3.0]);
+
+    let result = fix_access_error(
+        "some_type::TupleStruct",
+        &original_value,
+        "Field",
+        "Error accessing element with Field access at path .x",
+    );
+
+    assert!(result.is_some());
+    let (returned_value, hint) = result.unwrap();
+
+    // Value should be returned unchanged for path suggestions
+    assert_eq!(returned_value, original_value);
+
+    // Hint should suggest the correct path
+    assert!(hint.contains("try using path `.0` instead of `.x`"));
+}
+
+#[test]
+fn test_fix_access_error_integration_with_pattern_matching() {
+    // Test integration with the actual pattern matching system
+    use super::detection::analyze_error_pattern;
+    use super::transformations::apply_pattern_fix;
+
+    let error = BrpError {
+        code:    COMPONENT_FORMAT_ERROR_CODE,
+        message: "Error accessing element with `Field` access: failed at path .LinearRgba.red"
+            .to_string(),
+        data:    None,
+    };
+
+    // First, ensure pattern detection works
+    let analysis = analyze_error_pattern(&error);
+    assert!(analysis.pattern.is_some());
+
+    // Then test the fix application
+    let original_value = json!({"red": 1.0, "green": 0.5, "blue": 0.2, "alpha": 1.0});
+    let pattern = analysis.pattern.as_ref().unwrap();
+    let result = apply_pattern_fix(
+        pattern,
+        "bevy_color::linear_rgba::LinearRgba",
+        &original_value,
+    );
+
+    assert!(result.is_some());
+    let (returned_value, hint) = result.unwrap();
+
+    // Should return original value with path suggestion
+    assert_eq!(returned_value, original_value);
+    assert!(hint.contains("try using path `.0.0` instead of `.LinearRgba.red`"));
 }
