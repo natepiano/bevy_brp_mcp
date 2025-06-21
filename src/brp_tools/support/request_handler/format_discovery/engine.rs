@@ -458,8 +458,8 @@ async fn try_direct_discovery(
     if let Ok(BrpResult::Success(Some(data))) =
         execute_brp_method(BRP_METHOD_EXTRAS_DISCOVER_FORMAT, Some(params), port).await
     {
-        if let Some(formats) = data.get("formats").and_then(|f| f.as_array()) {
-            if let Some(format_info) = formats.first() {
+        if let Some(formats) = data.get("formats").and_then(|f| f.as_object()) {
+            if let Some(format_info) = formats.get(type_name) {
                 // Extract spawn_format and convert to corrected value
                 if let Some(spawn_format) = format_info
                     .get("spawn_format")
@@ -490,15 +490,16 @@ async fn tiered_type_format_discovery(
     let mut tier_info = Vec::new();
 
     // ========== TIER 1: Serialization Diagnostics ==========
-    // For UnknownComponentType and UnknownComponent errors, queries BRP to check if types
+    // For ANY error on spawn/insert operations, queries BRP to check if types
     // support required reflection traits (Serialize/Deserialize)
     // Only check for spawn/insert operations as mutations don't require Serialize/Deserialize
     let error_analysis = analyze_error_pattern(error);
-    if (method == BRP_METHOD_INSERT || method == BRP_METHOD_SPAWN)
-        && matches!(
-            &error_analysis.pattern,
-            Some(ErrorPattern::UnknownComponentType { .. } | ErrorPattern::UnknownComponent { .. })
-        )
+    if method == BRP_METHOD_INSERT || method == BRP_METHOD_SPAWN
+    // COMMENTED OUT: Old pattern-specific logic - testing if ALL spawn/insert errors should check traits
+    // && matches!(
+    //     &error_analysis.pattern,
+    //     Some(ErrorPattern::UnknownComponentType { .. } | ErrorPattern::UnknownComponent { .. })
+    // )
     {
         tier_info.push(TierInfo {
             tier:      TIER_SERIALIZATION,
