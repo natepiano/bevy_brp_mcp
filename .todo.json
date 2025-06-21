@@ -7,92 +7,50 @@
     "notes": ""
   },
   {
-    "id": "move-tools-1",
-    "content": "Move all TOOL_* constants from brp_tools/constants.rs to tools.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": "READY TO START: tools.rs created with all constants, now need to update imports across codebase to remove duplication"
-  },
-  {
-    "id": "move-tools-2",
-    "content": "Move all TOOL_* constants from app_tools/constants.rs to tools.rs",
+    "id": "remove-reexports-1",
+    "content": "Remove pub use crate::tools::*; from brp_tools/constants.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "move-desc-1",
-    "content": "Move all DESC_* description constants to tools.rs",
+    "id": "remove-reexports-2",
+    "content": "Remove pub use crate::tools::*; from app_tools/constants.rs", 
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "fix-naming-1",
-    "content": "Fix naming inconsistencies: shutdown and screenshot should be brp_extras_*",
+    "id": "remove-reexports-3",
+    "content": "Remove pub use crate::tools::*; from log_tools/constants.rs",
+    "status": "pending", 
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "direct-imports-1",
+    "content": "Update all files that import from brp_tools/constants to import directly from tools",
+    "status": "pending",
+    "priority": "high", 
+    "notes": ""
+  },
+  {
+    "id": "direct-imports-2", 
+    "content": "Update all files that import from app_tools/constants to import directly from tools",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "move-constants-1b",
-    "content": "build and fix any compile errors and any compile warnings for constant moves",
+    "id": "direct-imports-3",
+    "content": "Update all files that import from log_tools/constants to import directly from tools",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "update-imports-1",
-    "content": "Update imports in brp_tools/constants.rs to import from tools.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "update-imports-2",
-    "content": "Update imports in app_tools/constants.rs to import from tools.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "update-imports-3",
-    "content": "Update imports in tool_definitions.rs to import from tools.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "update-imports-4",
-    "content": "Update imports in registry.rs to import from tools.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "update-imports-5",
-    "content": "Update any other files that import tool constants to use tools.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "update-imports-5b",
-    "content": "build and fix any compile errors and any compile warnings for import updates",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "update-help-refs-1",
-    "content": "Update all include_help_text! calls to use new help file names",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "update-help-refs-1b",
-    "content": "build and fix any compile errors and any compile warnings for help text reference updates",
+    "id": "build-fix-1", 
+    "content": "build and fix any compile errors and any compile warnings for direct import changes",
     "status": "pending",
     "priority": "high",
     "notes": ""
@@ -115,7 +73,7 @@
     "id": "format-1",
     "content": "run `cargo +nightly fmt`",
     "status": "pending",
-    "priority": "high",
+    "priority": "high", 
     "notes": ""
   },
   {
@@ -127,14 +85,7 @@
   },
   {
     "id": "test-2",
-    "content": "If there are test issues, STOP and review them with the user",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "review-1",
-    "content": "STOP work here and return control to main agent",
+    "content": "If there are test issues, STOP and review them with the user", 
     "status": "pending",
     "priority": "high",
     "notes": ""
