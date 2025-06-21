@@ -299,6 +299,8 @@ fn substitute_template(template: &str, params: Option<&Value>) -> String {
     result
 }
 
+// Response size estimation functions
+
 // Common field extractors
 
 // Helper functions for common field extractors

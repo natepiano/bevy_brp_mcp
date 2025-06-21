@@ -41,47 +41,10 @@
 //!
 //! To add a new standard BRP tool:
 //!
-//! 1. **Define constants** in `constants.rs`: ```rust pub const TOOL_BRP_NEW_TOOL: &str =
-//!    "brp_new_tool"; pub const DESC_BRP_NEW_TOOL: &str = "Description of new tool"; pub const
-//!    BRP_METHOD_NEW_TOOL: &str = "bevy/new_tool"; ```
-//!
-//! 2. **Add tool definition** to the appropriate function: ```rust BrpToolDef { name:
-//!    TOOL_BRP_NEW_TOOL, description: DESC_BRP_NEW_TOOL, method: BRP_METHOD_NEW_TOOL, params:
-//!    vec![/* parameter definitions */], param_extractor: ParamExtractorType::Passthrough,
-//!    formatter: FormatterDef { formatter_type: FormatterType::PassThrough, template:
-//!    Some("Operation completed successfully"), response_fields: vec![], error_fields: vec![], }, }
-//!    ```
-//!
+//! 1. **Define constants** in `constants.rs` for the tool name, description, and BRP method
+//! 2. **Add tool definition** to the appropriate function with the required parameters and
+//!    formatters
 //! 3. **Register in generator** (automatic if added to `get_standard_tools()`)
-//!
-//! # Examples
-//!
-//! ## Simple Entity Operation
-//! ```rust
-//! BrpToolDef {
-//!     name:            TOOL_BRP_DESTROY,
-//!     method:          BRP_METHOD_DESTROY,
-//!     param_extractor: ParamExtractorType::Entity { required: true },
-//!     formatter:       FormatterDef {
-//!         formatter_type: FormatterType::EntityOperation(JSON_FIELD_DESTROYED_ENTITY),
-//!         template:       Some("Successfully destroyed entity {entity}"),
-//!         // ...
-//!     },
-//! }
-//! ```
-//!
-//! ## Resource Operation
-//! ```rust
-//! BrpToolDef {
-//!     name:            TOOL_BRP_GET_RESOURCE,
-//!     method:          BRP_METHOD_GET_RESOURCE,
-//!     param_extractor: ParamExtractorType::Resource,
-//!     formatter:       FormatterDef {
-//!         formatter_type: FormatterType::ResourceOperation(JSON_FIELD_RESOURCE),
-//!         // ...
-//!     },
-//! }
-//! ```
 
 use super::constants::{
     BRP_METHOD_DESTROY, BRP_METHOD_GET, BRP_METHOD_GET_RESOURCE, BRP_METHOD_INSERT,
@@ -98,6 +61,7 @@ use super::constants::{
     TOOL_BRP_LIST_RESOURCES, TOOL_BRP_MUTATE_COMPONENT, TOOL_BRP_MUTATE_RESOURCE, TOOL_BRP_REMOVE,
     TOOL_BRP_REMOVE_RESOURCE, TOOL_BRP_RPC_DISCOVER,
 };
+use super::support::create_pagination_params;
 
 /// Represents a parameter definition for a BRP tool
 #[derive(Clone)]
@@ -296,20 +260,24 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             name:            TOOL_BRP_LIST,
             description:     DESC_BRP_LIST,
             method:          BRP_METHOD_LIST,
-            params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_ENTITY,
-                    description: "Optional entity ID to list components for",
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          {
+                let mut params = vec![
+                    ParamDef {
+                        name:        JSON_FIELD_ENTITY,
+                        description: "Optional entity ID to list components for",
+                        required:    false,
+                        param_type:  ParamType::Number,
+                    },
+                    ParamDef {
+                        name:        JSON_FIELD_PORT,
+                        description: PORT_DESCRIPTION,
+                        required:    false,
+                        param_type:  ParamType::Number,
+                    },
+                ];
+                params.extend(create_pagination_params());
+                params
+            },
             param_extractor: ParamExtractorType::Entity { required: false },
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::Simple,
@@ -588,12 +556,16 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             name:            TOOL_BRP_LIST_RESOURCES,
             description:     DESC_BRP_LIST_RESOURCES,
             method:          BRP_METHOD_LIST_RESOURCES,
-            params:          vec![ParamDef {
-                name:        JSON_FIELD_PORT,
-                description: PORT_DESCRIPTION,
-                required:    false,
-                param_type:  ParamType::Number,
-            }],
+            params:          {
+                let mut params = vec![ParamDef {
+                    name:        JSON_FIELD_PORT,
+                    description: PORT_DESCRIPTION,
+                    required:    false,
+                    param_type:  ParamType::Number,
+                }];
+                params.extend(create_pagination_params());
+                params
+            },
             param_extractor: ParamExtractorType::EmptyParams,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::Simple,
@@ -643,32 +615,36 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             name:            "bevy_query",
             description:     "Query entities using the bevy/query BRP method. This powerful tool allows you to search for entities based on their components, applying filters and returning component data. This tool wraps the bevy/query method for easier use.",
             method:          "bevy/query",
-            params:          vec![
-                ParamDef {
-                    name:        "data",
-                    description: "Object specifying what component data to retrieve. Properties: components (array), option (array), has (array)",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        "filter",
-                    description: "Object specifying which entities to query. Properties: with (array), without (array)",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        "strict",
-                    description: "If true, returns error on unknown component types (default: false)",
-                    required:    false,
-                    param_type:  ParamType::Boolean,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          {
+                let mut params = vec![
+                    ParamDef {
+                        name:        "data",
+                        description: "Object specifying what component data to retrieve. Properties: components (array), option (array), has (array)",
+                        required:    true,
+                        param_type:  ParamType::Any,
+                    },
+                    ParamDef {
+                        name:        "filter",
+                        description: "Object specifying which entities to query. Properties: with (array), without (array)",
+                        required:    true,
+                        param_type:  ParamType::Any,
+                    },
+                    ParamDef {
+                        name:        "strict",
+                        description: "If true, returns error on unknown component types (default: false)",
+                        required:    false,
+                        param_type:  ParamType::Boolean,
+                    },
+                    ParamDef {
+                        name:        JSON_FIELD_PORT,
+                        description: PORT_DESCRIPTION,
+                        required:    false,
+                        param_type:  ParamType::Number,
+                    },
+                ];
+                params.extend(create_pagination_params());
+                params
+            },
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::Simple,
@@ -768,38 +744,42 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             name:            "bevy_registry_schema",
             description:     "Get JSON schema information for registered types using the bevy/registry/schema BRP method. Retrieves type schema definitions from the Bevy app's reflection registry.",
             method:          "bevy/registry/schema",
-            params:          vec![
-                ParamDef {
-                    name:        "with_crates",
-                    description: "Include only types from these crates (e.g., [\"bevy_transform\", \"my_game\"])",
-                    required:    false,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        "without_crates",
-                    description: "Exclude types from these crates (e.g., [\"bevy_render\", \"bevy_pbr\"])",
-                    required:    false,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        "with_types",
-                    description: "Include only types with these reflect traits (e.g., [\"Component\", \"Resource\"])",
-                    required:    false,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        "without_types",
-                    description: "Exclude types with these reflect traits (e.g., [\"RenderResource\"])",
-                    required:    false,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: PORT_DESCRIPTION,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          {
+                let mut params = vec![
+                    ParamDef {
+                        name:        "with_crates",
+                        description: "Include only types from these crates (e.g., [\"bevy_transform\", \"my_game\"])",
+                        required:    false,
+                        param_type:  ParamType::StringArray,
+                    },
+                    ParamDef {
+                        name:        "without_crates",
+                        description: "Exclude types from these crates (e.g., [\"bevy_render\", \"bevy_pbr\"])",
+                        required:    false,
+                        param_type:  ParamType::StringArray,
+                    },
+                    ParamDef {
+                        name:        "with_types",
+                        description: "Include only types with these reflect traits (e.g., [\"Component\", \"Resource\"])",
+                        required:    false,
+                        param_type:  ParamType::StringArray,
+                    },
+                    ParamDef {
+                        name:        "without_types",
+                        description: "Exclude types with these reflect traits (e.g., [\"RenderResource\"])",
+                        required:    false,
+                        param_type:  ParamType::StringArray,
+                    },
+                    ParamDef {
+                        name:        JSON_FIELD_PORT,
+                        description: PORT_DESCRIPTION,
+                        required:    false,
+                        param_type:  ParamType::Number,
+                    },
+                ];
+                params.extend(create_pagination_params());
+                params
+            },
             param_extractor: ParamExtractorType::RegistrySchema,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::Simple,
