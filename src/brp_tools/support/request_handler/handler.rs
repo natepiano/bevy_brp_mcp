@@ -14,13 +14,12 @@ use super::traits::ExtractedParams;
 use crate::BrpMcpService;
 use crate::brp_tools::constants::{
     JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO, JSON_FIELD_FORMAT_CORRECTIONS,
-    JSON_FIELD_ORIGINAL_ERROR,
+    JSON_FIELD_ORIGINAL_ERROR, MAX_RESPONSE_TOKENS,
 };
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult};
 use crate::brp_tools::support::response_formatter::{BrpMetadata, ResponseFormatter};
 use crate::error::BrpMcpError;
 use crate::support::debug_tools;
-use crate::tools::MAX_RESPONSE_TOKENS;
 
 const CHARS_PER_TOKEN: usize = 4;
 

@@ -359,7 +359,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::tools::DEFAULT_BRP_PORT;
+    use crate::brp_tools::constants::DEFAULT_BRP_PORT;
 
     #[test]
     fn test_substitute_template() {

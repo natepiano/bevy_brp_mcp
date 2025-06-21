@@ -12,9 +12,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::BrpJsonRpcBuilder;
-use crate::brp_tools::constants::{BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH};
+use crate::brp_tools::constants::{
+    BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH, DEFAULT_BRP_PORT,
+};
 use crate::error::BrpMcpError;
-use crate::tools::{BRP_EXTRAS_PREFIX, DEFAULT_BRP_PORT};
+use crate::tools::BRP_EXTRAS_PREFIX;
 
 /// Result of a BRP operation
 #[derive(Debug, Clone)]

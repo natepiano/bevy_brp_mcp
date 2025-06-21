@@ -32,19 +32,6 @@ macro_rules! include_help_text {
 }
 
 // ============================================================================
-// BEVY REMOTE PROTOCOL (BRP) CONSTANTS
-// ============================================================================
-
-/// Network/Port Constants
-pub const DEFAULT_BRP_PORT: u16 = 15702;
-
-/// Response size limits
-pub const MAX_RESPONSE_TOKENS: usize = 20_000;
-
-/// Documentation/Help Constants
-pub const DESC_PORT: &str = "The BRP port (default: 15702)";
-
-// ============================================================================
 // BRP PROTOCOL METHODS
 // ============================================================================
 

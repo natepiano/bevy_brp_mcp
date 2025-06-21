@@ -79,6 +79,9 @@ use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
+use super::constants::{
+    JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITIES, JSON_FIELD_ENTITY, JSON_FIELD_PARENT,
+};
 use super::support::{
     BrpExecuteExtractor, BrpHandlerConfig, EntityParamExtractor, FormatterContext, ParamExtractor,
     PassthroughExtractor, RegistrySchemaParamExtractor, ResourceParamExtractor,
@@ -88,9 +91,6 @@ use super::tool_definitions::{
     BrpToolDef, ExtractorType, FormatterType, ParamExtractorType, ParamType,
 };
 use crate::BrpMcpService;
-use crate::brp_tools::constants::{
-    JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITIES, JSON_FIELD_ENTITY, JSON_FIELD_PARENT,
-};
 use crate::support::schema;
 
 /// Generate tool registration from a declarative definition

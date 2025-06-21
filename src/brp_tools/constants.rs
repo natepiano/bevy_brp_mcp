@@ -70,6 +70,12 @@ pub const BRP_DEFAULT_HOST: &str = "localhost";
 /// HTTP protocol for BRP connections
 pub const BRP_HTTP_PROTOCOL: &str = "http";
 
+/// Documentation/Help Constants
+pub const DESC_PORT: &str = "The BRP port (default: 15702)";
+
+/// Network/Port Constants
+pub const DEFAULT_BRP_PORT: u16 = 15702;
+
 // ============================================================================
 // ERROR CONSTANTS
 // ============================================================================
@@ -88,3 +94,9 @@ pub const JSONRPC_FIELD: &str = "jsonrpc";
 pub const JSONRPC_FIELD_ID: &str = "id";
 pub const JSONRPC_FIELD_METHOD: &str = "method";
 pub const JSONRPC_FIELD_PARAMS: &str = "params";
+
+// ============================================================================
+// Claude code MPC limitation: 25_000 tokens - but we're using heuristics so we buffer
+// ============================================================================
+/// Response size limits
+pub const MAX_RESPONSE_TOKENS: usize = 20_000;

@@ -5,8 +5,8 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::{Value, json};
 
+use super::constants::{JSON_FIELD_COUNT, JSON_FIELD_WATCHES};
 use crate::BrpMcpService;
-use crate::brp_tools::constants::{JSON_FIELD_COUNT, JSON_FIELD_WATCHES};
 use crate::brp_tools::support::watch_manager::WATCH_MANAGER;
 use crate::support::response::ResponseBuilder;
 use crate::support::schema;

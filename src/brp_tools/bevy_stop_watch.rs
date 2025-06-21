@@ -5,9 +5,9 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::Value;
 
+use super::constants::JSON_FIELD_WATCH_ID;
 use super::support;
 use crate::BrpMcpService;
-use crate::brp_tools::constants::JSON_FIELD_WATCH_ID;
 use crate::brp_tools::support::watch_manager::WATCH_MANAGER;
 use crate::support::{params, schema};
 use crate::tools::{DESC_BEVY_STOP_WATCH, TOOL_BEVY_STOP_WATCH};
