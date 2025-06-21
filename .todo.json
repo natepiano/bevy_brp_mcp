@@ -1,0 +1,219 @@
+[
+  {
+    "id": "meta-1",
+    "content": "Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "restore-1",
+    "content": "Add back BRP_EXTRAS_PREFIX constant to bevy_brp_mcp constants.rs (was deleted by another agent)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "restore-1b",
+    "content": "build and fix any compile errors and any compile warnings for restored prefix constant",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "restore-2",
+    "content": "Add back bevy_brp_extras method constants to bevy_brp_mcp: BRP_METHOD_EXTRAS_SHUTDOWN, BRP_METHOD_EXTRAS_SCREENSHOT using BRP_EXTRAS_PREFIX",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "restore-2b",
+    "content": "build and fix any compile errors and any compile warnings for restored method constants",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "restore-3",
+    "content": "Add back BRP_METHOD_EXTRAS_DISCOVER_FORMAT constant using BRP_EXTRAS_PREFIX in bevy_brp_mcp",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "restore-3b",
+    "content": "build and fix any compile errors and any compile warnings for restored discover format constant",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "mcp-1",
+    "content": "Standardize all MCP tool names to use mcp__brp__ prefix consistently in bevy_brp_mcp",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "mcp-1b",
+    "content": "build and fix any compile errors and any compile warnings for MCP tool naming",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "mcp-2",
+    "content": "Add mcp__brp__brp_extras_discover_format tool constants to bevy_brp_mcp (if needed for external access)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "mcp-2b",
+    "content": "build and fix any compile errors and any compile warnings for MCP tool constants",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "engine-1",
+    "content": "Enhance existing format_discovery/engine.rs to add Tier 2 direct discovery by calling brp_extras/discover_format using existing BRP client infrastructure",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "engine-1b",
+    "content": "build and fix any compile errors and any compile warnings for engine enhancement",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "engine-2",
+    "content": "Ensure Tier 2 direct discovery still returns format_corrections field even when providing perfect formats",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "engine-2b",
+    "content": "build and fix any compile errors and any compile warnings for format_corrections preservation",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "mcp-3",
+    "content": "Add format discovery tool definition to MCP tool registry (if needed for external access)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "mcp-3b",
+    "content": "build and fix any compile errors and any compile warnings for tool definition",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-1",
+    "content": "Test enhanced tier system with both direct discovery (bevy_brp_extras format_test.rs) and fallback scenarios (nateroids)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-1b",
+    "content": "build and fix any compile errors and any compile warnings for tier system testing",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-2",
+    "content": "Test end-to-end workflows with intentionally wrong formats on both test apps to validate format correction responses",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-2b",
+    "content": "build and fix any compile errors and any compile warnings for end-to-end testing",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "brp-test-1",
+    "content": "Update rust/.claude/commands/brp_test.md to include minimal high-level integration testing with bevy_brp_extras format_test.rs example (Tier 2 validation) and nateroids (Tier 3 fallback validation)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "brp-test-1b",
+    "content": "build and fix any compile errors and any compile warnings for brp_test.md updates",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "clippy-1",
+    "content": "run `cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata`",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "clippy-2",
+    "content": "fix any clippy issues following rules: do not mark code as dead, remove unused variables instead of prefixing with _",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "format-1",
+    "content": "run `cargo +nightly fmt`",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-3",
+    "content": "run 'cargo nextest run'",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "test-4",
+    "content": "If there are test issues, STOP and review them with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-1",
+    "content": "STOP work here and return control to main agent",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-2",
+    "content": "task a new subagent to do a code review of the changes in the worktree - tell it to focus on identifying duplication and complexity. emphasize that it should only read and analyze, not modify anything.",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "review-3",
+    "content": "when this new subagent returns, STOP and review the suggested changes with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
