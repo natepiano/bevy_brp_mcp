@@ -10,6 +10,7 @@ use super::watch_manager::{WATCH_MANAGER, WatchInfo};
 use crate::brp_tools::constants::{BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH};
 use crate::brp_tools::support::json_rpc_builder::BrpJsonRpcBuilder;
 use crate::brp_tools::support::watch_logger::{self, BufferedWatchLogger};
+use crate::error::BrpMcpError;
 use crate::tools::{BRP_METHOD_GET_WATCH, BRP_METHOD_LIST_WATCH};
 
 /// Process the watch stream from the BRP server
@@ -17,12 +18,15 @@ async fn process_watch_stream(
     response: reqwest::Response,
     entity_id: u64,
     logger: &BufferedWatchLogger,
-) -> Result<(), String> {
+) -> Result<(), BrpMcpError> {
     if !response.status().is_success() {
-        let error_msg = format!(
-            "BRP server returned error {}: {}",
-            response.status(),
-            response.status().canonical_reason().unwrap_or("Unknown")
+        let error_msg = BrpMcpError::brp_request_failed(
+            "process watch stream",
+            format!(
+                "server returned {}: {}",
+                response.status(),
+                response.status().canonical_reason().unwrap_or("Unknown")
+            ),
         );
         error!("{}", error_msg);
         return Err(error_msg);
@@ -164,7 +168,7 @@ async fn start_watch_task(
     brp_method: &str,
     params: Value,
     port: u16,
-) -> Result<(u32, PathBuf), String> {
+) -> Result<(u32, PathBuf), BrpMcpError> {
     // Get watch_id first from manager and release lock immediately
     let watch_id = {
         let manager = WATCH_MANAGER.lock().await;
@@ -197,7 +201,9 @@ async fn start_watch_task(
     logger
         .write_update("WATCH_STARTED", log_data)
         .await
-        .map_err(|e| format!("Failed to write initial log: {e}"))?;
+        .map_err(|e| {
+            BrpMcpError::watch_failed("log initial entry", u32::try_from(entity_id).ok(), e)
+        })?;
 
     let watch_type_owned = watch_type.to_string();
     let brp_method_owned = brp_method.to_string();
@@ -238,17 +244,17 @@ pub async fn start_entity_watch_task(
     entity_id: u64,
     components: Option<Vec<String>>,
     port: u16,
-) -> Result<(u32, PathBuf), String> {
+) -> Result<(u32, PathBuf), BrpMcpError> {
     // Validate components parameter
     let components = components.ok_or_else(|| {
-        "Components parameter is required for entity watch. Specify which components to monitor.".to_string()
+        BrpMcpError::missing("components parameter is required for entity watch. Specify which components to monitor")
     })?;
 
     if components.is_empty() {
-        return Err(
-            "Components array cannot be empty. Specify at least one component to watch."
-                .to_string(),
-        );
+        return Err(BrpMcpError::invalid(
+            "components array",
+            "cannot be empty. Specify at least one component to watch",
+        ));
     }
 
     // Build the watch parameters
@@ -261,7 +267,10 @@ pub async fn start_entity_watch_task(
 }
 
 /// Start a background task for entity list watching
-pub async fn start_list_watch_task(entity_id: u64, port: u16) -> Result<(u32, PathBuf), String> {
+pub async fn start_list_watch_task(
+    entity_id: u64,
+    port: u16,
+) -> Result<(u32, PathBuf), BrpMcpError> {
     let params = serde_json::json!({
         "entity": entity_id
     });

@@ -53,11 +53,10 @@ pub fn format_bytes(bytes: u64) -> String {
         unit_index += 1;
     }
 
+    let unit = UNITS[unit_index];
     if unit_index == 0 {
-        let unit = UNITS[unit_index];
         format!("{bytes} {unit}")
     } else {
-        let unit = UNITS[unit_index];
         format!("{size:.2} {unit}")
     }
 }

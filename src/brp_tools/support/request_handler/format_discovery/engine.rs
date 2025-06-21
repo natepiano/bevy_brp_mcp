@@ -538,7 +538,8 @@ async fn tiered_type_format_discovery(
             Err(e) => {
                 tier_manager.complete_tier(
                     false,
-                    format!("Failed to query serialization info for {type_name}: {e}"),
+                    BrpMcpError::failed_to("query serialization info", format!("{type_name}: {e}"))
+                        .to_string(),
                 );
             }
         }

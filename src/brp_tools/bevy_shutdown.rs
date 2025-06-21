@@ -103,7 +103,7 @@ async fn shutdown_bevy_app(app_name: &str, port: u16) -> Result<CallToolResult, 
             ))
         }
         Err(e) => {
-            let message = format!("Failed to terminate process '{app_name}': {e}");
+            let message = e.to_string();
             Ok(response::success_json_response(
                 message.clone(),
                 json!({
@@ -163,7 +163,7 @@ async fn try_graceful_shutdown(port: u16) -> Result<bool, McpError> {
 }
 
 /// Kill the process using the system signal
-fn kill_process(app_name: &str) -> Result<Option<u32>, String> {
+fn kill_process(app_name: &str) -> Result<Option<u32>, BrpMcpError> {
     let mut system = System::new_all();
     system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
 
@@ -182,7 +182,11 @@ fn kill_process(app_name: &str) -> Result<Option<u32>, String> {
         if process.kill_with(Signal::Term).unwrap_or(false) {
             Ok(Some(pid))
         } else {
-            Err(format!("Failed to send SIGTERM to process {pid}"))
+            Err(BrpMcpError::process_failed(
+                "terminate",
+                &pid.to_string(),
+                "Failed to send SIGTERM",
+            ))
         }
     })
 }
