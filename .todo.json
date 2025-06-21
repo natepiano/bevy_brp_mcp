@@ -8,112 +8,112 @@
   },
   {
     "id": "1",
-    "content": "Add once_cell dependency to Cargo.toml for Lazy<Regex> support",
+    "content": "Add new error variants to BrpMcpError in src/error.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "2",
-    "content": "Build and fix any compile errors/warnings after adding dependency",
+    "content": "Build and fix any compile errors/warnings after adding error variants",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "3",
-    "content": "Create src/error.rs with BrpMcpError types and McpError conversions",
+    "content": "Fix remaining unwrap in src/support/service.rs:21",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "4",
-    "content": "Build and fix any compile errors/warnings after creating error module",
+    "content": "Build and fix any compile errors/warnings after service.rs fix",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "5",
-    "content": "Add error module to main.rs and create helper macros",
+    "content": "Convert watch operations to use BrpMcpError::WatchOperation",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "6",
-    "content": "Build and fix any compile errors/warnings after adding error module",
+    "content": "Build and fix any compile errors/warnings after watch operations conversion",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "7",
-    "content": "Fix mutex unwrap in main.rs:102 with proper error handling",
+    "content": "Convert process management to use BrpMcpError::ProcessManagement",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "8",
-    "content": "Build and fix any compile errors/warnings after mutex fix",
+    "content": "Build and fix any compile errors/warnings after process management conversion",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "9",
-    "content": "Replace all unwraps in format_discovery/engine.rs with proper error handling",
+    "content": "Convert parameter extraction to use BrpMcpError::ParameterExtraction",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "10",
-    "content": "Build and fix any compile errors/warnings after engine fixes",
+    "content": "Build and fix any compile errors/warnings after parameter extraction conversion",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "11",
-    "content": "Convert regex compilation in detection.rs to Lazy<Regex> pattern",
+    "content": "Convert log operations to use BrpMcpError::LogOperation",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "12",
-    "content": "Build and fix any compile errors/warnings after regex fixes",
+    "content": "Build and fix any compile errors/warnings after log operations conversion",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "13",
-    "content": "Fix file path unwraps in cargo_detector.rs and watch_logger.rs",
+    "content": "Create TierInfo helper methods to reduce duplication",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "14",
-    "content": "Build and fix any compile errors/warnings after file operation fixes",
+    "content": "Build and fix any compile errors/warnings after TierInfo refactoring",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "15",
-    "content": "Convert test unwraps in format_discovery tests to proper assertions",
+    "content": "Create TierManager to encapsulate tier pattern",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "16",
-    "content": "Build and fix any compile errors/warnings after test fixes",
+    "content": "Build and fix any compile errors/warnings after TierManager implementation",
     "status": "pending",
     "priority": "high",
     "notes": ""
