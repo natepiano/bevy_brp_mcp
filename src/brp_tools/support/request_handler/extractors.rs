@@ -4,15 +4,14 @@ use serde_json::{Value, json};
 
 use super::traits::{ExtractedParams, ParamExtractor};
 use crate::brp_tools::constants::{
-    JSON_FIELD_ENTITY, JSON_FIELD_PORT, JSON_FIELD_RESOURCE, PARAM_WITH_CRATES, PARAM_WITH_TYPES,
-    PARAM_WITHOUT_CRATES, PARAM_WITHOUT_TYPES,
+    DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT, JSON_FIELD_RESOURCE, PARAM_WITH_CRATES,
+    PARAM_WITH_TYPES, PARAM_WITHOUT_CRATES, PARAM_WITHOUT_TYPES,
 };
 use crate::error::BrpMcpError;
 use crate::support::params::{
     extract_any_value, extract_optional_number, extract_optional_string_array_from_request,
     extract_required_number, extract_required_string,
 };
-use crate::tools::DEFAULT_BRP_PORT;
 
 /// Parameters for BRP execute tool
 #[derive(Debug, Clone, Serialize, Deserialize)]
