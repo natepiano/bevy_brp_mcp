@@ -4,6 +4,8 @@ use std::process::{Command, Stdio};
 
 use rmcp::Error as McpError;
 
+use crate::error::BrpMcpError;
+
 /// Launch a detached process with proper setup
 pub fn launch_detached_process(
     mut cmd: Command,
@@ -13,7 +15,7 @@ pub fn launch_detached_process(
 ) -> Result<u32, McpError> {
     // Clone the log file handle for stderr
     let log_file_for_stderr = log_file.try_clone().map_err(|e| {
-        McpError::internal_error(format!("Failed to clone log file handle: {e}"), None)
+        BrpMcpError::ProcessManagement(format!("Failed to clone log file handle: {e}"))
     })?;
 
     // Set up the command
@@ -29,9 +31,8 @@ pub fn launch_detached_process(
             // Get the process ID
             Ok(child.id())
         }
-        Err(e) => Err(McpError::invalid_params(
-            format!("Failed to launch '{process_name}': {e}"),
-            None,
-        )),
+        Err(e) => Err(McpError::from(BrpMcpError::ProcessManagement(format!(
+            "Failed to launch '{process_name}': {e}"
+        )))),
     }
 }

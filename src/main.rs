@@ -10,9 +10,12 @@ use rmcp::service::RequestContext;
 use rmcp::transport::stdio;
 use rmcp::{Error as McpError, RoleServer, ServerHandler, ServiceExt};
 
+use crate::error::BrpMcpError;
+
 mod app_tools;
 mod brp_tools;
 mod constants;
+mod error;
 mod log_tools;
 mod registry;
 mod support;
@@ -99,7 +102,9 @@ impl BrpMcpService {
                     .collect();
 
                 // Update our roots
-                let mut roots = self.roots.lock().unwrap();
+                let mut roots = self.roots.lock().map_err(|e| {
+                    BrpMcpError::MutexPoisoned(format!("Failed to lock roots mutex: {}", e))
+                })?;
                 *roots = paths;
                 tracing::debug!("Processed roots: {:?}", *roots);
             }

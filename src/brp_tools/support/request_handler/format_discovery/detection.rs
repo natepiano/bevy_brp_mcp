@@ -1,6 +1,5 @@
 //! Error detection and pattern matching logic for format discovery
 
-use regex::Regex;
 use rmcp::Error as McpError;
 use serde_json::Value;
 
@@ -72,14 +71,62 @@ pub struct TierInfo {
     pub success:   bool,
 }
 
+impl TierInfo {
+    /// Create a new `TierInfo` instance
+    pub fn new(tier: u8, name: &str, action: String) -> Self {
+        Self {
+            tier,
+            tier_name: name.to_string(),
+            action,
+            success: false,
+        }
+    }
+
+    /// Mark this tier as successful and update the action message
+    pub fn mark_success(&mut self, action: String) {
+        self.success = true;
+        self.action = action;
+    }
+}
+
+/// Manager for tracking tier execution during format discovery
+pub struct TierManager {
+    tier_info: Vec<TierInfo>,
+}
+
+impl TierManager {
+    /// Create a new `TierManager`
+    pub fn new() -> Self {
+        Self {
+            tier_info: Vec::new(),
+        }
+    }
+
+    /// Start a new tier
+    pub fn start_tier(&mut self, tier: u8, name: &str, action: String) {
+        self.tier_info.push(TierInfo::new(tier, name, action));
+    }
+
+    /// Complete the current tier
+    pub fn complete_tier(&mut self, success: bool, action: String) {
+        if let Some(last) = self.tier_info.last_mut() {
+            if success {
+                last.mark_success(action);
+            } else {
+                last.action = action;
+            }
+        }
+    }
+
+    /// Convert into the underlying vector of tier info
+    pub fn into_vec(self) -> Vec<TierInfo> {
+        self.tier_info
+    }
+}
+
 /// Check for access error pattern
 fn check_access_error(message: &str) -> Option<ErrorPattern> {
-    let access_error_regex = ACCESS_ERROR_REGEX.get_or_init(|| {
-        Regex::new(r"Error accessing element with `([^`]+)` access(?:\s*\(offset \d+\))?: (.+)")
-            .unwrap()
-    });
-
-    access_error_regex.captures(message).map(|captures| {
+    ACCESS_ERROR_REGEX.captures(message).map(|captures| {
         let access = captures[1].to_string();
         let error_type = captures[2].to_string();
         ErrorPattern::AccessError { access, error_type }
@@ -88,12 +135,7 @@ fn check_access_error(message: &str) -> Option<ErrorPattern> {
 
 /// Check for type mismatch pattern
 fn check_type_mismatch(message: &str) -> Option<ErrorPattern> {
-    let type_mismatch_regex = TYPE_MISMATCH_REGEX.get_or_init(|| {
-        Regex::new(r"Expected ([a-zA-Z0-9_\[\]]+) access to access a ([a-zA-Z0-9_]+), found a ([a-zA-Z0-9_]+) instead\.")
-            .unwrap()
-    });
-
-    type_mismatch_regex.captures(message).map(|captures| {
+    TYPE_MISMATCH_REGEX.captures(message).map(|captures| {
         let access = captures[1].to_string();
         let expected = captures[2].to_string();
         let actual = captures[3].to_string();
@@ -107,12 +149,7 @@ fn check_type_mismatch(message: &str) -> Option<ErrorPattern> {
 
 /// Check for variant type mismatch pattern
 fn check_variant_type_mismatch(message: &str) -> Option<ErrorPattern> {
-    let variant_type_mismatch_regex = VARIANT_TYPE_MISMATCH_REGEX.get_or_init(|| {
-        Regex::new(r"Expected variant ([a-zA-Z0-9_\[\]]+) access to access a ([a-zA-Z0-9_]+) variant, found a ([a-zA-Z0-9_]+) variant instead\.")
-            .unwrap()
-    });
-
-    variant_type_mismatch_regex
+    VARIANT_TYPE_MISMATCH_REGEX
         .captures(message)
         .map(|captures| {
             let access = captures[1].to_string();
@@ -128,12 +165,7 @@ fn check_variant_type_mismatch(message: &str) -> Option<ErrorPattern> {
 
 /// Check for missing field pattern
 fn check_missing_field(message: &str) -> Option<ErrorPattern> {
-    let missing_field_regex = MISSING_FIELD_REGEX.get_or_init(|| {
-        Regex::new(r#"The ([a-zA-Z0-9_]+) accessed doesn't have (?:an? )?[`"]([^`"]+)[`"] field"#)
-            .unwrap()
-    });
-
-    missing_field_regex.captures(message).map(|captures| {
+    MISSING_FIELD_REGEX.captures(message).map(|captures| {
         let type_name = captures[1].to_string();
         let field_name = captures[2].to_string();
         ErrorPattern::MissingField {
@@ -145,10 +177,7 @@ fn check_missing_field(message: &str) -> Option<ErrorPattern> {
 
 /// Check for unknown component pattern
 fn check_unknown_component(message: &str) -> Option<ErrorPattern> {
-    let unknown_component_regex = UNKNOWN_COMPONENT_REGEX
-        .get_or_init(|| Regex::new(r"Unknown component type: `([^`]+)`").unwrap());
-
-    unknown_component_regex.captures(message).map(|captures| {
+    UNKNOWN_COMPONENT_REGEX.captures(message).map(|captures| {
         let component_path = captures[1].to_string();
         ErrorPattern::UnknownComponent { component_path }
     })
@@ -156,25 +185,21 @@ fn check_unknown_component(message: &str) -> Option<ErrorPattern> {
 
 /// Check for transform sequence pattern
 fn check_transform_sequence(message: &str) -> Option<ErrorPattern> {
-    let transform_regex = TRANSFORM_SEQUENCE_REGEX
-        .get_or_init(|| Regex::new(r"expected a sequence of (\d+) f32 values").unwrap());
-
-    transform_regex.captures(message).and_then(|captures| {
-        captures[1]
-            .parse::<usize>()
-            .ok()
-            .map(|count| ErrorPattern::TransformSequence {
-                expected_count: count,
-            })
-    })
+    TRANSFORM_SEQUENCE_REGEX
+        .captures(message)
+        .and_then(|captures| {
+            captures[1]
+                .parse::<usize>()
+                .ok()
+                .map(|count| ErrorPattern::TransformSequence {
+                    expected_count: count,
+                })
+        })
 }
 
 /// Check for expected type pattern
 fn check_expected_type(message: &str) -> Option<ErrorPattern> {
-    let expected_type_regex = EXPECTED_TYPE_REGEX
-        .get_or_init(|| Regex::new(r"expected `([a-zA-Z_:]+(?::[a-zA-Z_:]+)*)`").unwrap());
-
-    expected_type_regex.captures(message).map(|captures| {
+    EXPECTED_TYPE_REGEX.captures(message).map(|captures| {
         let expected_type = captures[1].to_string();
         ErrorPattern::ExpectedType { expected_type }
     })
@@ -182,11 +207,7 @@ fn check_expected_type(message: &str) -> Option<ErrorPattern> {
 
 /// Check for math type array pattern
 fn check_math_type_array(message: &str) -> Option<ErrorPattern> {
-    let math_type_array_regex = MATH_TYPE_ARRAY_REGEX.get_or_init(|| {
-        Regex::new(r"(Vec2|Vec3|Vec4|Quat)\s+(?:expects?|requires?|needs?)\s+array").unwrap()
-    });
-
-    math_type_array_regex.captures(message).map(|captures| {
+    MATH_TYPE_ARRAY_REGEX.captures(message).map(|captures| {
         let math_type = captures[1].to_string();
         ErrorPattern::MathTypeArray { math_type }
     })
@@ -194,10 +215,7 @@ fn check_math_type_array(message: &str) -> Option<ErrorPattern> {
 
 /// Check for tuple struct path pattern
 fn check_tuple_struct_path(message: &str) -> Option<ErrorPattern> {
-    let tuple_struct_path_regex = TUPLE_STRUCT_PATH_REGEX
-        .get_or_init(|| Regex::new(r#"(?:at path|path)\s+[`"]?([^`"\s]+)[`"]?"#).unwrap());
-
-    tuple_struct_path_regex.captures(message).map(|captures| {
+    TUPLE_STRUCT_PATH_REGEX.captures(message).map(|captures| {
         let field_path = captures[1].to_string();
         ErrorPattern::TupleStructAccess { field_path }
     })
@@ -205,11 +223,7 @@ fn check_tuple_struct_path(message: &str) -> Option<ErrorPattern> {
 
 /// Check for unknown component type pattern
 fn check_unknown_component_type(message: &str) -> Option<ErrorPattern> {
-    let unknown_component_type_regex = UNKNOWN_COMPONENT_TYPE_REGEX.get_or_init(|| {
-        Regex::new(r"Unknown component type(?::\s*)?[`']?([^`'\s]+)[`']?").unwrap()
-    });
-
-    unknown_component_type_regex
+    UNKNOWN_COMPONENT_TYPE_REGEX
         .captures(message)
         .map(|captures| {
             let component_type = captures[1].to_string();

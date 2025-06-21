@@ -9,6 +9,7 @@ use serde_json::json;
 
 use super::support::log_utils;
 use crate::BrpMcpService;
+use crate::error::BrpMcpError;
 use crate::support::{params, response, schema};
 use crate::tools::{DESC_READ_LOG, FILE_PATH, TOOL_READ_LOG};
 
@@ -45,14 +46,17 @@ pub fn handle(
     let filename = params::extract_required_string(request, "filename")?;
     let keyword = params::extract_optional_string(request, "keyword", "");
     let tail_lines = usize::try_from(params::extract_optional_number(request, "tail_lines", 0)?)
-        .map_err(|_| McpError::invalid_params("tail_lines value too large", None))?;
+        .map_err(|_| {
+            McpError::from(BrpMcpError::LogOperation(
+                "tail_lines value too large".to_string(),
+            ))
+        })?;
 
     // Validate filename format for security
     if !log_utils::is_valid_log_filename(filename) {
-        return Err(McpError::invalid_params(
-            "Invalid log filename. Only bevy_brp_mcp log files can be read.",
-            None,
-        ));
+        return Err(McpError::from(BrpMcpError::LogOperation(
+            "Invalid log filename. Only bevy_brp_mcp log files can be read.".to_string(),
+        )));
     }
 
     // Build full path
@@ -60,10 +64,9 @@ pub fn handle(
 
     // Check if file exists
     if !log_path.exists() {
-        return Err(McpError::invalid_params(
-            format!("Log file not found: {filename}"),
-            None,
-        ));
+        return Err(McpError::from(BrpMcpError::LogOperation(format!(
+            "Log file not found: {filename}"
+        ))));
     }
 
     // Read the log file
@@ -91,11 +94,11 @@ fn read_log_file(
 ) -> Result<(String, std::fs::Metadata), McpError> {
     // Get file metadata
     let metadata = std::fs::metadata(path)
-        .map_err(|e| McpError::internal_error(format!("Failed to get file metadata: {e}"), None))?;
+        .map_err(|e| BrpMcpError::LogOperation(format!("Failed to get file metadata: {e}")))?;
 
     // Open the file
     let file = File::open(path)
-        .map_err(|e| McpError::internal_error(format!("Failed to open log file: {e}"), None))?;
+        .map_err(|e| BrpMcpError::LogOperation(format!("Failed to open log file: {e}")))?;
 
     let reader = BufReader::new(file);
     let mut lines: Vec<String> = Vec::new();
@@ -103,7 +106,7 @@ fn read_log_file(
     // Read lines with optional keyword filtering
     for line_result in reader.lines() {
         let line = line_result
-            .map_err(|e| McpError::internal_error(format!("Failed to read line: {e}"), None))?;
+            .map_err(|e| BrpMcpError::LogOperation(format!("Failed to read line: {e}")))?;
 
         // Apply keyword filter if provided
         if keyword.is_empty() || line.to_lowercase().contains(&keyword.to_lowercase()) {

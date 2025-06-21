@@ -6,6 +6,7 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
 use crate::BrpMcpService;
+use crate::error::BrpMcpError;
 
 /// Fetch roots from the client and return the search paths
 pub async fn fetch_roots_and_get_paths(
@@ -18,7 +19,11 @@ pub async fn fetch_roots_and_get_paths(
         tracing::debug!("Failed to fetch roots: {}", e);
     }
 
-    Ok(service.roots.lock().unwrap().clone())
+    Ok(service
+        .roots
+        .lock()
+        .map_err(|e| BrpMcpError::MutexPoisoned(format!("Failed to acquire roots lock: {}", e)))?
+        .clone())
 }
 
 /// Generic handler wrapper that fetches search paths and calls the provided handler

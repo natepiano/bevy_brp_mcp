@@ -7,7 +7,7 @@ use super::constants::{
     COMPONENT_FORMAT_ERROR_CODE, FORMAT_DISCOVERY_METHODS, RESOURCE_FORMAT_ERROR_CODE,
     TIER_DETERMINISTIC, TIER_DIRECT_DISCOVERY, TIER_GENERIC_FALLBACK, TIER_SERIALIZATION,
 };
-use super::detection::{TierInfo, analyze_error_pattern, check_type_serialization};
+use super::detection::{TierInfo, TierManager, analyze_error_pattern, check_type_serialization};
 use super::transformations::{apply_pattern_fix, try_component_format_alternatives_legacy};
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
 use crate::tools::{
@@ -442,14 +442,13 @@ async fn process_single_type_item(
 async fn try_direct_discovery(
     type_name: &str,
     port: Option<u16>,
-    tier_info: &mut Vec<TierInfo>,
+    tier_manager: &mut TierManager,
 ) -> Option<(Value, String)> {
-    tier_info.push(TierInfo {
-        tier:      TIER_DIRECT_DISCOVERY,
-        tier_name: "Direct Discovery".to_string(),
-        action:    format!("Calling brp_extras/discover_format for type: {type_name}"),
-        success:   false,
-    });
+    tier_manager.start_tier(
+        TIER_DIRECT_DISCOVERY,
+        "Direct Discovery",
+        format!("Calling brp_extras/discover_format for type: {type_name}"),
+    );
 
     let params = serde_json::json!({
         "types": [type_name]
@@ -465,16 +464,17 @@ async fn try_direct_discovery(
                     .get("spawn_format")
                     .and_then(|sf| sf.get("example"))
                 {
-                    tier_info.last_mut().unwrap().success = true;
-                    tier_info.last_mut().unwrap().action =
-                        format!("Direct discovery successful: found format for {type_name}");
+                    tier_manager.complete_tier(
+                        true,
+                        format!("Direct discovery successful: found format for {type_name}"),
+                    );
                     let hint = "Direct discovery from bevy_brp_extras".to_string();
                     return Some((spawn_format.clone(), hint));
                 }
             }
         }
     }
-    tier_info.last_mut().unwrap().action = "Direct discovery unavailable or failed".to_string();
+    tier_manager.complete_tier(false, "Direct discovery unavailable or failed".to_string());
     None
 }
 
@@ -487,7 +487,7 @@ async fn tiered_type_format_discovery(
     error: &BrpError,
     port: Option<u16>,
 ) -> (Option<(Value, String)>, Vec<TierInfo>) {
-    let mut tier_info = Vec::new();
+    let mut tier_manager = TierManager::new();
 
     // ========== TIER 1: Serialization Diagnostics ==========
     // For ANY error on spawn/insert operations, queries BRP to check if types
@@ -495,30 +495,24 @@ async fn tiered_type_format_discovery(
     // Only check for spawn/insert operations as mutations don't require Serialize/Deserialize
     let error_analysis = analyze_error_pattern(error);
     if method == BRP_METHOD_INSERT || method == BRP_METHOD_SPAWN
-    // COMMENTED OUT: Old pattern-specific logic - testing if ALL spawn/insert errors should check traits
-    // && matches!(
+    // COMMENTED OUT: Old pattern-specific logic - testing if ALL spawn/insert errors should check
+    // traits && matches!(
     //     &error_analysis.pattern,
     //     Some(ErrorPattern::UnknownComponentType { .. } | ErrorPattern::UnknownComponent { .. })
     // )
     {
-        tier_info.push(TierInfo {
-            tier:      TIER_SERIALIZATION,
-            tier_name: "Serialization Diagnostics".to_string(),
-            action:    format!("Checking serialization support for type: {type_name}"),
-            success:   false,
-        });
+        tier_manager.start_tier(
+            TIER_SERIALIZATION,
+            "Serialization Diagnostics",
+            format!("Checking serialization support for type: {type_name}"),
+        );
 
         // Use the actual type_name from the request context instead of the extracted error type
         // This fixes the issue where we'd get "`bevy_reflect::DynamicEnum`" instead of the actual
         // component
         match check_type_serialization(type_name, port).await {
             Ok(serialization_check) => {
-                tier_info.last_mut().unwrap().success = true;
-                tier_info
-                    .last_mut()
-                    .unwrap()
-                    .action
-                    .clone_from(&serialization_check.diagnostic_message);
+                tier_manager.complete_tier(true, serialization_check.diagnostic_message.clone());
 
                 // If this is a missing trait error, make it prominent by returning it as a "hint"
                 // This ensures the diagnostic message is clearly visible to the user
@@ -533,65 +527,63 @@ async fn tiered_type_format_discovery(
                             original_value.clone(),
                             serialization_check.diagnostic_message,
                         )),
-                        tier_info,
+                        tier_manager.into_vec(),
                     );
                 }
 
                 // Otherwise, return as before
-                return (None, tier_info);
+                return (None, tier_manager.into_vec());
             }
             Err(e) => {
-                tier_info.last_mut().unwrap().action =
-                    format!("Failed to query serialization info for {type_name}: {e}");
+                tier_manager.complete_tier(
+                    false,
+                    format!("Failed to query serialization info for {type_name}: {e}"),
+                );
             }
         }
     }
 
     // ========== TIER 2: Direct Discovery ==========
     // Calls bevy_brp_extras/discover_format to get correct format directly from the Bevy app
-    if let Some(result) = try_direct_discovery(type_name, port, &mut tier_info).await {
-        return (Some(result), tier_info);
+    if let Some(result) = try_direct_discovery(type_name, port, &mut tier_manager).await {
+        return (Some(result), tier_manager.into_vec());
     }
 
     // ========== TIER 3: Deterministic Pattern Matching ==========
     // Uses error message patterns to determine exact format mismatches
     // and applies targeted fixes with high confidence
     if let Some(pattern) = &error_analysis.pattern {
-        tier_info.push(TierInfo {
-            tier:      TIER_DETERMINISTIC,
-            tier_name: "Deterministic Pattern Matching".to_string(),
-            action:    format!("Matched pattern: {pattern:?}"),
-            success:   false, // Will be updated if successful
-        });
+        tier_manager.start_tier(
+            TIER_DETERMINISTIC,
+            "Deterministic Pattern Matching",
+            format!("Matched pattern: {pattern:?}"),
+        );
 
         if let Some((corrected_value, hint)) = apply_pattern_fix(pattern, type_name, original_value)
         {
-            tier_info.last_mut().unwrap().success = true;
-            tier_info.last_mut().unwrap().action = format!("Applied pattern fix: {hint}");
-            return (Some((corrected_value, hint)), tier_info);
+            tier_manager.complete_tier(true, format!("Applied pattern fix: {hint}"));
+            return (Some((corrected_value, hint)), tier_manager.into_vec());
         }
     }
 
     // ========== TIER 4: Generic Fallback ==========
     // Falls back to legacy transformation logic trying various
     // format conversions (object->array, array->string, etc.)
-    tier_info.push(TierInfo {
-        tier:      TIER_GENERIC_FALLBACK,
-        tier_name: "Generic Fallback".to_string(),
-        action:    "Trying generic format alternatives".to_string(),
-        success:   false,
-    });
+    tier_manager.start_tier(
+        TIER_GENERIC_FALLBACK,
+        "Generic Fallback",
+        "Trying generic format alternatives".to_string(),
+    );
 
     let fallback_result =
         try_component_format_alternatives_legacy(type_name, original_value, error);
     if fallback_result.is_some() {
-        tier_info.last_mut().unwrap().success = true;
-        tier_info.last_mut().unwrap().action = "Found generic format alternative".to_string();
+        tier_manager.complete_tier(true, "Found generic format alternative".to_string());
     } else {
-        tier_info.last_mut().unwrap().action = "No generic alternative found".to_string();
+        tier_manager.complete_tier(false, "No generic alternative found".to_string());
     }
 
-    (fallback_result, tier_info)
+    (fallback_result, tier_manager.into_vec())
 }
 
 /// Test a component format by spawning a test entity
