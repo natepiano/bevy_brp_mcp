@@ -412,7 +412,7 @@ async fn process_single_type_item(
 
     // Add type context to tier info
     for info in &mut tier_info {
-        info.action = format!("[{}] {}", type_name, info.action);
+        info.action = format!("[{type_name}] {}", info.action);
     }
 
     if let Some((corrected_value, hint)) = discovery_result {
@@ -642,7 +642,8 @@ fn tier_info_to_debug_strings(tier_info: &[TierInfo]) -> Vec<String> {
                 .iter()
                 .map(|t| t.tier.to_string())
                 .collect();
-            debug_strings.push(format!("Successful tier(s): {}", tier_numbers.join(", ")));
+            let tiers = tier_numbers.join(", ");
+            debug_strings.push(format!("Successful tier(s): {tiers}"));
         }
     }
 
