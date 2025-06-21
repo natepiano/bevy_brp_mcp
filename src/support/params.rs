@@ -178,4 +178,3 @@ pub fn extract_optional_string_array_from_request(
         None => Ok(None),
     }
 }
-
