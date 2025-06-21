@@ -8,126 +8,147 @@
   },
   {
     "id": "1",
-    "content": "Add error message constants to src/error.rs (MSG_FAILED_TO_PREFIX, etc.)",
+    "content": "Add General error variant to BrpMcpError and update categorize_error fallback",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "2",
-    "content": "Add builder methods to BrpMcpError (failed_to, cannot, invalid, etc.)",
+    "content": "Build and fix any compile errors/warnings after adding General variant",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "3",
-    "content": "Build and fix any compile errors after error.rs changes",
+    "content": "Add specialized error builders (brp_request_failed, validation_failed)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "4",
-    "content": "Convert error patterns in src/support/params.rs to use new helpers",
+    "content": "Build and fix any compile errors/warnings after adding specialized builders",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "5",
-    "content": "Build and test after params.rs conversion",
+    "content": "Convert brp_client.rs to use BrpMcpError instead of direct internal_error",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "6",
-    "content": "Convert error patterns in src/support/logging.rs to use new helpers",
+    "content": "Build and fix any compile errors/warnings after brp_client.rs conversion",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "7",
-    "content": "Build and test after logging.rs conversion",
+    "content": "Convert brp_status.rs to use BrpMcpError builders instead of McpError::invalid_params",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "8",
-    "content": "Convert error patterns in src/support/process.rs to use new helpers",
+    "content": "Build and fix any compile errors/warnings after brp_status.rs conversion",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "9",
-    "content": "Build and test after process.rs conversion",
+    "content": "Convert watch_response.rs to use error builders instead of format! patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "10",
-    "content": "Convert error patterns in brp_tools parameter extractors to use new helpers",
+    "content": "Build and fix any compile errors/warnings after watch_response.rs conversion",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "11",
-    "content": "Build and test after brp_tools conversion",
+    "content": "Convert read_log.rs to use error builders instead of string formatting",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "12",
-    "content": "Convert remaining error patterns in other files to use new helpers",
+    "content": "Build and fix any compile errors/warnings after read_log.rs conversion",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "13",
-    "content": "Build and test after remaining conversions",
+    "content": "Search for and convert any remaining direct McpError or format! error patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "14",
-    "content": "Run cargo clippy with strict settings and fix all issues",
+    "content": "Build and fix any compile errors/warnings after remaining conversions",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "15",
-    "content": "Run cargo +nightly fmt to format all code",
+    "content": "Run cargo clippy with strict settings and fix all issues",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "16",
-    "content": "Run cargo nextest run and ensure all tests pass",
+    "content": "Fix any clippy issues found",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "17",
-    "content": "Task subagent to review error message consistency",
+    "content": "Run cargo +nightly fmt",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "18",
-    "content": "Review subagent findings and create summary for user",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "19",
+    "content": "If test issues found, STOP and review with user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "20",
+    "content": "Task subagent for code review focusing on duplication and complexity",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "21",
+    "content": "Review subagent suggestions with user before proceeding",
     "status": "pending",
     "priority": "high",
     "notes": ""
