@@ -9,7 +9,7 @@ use tokio::time::timeout;
 
 use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
-use crate::brp_tools::constants::{JSON_FIELD_PORT, JSON_FIELD_STATUS};
+use crate::brp_tools::constants::{JSON_FIELD_PORT, JSON_FIELD_STATUS, JSONRPC_FIELD};
 use crate::error::BrpMcpError;
 use crate::support::{params, response, schema};
 use crate::tools::{
@@ -139,7 +139,7 @@ async fn check_brp_on_port(port: u16) -> Result<bool, McpError> {
             // Check if we got a valid JSON-RPC response
             resp.json::<serde_json::Value>()
                 .await
-                .map_or(Ok(false), |json| Ok(json.get("jsonrpc").is_some()))
+                .map_or(Ok(false), |json| Ok(json.get(JSONRPC_FIELD).is_some()))
         }
         _ => Ok(false),
     }

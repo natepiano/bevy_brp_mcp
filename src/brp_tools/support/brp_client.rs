@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::BrpJsonRpcBuilder;
+use crate::brp_tools::constants::{BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH};
 use crate::error::BrpMcpError;
 use crate::tools::{BRP_EXTRAS_PREFIX, DEFAULT_BRP_PORT};
 
@@ -59,7 +60,7 @@ pub async fn execute_brp_method(
     port: Option<u16>,
 ) -> Result<BrpResult, McpError> {
     let port = port.unwrap_or(DEFAULT_BRP_PORT);
-    let url = format!("http://localhost:{port}/jsonrpc");
+    let url = format!("{BRP_HTTP_PROTOCOL}://{BRP_DEFAULT_HOST}:{port}{BRP_JSONRPC_PATH}");
 
     // Build JSON-RPC request
     let mut builder = BrpJsonRpcBuilder::new(method);

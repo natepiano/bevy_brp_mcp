@@ -7,6 +7,7 @@ use serde_json::Value;
 use tracing::{debug, error, info};
 
 use super::watch_manager::{WATCH_MANAGER, WatchInfo};
+use crate::brp_tools::constants::{BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH};
 use crate::brp_tools::support::json_rpc_builder::BrpJsonRpcBuilder;
 use crate::brp_tools::support::watch_logger::{self, BufferedWatchLogger};
 use crate::tools::{BRP_METHOD_GET_WATCH, BRP_METHOD_LIST_WATCH};
@@ -97,7 +98,7 @@ async fn run_watch_connection(
     );
 
     // Create HTTP client for streaming
-    let url = format!("http://localhost:{port}/jsonrpc");
+    let url = format!("{BRP_HTTP_PROTOCOL}://{BRP_DEFAULT_HOST}:{port}{BRP_JSONRPC_PATH}");
     let client = reqwest::Client::new();
 
     // Build JSON-RPC request for watching

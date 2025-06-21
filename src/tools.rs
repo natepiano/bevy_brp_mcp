@@ -42,7 +42,7 @@ pub const DEFAULT_BRP_PORT: u16 = 15702;
 pub const MAX_RESPONSE_TOKENS: usize = 20_000;
 
 /// Documentation/Help Constants
-pub const PORT_DESCRIPTION: &str = "The BRP port (default: 15702)";
+pub const DESC_PORT: &str = "The BRP port (default: 15702)";
 
 // ============================================================================
 // BRP PROTOCOL METHODS
@@ -209,23 +209,11 @@ pub const PARAM_APP_NAME: &str = "app_name";
 pub const PARAM_EXAMPLE_NAME: &str = "example_name";
 
 // ============================================================================
-// JSON-RPC CONSTANTS
-// ============================================================================
-
-/// JSON-RPC protocol constants
-pub const JSONRPC_VERSION: &str = "2.0";
-pub const JSONRPC_DEFAULT_ID: u64 = 1;
-pub const JSONRPC_FIELD: &str = "jsonrpc";
-pub const JSONRPC_FIELD_ID: &str = "id";
-pub const JSONRPC_FIELD_METHOD: &str = "method";
-pub const JSONRPC_FIELD_PARAMS: &str = "params";
-
-// ============================================================================
 // LOG TOOL CONSTANTS
 // ============================================================================
 
 /// Log tool specific constants
-pub const FILE_PATH: &str = "path";
+pub const PARAM_FILE_PATH: &str = "path";
 
 // ============================================================================
 // BACKWARD COMPATIBILITY ALIASES

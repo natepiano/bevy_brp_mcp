@@ -9,7 +9,7 @@ use tokio::time::timeout;
 
 use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
-use crate::brp_tools::constants::{JSON_FIELD_PORT, JSON_FIELD_STATUS};
+use crate::brp_tools::constants::{JSON_FIELD_PORT, JSON_FIELD_STATUS, JSONRPC_FIELD};
 use crate::error::BrpMcpError;
 use crate::support::{params, response, schema};
 use crate::tools::{
@@ -139,7 +139,7 @@ async fn try_graceful_shutdown(port: u16) -> Result<bool, McpError> {
             match resp.json::<serde_json::Value>().await {
                 Ok(json) => {
                     // Check if this is a valid JSON-RPC response
-                    if json.get("jsonrpc").is_some() {
+                    if json.get(JSONRPC_FIELD).is_some() {
                         // Check if it's an error response indicating method not found
                         if let Some(error) = json.get("error") {
                             if let Some(code) = error.get("code") {

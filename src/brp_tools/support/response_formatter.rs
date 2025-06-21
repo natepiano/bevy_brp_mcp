@@ -4,8 +4,8 @@ use serde_json::{Value, json};
 use super::brp_client::BrpError;
 use super::request_handler::FormatterContext;
 use crate::brp_tools::constants::{
-    JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA,
-    JSON_FIELD_METHOD, JSON_FIELD_PORT,
+    BRP_ERROR_CODE_INVALID_REQUEST, JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE,
+    JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PORT,
 };
 use crate::support::response::ResponseBuilder;
 use crate::support::serialization::json_response_to_result;
@@ -29,7 +29,9 @@ impl BrpMetadata {
 /// Default error formatter implementation
 pub fn format_error_default(mut error: BrpError, metadata: &BrpMetadata) -> CallToolResult {
     // Enhance error messages for common format issues
-    if error.code == -23402 && error.message.contains("expected a sequence of") {
+    if error.code == BRP_ERROR_CODE_INVALID_REQUEST
+        && error.message.contains("expected a sequence of")
+    {
         error.message.push_str(
             "\nHint: Math types like Vec3 use array format [x,y,z], not objects {x:1,y:2,z:3}",
         );
@@ -113,7 +115,9 @@ impl ResponseFormatter {
 
     pub fn format_error(&self, mut error: BrpError, metadata: &BrpMetadata) -> CallToolResult {
         // Enhance error messages for common format issues
-        if error.code == -23402 && error.message.contains("expected a sequence of") {
+        if error.code == BRP_ERROR_CODE_INVALID_REQUEST
+            && error.message.contains("expected a sequence of")
+        {
             error.message.push_str(
                 "\nHint: Math types like Vec3 use array format [x,y,z], not objects {x:1,y:2,z:3}",
             );
@@ -355,6 +359,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
+    use crate::tools::DEFAULT_BRP_PORT;
 
     #[test]
     fn test_substitute_template() {
@@ -392,7 +397,7 @@ mod tests {
         };
 
         let formatter = ResponseFormatter::new(config, context);
-        let metadata = BrpMetadata::new("bevy/destroy", 15702);
+        let metadata = BrpMetadata::new("bevy/destroy", DEFAULT_BRP_PORT);
         let result = formatter.format_success(&Value::Null, metadata);
 
         // Verify result has content
@@ -420,7 +425,7 @@ mod tests {
         };
 
         let formatter = ResponseFormatter::new(config, context);
-        let metadata = BrpMetadata::new("bevy/destroy", 15702);
+        let metadata = BrpMetadata::new("bevy/destroy", DEFAULT_BRP_PORT);
         let error = BrpError {
             code:    -32603,
             message: "Entity not found".to_string(),
@@ -446,7 +451,7 @@ mod tests {
         let context = FormatterContext { params: None };
 
         let formatter = ResponseFormatter::new(config, context);
-        let metadata = BrpMetadata::new("bevy/test", 15702);
+        let metadata = BrpMetadata::new("bevy/test", DEFAULT_BRP_PORT);
         let error = BrpError {
             code:    -32603,
             message: "Test error".to_string(),
@@ -474,7 +479,7 @@ mod tests {
         };
 
         let formatter = factory.create(context);
-        let metadata = BrpMetadata::new("bevy/destroy", 15702);
+        let metadata = BrpMetadata::new("bevy/destroy", DEFAULT_BRP_PORT);
         let result = formatter.format_success(&Value::Null, metadata);
 
         // Verify result has content
@@ -489,7 +494,7 @@ mod tests {
         let context = FormatterContext { params: None };
 
         let formatter = factory.create(context);
-        let metadata = BrpMetadata::new("bevy/query", 15702);
+        let metadata = BrpMetadata::new("bevy/query", DEFAULT_BRP_PORT);
         let data = json!([{"entity": 1}, {"entity": 2}]);
         let result = formatter.format_success(&data, metadata);
 

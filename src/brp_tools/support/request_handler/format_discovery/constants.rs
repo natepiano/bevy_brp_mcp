@@ -4,13 +4,14 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
+use crate::brp_tools::constants::BRP_ERROR_CODE_INVALID_REQUEST;
 use crate::tools::{
     BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_MUTATE_COMPONENT,
     BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_SPAWN,
 };
 
 /// Error code for component type format errors from BRP
-pub const COMPONENT_FORMAT_ERROR_CODE: i32 = -23402;
+pub const COMPONENT_FORMAT_ERROR_CODE: i32 = BRP_ERROR_CODE_INVALID_REQUEST;
 
 /// Error code for resource type format errors from BRP
 pub const RESOURCE_FORMAT_ERROR_CODE: i32 = -23501;
