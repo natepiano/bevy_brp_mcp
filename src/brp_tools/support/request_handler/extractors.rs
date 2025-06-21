@@ -35,11 +35,7 @@ fn extract_port(request: &rmcp::model::CallToolRequestParam) -> Result<u16, McpE
         JSON_FIELD_PORT,
         u64::from(DEFAULT_BRP_PORT),
     )?)
-    .map_err(|_| {
-        McpError::from(BrpMcpError::ParameterExtraction(
-            "Port number must be a valid u16".to_string(),
-        ))
-    })
+    .map_err(|_| McpError::from(BrpMcpError::invalid("port number", "must be a valid u16")))
 }
 
 /// Simple parameter extractor that just extracts port
@@ -119,11 +115,7 @@ impl ParamExtractor for BrpExecuteExtractor {
         let params: BrpExecuteParams = serde_json::from_value(serde_json::Value::Object(
             request.arguments.clone().unwrap_or_default(),
         ))
-        .map_err(|e| {
-            McpError::from(BrpMcpError::ParameterExtraction(format!(
-                "Invalid parameters: {e}"
-            )))
-        })?;
+        .map_err(|e| McpError::from(BrpMcpError::invalid("parameters", e)))?;
 
         Ok(ExtractedParams {
             method: Some(params.method),

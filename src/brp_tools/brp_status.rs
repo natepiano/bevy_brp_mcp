@@ -10,6 +10,7 @@ use tokio::time::timeout;
 use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
 use crate::brp_tools::constants::{JSON_FIELD_PORT, JSON_FIELD_STATUS};
+use crate::error::BrpMcpError;
 use crate::support::{params, response, schema};
 use crate::tools::{
     BRP_METHOD_LIST, DEFAULT_BRP_PORT, PARAM_APP_NAME, PARAM_PORT, TOOL_BRP_STATUS,
@@ -38,8 +39,8 @@ pub async fn handle(
     // Check the app
     check_brp_for_app(
         app_name,
-        u16::try_from(port).map_err(|_| {
-            McpError::invalid_params("Port number must be a valid u16".to_string(), None)
+        u16::try_from(port).map_err(|_| -> McpError {
+            BrpMcpError::validation_failed("port", "must be a valid u16").into()
         })?,
     )
     .await

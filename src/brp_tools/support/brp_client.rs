@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::BrpJsonRpcBuilder;
+use crate::error::BrpMcpError;
 use crate::tools::{BRP_EXTRAS_PREFIX, DEFAULT_BRP_PORT};
 
 /// Result of a BRP operation
@@ -76,34 +77,29 @@ pub async fn execute_brp_method(
         .timeout(Duration::from_secs(30))
         .send()
         .await
-        .map_err(|e| {
-            McpError::from(rmcp::model::ErrorData::internal_error(
-                format!("Failed to send BRP request to {url}: {e}"),
-                None,
-            ))
+        .map_err(|e| -> McpError {
+            BrpMcpError::brp_request_failed("send", format!("to {url}: {e}")).into()
         })?;
 
     // Check HTTP status
     if !response.status().is_success() {
-        return Err(McpError::from(rmcp::model::ErrorData::internal_error(
+        return Err(BrpMcpError::brp_request_failed(
+            "execute",
             format!(
-                "BRP server returned HTTP error {}: {}",
+                "server returned HTTP error {}: {}",
                 response.status(),
                 response
                     .status()
                     .canonical_reason()
                     .unwrap_or("Unknown error")
             ),
-            None,
-        )));
+        )
+        .into());
     }
 
     // Parse JSON-RPC response
-    let brp_response: BrpResponse = response.json().await.map_err(|e| {
-        McpError::from(rmcp::model::ErrorData::internal_error(
-            format!("Failed to parse BRP response: {e}"),
-            None,
-        ))
+    let brp_response: BrpResponse = response.json().await.map_err(|e| -> McpError {
+        BrpMcpError::brp_request_failed("parse", format!("response: {e}")).into()
     })?;
 
     // Convert to structured result

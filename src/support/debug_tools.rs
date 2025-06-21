@@ -6,6 +6,7 @@ use rmcp::{Error as McpError, RoleServer};
 use serde::Deserialize;
 
 use crate::BrpMcpService;
+use crate::error::BrpMcpError;
 use crate::support::response::ResponseBuilder;
 use crate::support::schema;
 use crate::support::serialization::json_response_to_result;
@@ -30,7 +31,7 @@ pub fn handle_set_debug_mode(
 ) -> Result<CallToolResult, McpError> {
     let args = request.arguments.unwrap_or_default();
     let params: SetDebugModeParams = serde_json::from_value(serde_json::Value::Object(args))
-        .map_err(|e| McpError::invalid_params(format!("Invalid parameters: {e}"), None))?;
+        .map_err(|e| -> McpError { BrpMcpError::validation_failed("parameters", e).into() })?;
 
     // Update the debug state
     DEBUG_ENABLED.store(params.enabled, Ordering::Relaxed);

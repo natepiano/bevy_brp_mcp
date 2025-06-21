@@ -9,6 +9,7 @@ use crate::brp_tools::{
     brp_status, tool_definitions, tool_generator,
 };
 // Imports removed - using fully qualified paths in match statement to avoid naming conflicts
+use crate::error::BrpMcpError;
 use crate::log_tools::{cleanup_logs, list_logs, read_log};
 use crate::support::debug_tools;
 
@@ -130,9 +131,6 @@ pub async fn handle_tool_call(
             debug_tools::handle_set_debug_mode(service, request, context)
         }
 
-        _ => Err(McpError::from(rmcp::model::ErrorData::invalid_params(
-            format!("Unknown tool: {}", request.name),
-            None,
-        ))),
+        _ => Err(BrpMcpError::invalid("tool", format!("unknown: {}", request.name)).into()),
     }
 }

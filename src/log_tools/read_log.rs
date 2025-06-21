@@ -46,17 +46,17 @@ pub fn handle(
     let filename = params::extract_required_string(request, "filename")?;
     let keyword = params::extract_optional_string(request, "keyword", "");
     let tail_lines = usize::try_from(params::extract_optional_number(request, "tail_lines", 0)?)
-        .map_err(|_| {
-            McpError::from(BrpMcpError::LogOperation(
-                "tail_lines value too large".to_string(),
-            ))
+        .map_err(|_| -> McpError {
+            BrpMcpError::validation_failed("tail_lines", "value too large").into()
         })?;
 
     // Validate filename format for security
     if !log_utils::is_valid_log_filename(filename) {
-        return Err(McpError::from(BrpMcpError::LogOperation(
-            "Invalid log filename. Only bevy_brp_mcp log files can be read.".to_string(),
-        )));
+        return Err(BrpMcpError::validation_failed(
+            "filename",
+            "only bevy_brp_mcp log files can be read",
+        )
+        .into());
     }
 
     // Build full path
@@ -64,9 +64,7 @@ pub fn handle(
 
     // Check if file exists
     if !log_path.exists() {
-        return Err(McpError::from(BrpMcpError::LogOperation(format!(
-            "Log file not found: {filename}"
-        ))));
+        return Err(BrpMcpError::missing(&format!("log file '{filename}'")).into());
     }
 
     // Read the log file
@@ -94,19 +92,18 @@ fn read_log_file(
 ) -> Result<(String, std::fs::Metadata), McpError> {
     // Get file metadata
     let metadata = std::fs::metadata(path)
-        .map_err(|e| BrpMcpError::LogOperation(format!("Failed to get file metadata: {e}")))?;
+        .map_err(|e| BrpMcpError::io_failed("get file metadata", path, e))?;
 
     // Open the file
-    let file = File::open(path)
-        .map_err(|e| BrpMcpError::LogOperation(format!("Failed to open log file: {e}")))?;
+    let file = File::open(path).map_err(|e| BrpMcpError::io_failed("open log file", path, e))?;
 
     let reader = BufReader::new(file);
     let mut lines: Vec<String> = Vec::new();
 
     // Read lines with optional keyword filtering
     for line_result in reader.lines() {
-        let line = line_result
-            .map_err(|e| BrpMcpError::LogOperation(format!("Failed to read line: {e}")))?;
+        let line =
+            line_result.map_err(|e| BrpMcpError::io_failed("read line from log", path, e))?;
 
         // Apply keyword filter if provided
         if keyword.is_empty() || line.to_lowercase().contains(&keyword.to_lowercase()) {

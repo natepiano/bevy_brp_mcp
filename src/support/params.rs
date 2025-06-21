@@ -14,15 +14,11 @@ pub fn extract_required_u32(
 ) -> Result<u32, McpError> {
     arguments[field_name]
         .as_u64()
-        .ok_or_else(|| {
-            let msg = format!("{field_description} parameter is required and must be a number");
-            McpError::from(BrpMcpError::ParameterExtraction(msg))
-        })
+        .ok_or_else(|| BrpMcpError::missing(&format!("{field_description} parameter")).into())
         .and_then(|v| {
             u32::try_from(v).map_err(|_| {
-                McpError::from(BrpMcpError::ParameterExtraction(format!(
-                    "{field_description} value too large for u32"
-                )))
+                BrpMcpError::invalid(&format!("{field_description} value"), "too large for u32")
+                    .into()
             })
         })
 }
@@ -33,10 +29,9 @@ pub fn extract_required_u64(
     field_name: &str,
     field_description: &str,
 ) -> Result<u64, McpError> {
-    arguments[field_name].as_u64().ok_or_else(|| {
-        let msg = format!("{field_description} parameter is required and must be a number");
-        McpError::from(BrpMcpError::ParameterExtraction(msg))
-    })
+    arguments[field_name]
+        .as_u64()
+        .ok_or_else(|| BrpMcpError::missing(&format!("{field_description} parameter")).into())
 }
 
 /// Extract an optional u16 with a default value
@@ -68,11 +63,7 @@ pub fn extract_required_string<'a>(
         .as_ref()
         .and_then(|args| args.get(param_name))
         .and_then(|v| v.as_str())
-        .ok_or_else(|| {
-            McpError::from(BrpMcpError::ParameterExtraction(format!(
-                "Missing required parameter: {param_name}"
-            )))
-        })
+        .ok_or_else(|| BrpMcpError::missing(&format!("required parameter: {param_name}")).into())
 }
 
 /// Extract an optional string parameter from the request with a default value
@@ -101,9 +92,8 @@ pub fn extract_optional_number(
         .and_then(|args| args.get(param_name))
         .map_or(Ok(default), |v| {
             v.as_u64().ok_or_else(|| {
-                McpError::from(BrpMcpError::ParameterExtraction(format!(
-                    "Parameter '{param_name}' must be a number"
-                )))
+                BrpMcpError::invalid(&format!("parameter '{param_name}'"), "must be a number")
+                    .into()
             })
         })
 }
@@ -115,11 +105,8 @@ pub fn extract_optional_u32(
     default: u32,
 ) -> Result<u32, McpError> {
     let value = extract_optional_number(request, param_name, u64::from(default))?;
-    u32::try_from(value).map_err(|_| {
-        McpError::from(BrpMcpError::ParameterExtraction(format!(
-            "{param_name} value too large for u32"
-        )))
-    })
+    u32::try_from(value)
+        .map_err(|_| BrpMcpError::invalid(param_name, "value too large for u32").into())
 }
 
 /// Extract a required number parameter from the request
@@ -132,11 +119,7 @@ pub fn extract_required_number(
         .as_ref()
         .and_then(|args| args.get(param_name))
         .and_then(serde_json::Value::as_u64)
-        .ok_or_else(|| {
-            McpError::from(BrpMcpError::ParameterExtraction(format!(
-                "{param_name} is required and must be a number"
-            )))
-        })
+        .ok_or_else(|| BrpMcpError::missing(&format!("{param_name} (must be a number)")).into())
 }
 
 /// Extract any value parameter from the request (for generic JSON values)
@@ -167,16 +150,19 @@ pub fn extract_optional_string_array_from_request(
                     if let Some(s) = item.as_str() {
                         result.push(s.to_string());
                     } else {
-                        return Err(McpError::from(BrpMcpError::ParameterExtraction(format!(
-                            "All items in '{param_name}' array must be strings"
-                        ))));
+                        return Err(BrpMcpError::invalid(
+                            &format!("items in '{param_name}' array"),
+                            "must be strings",
+                        )
+                        .into());
                     }
                 }
                 Ok(Some(result))
             } else {
-                Err(McpError::from(BrpMcpError::ParameterExtraction(format!(
-                    "Parameter '{param_name}' must be an array"
-                ))))
+                Err(
+                    BrpMcpError::invalid(&format!("parameter '{param_name}'"), "must be an array")
+                        .into(),
+                )
             }
         }
         None => Ok(None),
