@@ -8,7 +8,7 @@ use super::constants::{
     TIER_DETERMINISTIC, TIER_DIRECT_DISCOVERY, TIER_GENERIC_FALLBACK, TIER_SERIALIZATION,
 };
 use super::detection::{TierInfo, TierManager, analyze_error_pattern, check_type_serialization};
-use super::transformations::{apply_pattern_fix, try_component_format_alternatives_legacy};
+use super::transformations::apply_smart_format_discovery;
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
 use crate::error::BrpMcpError;
 use crate::tools::{
@@ -551,41 +551,42 @@ async fn tiered_type_format_discovery(
         return (Some(result), tier_manager.into_vec());
     }
 
-    // ========== TIER 3: Deterministic Pattern Matching ==========
-    // Uses error message patterns to determine exact format mismatches
-    // and applies targeted fixes with high confidence
-    if let Some(pattern) = &error_analysis.pattern {
-        tier_manager.start_tier(
-            TIER_DETERMINISTIC,
-            "Deterministic Pattern Matching",
-            format!("Matched pattern: {pattern:?}"),
-        );
-
-        if let Some((corrected_value, hint)) = apply_pattern_fix(pattern, type_name, original_value)
-        {
-            tier_manager.complete_tier(true, format!("Applied pattern fix: {hint}"));
-            return (Some((corrected_value, hint)), tier_manager.into_vec());
-        }
-    }
-
-    // ========== TIER 4: Generic Fallback ==========
-    // Falls back to legacy transformation logic trying various
-    // format conversions (object->array, array->string, etc.)
+    // ========== TIERS 3 & 4: Smart Format Discovery ==========
+    // Consolidates deterministic pattern matching (Tier 3) with
+    // generic fallback transformations (Tier 4) into a single approach
     tier_manager.start_tier(
-        TIER_GENERIC_FALLBACK,
-        "Generic Fallback",
-        "Trying generic format alternatives".to_string(),
+        TIER_DETERMINISTIC, // Still report as Tier 3 for compatibility
+        "Smart Format Discovery",
+        "Applying pattern matching and transformation logic".to_string(),
     );
 
-    let fallback_result =
-        try_component_format_alternatives_legacy(type_name, original_value, error);
-    if fallback_result.is_some() {
-        tier_manager.complete_tier(true, "Found generic format alternative".to_string());
-    } else {
-        tier_manager.complete_tier(false, "No generic alternative found".to_string());
+    let smart_result = apply_smart_format_discovery(
+        type_name,
+        original_value,
+        error,
+        error_analysis.pattern.as_ref(),
+    );
+
+    if let Some((corrected_value, hint)) = smart_result {
+        // Determine which tier actually succeeded based on the hint
+        if hint.contains("pattern") || hint.contains("AccessError") || hint.contains("MissingField")
+        {
+            tier_manager.complete_tier(true, format!("Applied pattern fix: {hint}"));
+        } else {
+            // This was a generic transformation
+            tier_manager.complete_tier(false, "Pattern matching failed".to_string());
+            tier_manager.start_tier(
+                TIER_GENERIC_FALLBACK,
+                "Generic Fallback",
+                "Trying generic format alternatives".to_string(),
+            );
+            tier_manager.complete_tier(true, format!("Found generic alternative: {hint}"));
+        }
+        return (Some((corrected_value, hint)), tier_manager.into_vec());
     }
 
-    (fallback_result, tier_manager.into_vec())
+    tier_manager.complete_tier(false, "No format discovery succeeded".to_string());
+    (None, tier_manager.into_vec())
 }
 
 /// Test a component format by spawning a test entity

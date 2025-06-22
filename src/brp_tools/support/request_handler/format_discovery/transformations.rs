@@ -152,24 +152,33 @@ pub fn apply_pattern_fix(
             expected,
             actual,
             access,
+            is_variant,
         } => {
-            // Handle type mismatch errors
-            fix_type_mismatch(type_name, original_value, expected, actual, access)
-        }
-        ErrorPattern::VariantTypeMismatch {
-            expected,
-            actual,
-            access,
-        } => {
-            // Handle variant type mismatch for enums
-            fix_variant_type_mismatch(type_name, original_value, expected, actual, access)
+            // Handle type mismatch errors (including variant mismatches)
+            let mismatch_info = if *is_variant {
+                StructureMismatchInfo::VariantTypeMismatch {
+                    expected: expected.clone(),
+                    actual:   actual.clone(),
+                    access:   access.clone(),
+                }
+            } else {
+                StructureMismatchInfo::TypeMismatch {
+                    expected: expected.clone(),
+                    actual:   actual.clone(),
+                    access:   access.clone(),
+                }
+            };
+            fix_structure_mismatch(type_name, original_value, mismatch_info)
         }
         ErrorPattern::MissingField {
             field_name,
             type_name: _,
         } => {
             // Handle missing field errors - convert to tuple access
-            fix_missing_field(type_name, original_value, field_name)
+            let mismatch_info = StructureMismatchInfo::MissingField {
+                field_name: field_name.clone(),
+            };
+            fix_structure_mismatch(type_name, original_value, mismatch_info)
         }
     }
 }
@@ -355,6 +364,64 @@ pub enum TransformationType {
     ArrayToObject,
 }
 
+/// Hints about what kind of transformation might be needed based on error analysis
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TransformationHint {
+    /// Try converting to string (e.g., Name component expects string)
+    NeedsString,
+    /// Try converting to array (e.g., Vec3, Transform expects arrays)
+    NeedsArray,
+    /// Try converting to object (less common)
+    NeedsObject,
+    /// Try tuple struct conversions (field access issues)
+    NeedsTupleAccess,
+    /// No clear hint - try all possibilities
+    Unknown,
+}
+
+/// Analyze error message to determine what transformation might help
+pub fn analyze_error_for_transformation_hint(error: &BrpError) -> TransformationHint {
+    let message = &error.message;
+
+    // Check for string expectations
+    if message.contains("expected string")
+        || message.contains("String")
+        || message.contains("Name")
+        || message.contains("expected `bevy_ecs::name::Name`")
+    {
+        return TransformationHint::NeedsString;
+    }
+
+    // Check for array expectations
+    if message.contains("expected array")
+        || message.contains("sequence")
+        || message.contains("Vec2")
+        || message.contains("Vec3")
+        || message.contains("Vec4")
+        || message.contains("Quat")
+        || message.contains("Transform")
+    {
+        return TransformationHint::NeedsArray;
+    }
+
+    // Check for tuple struct access issues
+    if message.contains("tuple struct")
+        || message.contains("tuple_struct")
+        || message.contains("TupleIndex")
+        || message.contains("found a tuple struct instead")
+    {
+        return TransformationHint::NeedsTupleAccess;
+    }
+
+    // Check for object expectations (rare)
+    if message.contains("expected object") || message.contains("struct") {
+        return TransformationHint::NeedsObject;
+    }
+
+    // No clear hint
+    TransformationHint::Unknown
+}
+
 /// Transform object to string by extracting from common field names
 fn transform_object_to_string(value: &Value) -> Option<Value> {
     if let Value::Object(map) = value {
@@ -432,15 +499,59 @@ pub fn get_possible_transformations(value: &Value) -> Vec<TransformationType> {
     }
 }
 
+/// Get transformations based on transformation hint and value type
+pub fn get_transformations_for_hint(
+    hint: TransformationHint,
+    value: &Value,
+) -> Vec<TransformationType> {
+    match (hint, value) {
+        // If we need a string
+        (TransformationHint::NeedsString, Value::Object(_)) => {
+            vec![TransformationType::ObjectToString]
+        }
+        (
+            TransformationHint::NeedsString | TransformationHint::NeedsTupleAccess,
+            Value::Array(_),
+        ) => {
+            vec![TransformationType::ArrayToString]
+        }
+
+        // If we need an array
+        (TransformationHint::NeedsArray, Value::Object(_)) => {
+            vec![TransformationType::ObjectToArray]
+        }
+
+        // If we need an object
+        (TransformationHint::NeedsObject, Value::Array(_)) => {
+            vec![TransformationType::ArrayToObject]
+        }
+
+        // Tuple access issues often need array->string or object->string conversions
+        (TransformationHint::NeedsTupleAccess, Value::Object(_)) => vec![
+            TransformationType::ObjectToString,
+            TransformationType::ObjectToArray,
+        ],
+
+        // Unknown hint - try all possibilities
+        (TransformationHint::Unknown, _) => get_possible_transformations(value),
+
+        // If value is already the right type, no transformation needed
+        _ => vec![],
+    }
+}
+
 /// Legacy format discovery function (renamed from `try_component_format_alternatives`)
-/// Since we can't reliably parse error messages, we try all reasonable alternatives
+/// Now uses guided transformation based on error analysis
 pub fn try_component_format_alternatives_legacy(
     type_name: &str,
     original_value: &Value,
-    _error: &BrpError,
+    error: &BrpError,
 ) -> Option<(Value, String)> {
-    // Get possible transformations for this value type
-    let transformations = get_possible_transformations(original_value);
+    // First, analyze the error to get a transformation hint
+    let hint = analyze_error_for_transformation_hint(error);
+
+    // Get guided transformations based on the hint
+    let transformations = get_transformations_for_hint(hint, original_value);
 
     // Try each transformation
     for transformation in transformations {
@@ -550,8 +661,101 @@ pub fn fix_access_error(
     None
 }
 
-/// Fix type mismatch errors
-fn fix_type_mismatch(
+/// Extract single value from single-field object
+fn extract_single_field_value(obj: &serde_json::Map<String, Value>) -> Option<(&str, &Value)> {
+    if obj.len() == 1 {
+        obj.iter().next().map(|(k, v)| (k.as_str(), v))
+    } else {
+        None
+    }
+}
+
+/// Convert single-field object to value for tuple struct access
+fn convert_object_to_tuple_access(
+    type_name: &str,
+    obj: &serde_json::Map<String, Value>,
+    context: &str,
+) -> Option<(Value, String)> {
+    extract_single_field_value(obj).map(|(field_name, value)| {
+        let hint =
+            format!("`{type_name}` {context}: converted field '{field_name}' to tuple access");
+        (value.clone(), hint)
+    })
+}
+
+/// Convert array to single element for struct access
+fn convert_array_to_struct_access(
+    type_name: &str,
+    arr: &[Value],
+    context: &str,
+) -> Option<(Value, String)> {
+    arr.first().map(|element| {
+        let hint = format!("`{type_name}` {context}: using first array element");
+        (element.clone(), hint)
+    })
+}
+
+/// Try to convert field name to tuple index and extract element from array
+fn try_tuple_struct_field_access(
+    type_name: &str,
+    field_name: &str,
+    original_value: &Value,
+) -> Option<(Value, String)> {
+    let fixed_path = fix_tuple_struct_path(&format!(".{field_name}"));
+    if fixed_path != format!(".{field_name}") {
+        // The path was transformed, so it's likely a tuple struct
+        match original_value {
+            Value::Array(arr) => {
+                // Extract the correct index from the fixed path
+                if let Some(index_str) = fixed_path.strip_prefix('.') {
+                    if let Ok(index) = index_str.parse::<usize>() {
+                        if let Some(element) = arr.get(index) {
+                            let hint = format!(
+                                "`{type_name}` MissingField '{field_name}': converted to tuple struct index {index}"
+                            );
+                            return Some((element.clone(), hint));
+                        }
+                    }
+                }
+            }
+            Value::Object(obj) => {
+                let context =
+                    format!("MissingField '{field_name}': converted object to tuple struct access");
+                return convert_object_to_tuple_access(type_name, obj, &context);
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Try to extract enum variant value from object
+fn try_enum_variant_extraction(
+    type_name: &str,
+    field_name: &str,
+    obj: &serde_json::Map<String, Value>,
+) -> Option<(Value, String)> {
+    // Try to find the variant field
+    obj.get(field_name).map_or_else(
+        || {
+            // Fallback: try single field extraction
+            extract_single_field_value(obj).map(|(actual_field, value)| {
+                let hint = format!(
+                    "`{type_name}` MissingField '{field_name}': used field '{actual_field}' instead"
+                );
+                (value.clone(), hint)
+            })
+        },
+        |variant_value| {
+            let hint =
+                format!("`{type_name}` MissingField '{field_name}': extracted enum variant value");
+            Some((variant_value.clone(), hint))
+        },
+    )
+}
+
+/// Handle type mismatch scenarios
+fn handle_type_mismatch(
     type_name: &str,
     original_value: &Value,
     expected: &str,
@@ -561,49 +765,34 @@ fn fix_type_mismatch(
     // Common type mismatches and their fixes
     match (expected, actual) {
         // Trying to access a struct field on a tuple struct
-        ("struct", "tuple_struct") => match original_value {
-            Value::Object(obj) if obj.len() == 1 => {
-                if let Some((field_name, value)) = obj.iter().next() {
-                    let hint = format!(
-                        "`{type_name}` TypeMismatch: Expected {expected} access to access a {actual}, \
-                            converted field '{field_name}' to tuple access"
-                    );
-                    return Some((value.clone(), hint));
-                }
+        ("struct", "tuple_struct") => {
+            if let Value::Object(obj) = original_value {
+                let context =
+                    format!("TypeMismatch: Expected {expected} access to access a {actual}");
+                return convert_object_to_tuple_access(type_name, obj, &context);
             }
-            _ => {}
-        },
+        }
         // Trying to access a tuple index on a struct
         ("tuple_struct", "struct") => {
             if let Value::Array(arr) = original_value {
-                if !arr.is_empty() {
-                    let hint = format!(
-                        "`{type_name}` TypeMismatch: Expected {expected} access to access a {actual}, \
-                        using first array element"
-                    );
-                    return Some((arr[0].clone(), hint));
-                }
+                let context =
+                    format!("TypeMismatch: Expected {expected} access to access a {actual}");
+                return convert_array_to_struct_access(type_name, arr, &context);
             }
         }
         // Enum variant mismatches
         ("variant", "tuple_struct") | ("tuple_struct", "variant") => {
             // Try to convert between variant and tuple struct formats
             match original_value {
-                Value::Object(obj) if obj.len() == 1 => {
-                    if let Some((_, value)) = obj.iter().next() {
-                        let hint = format!(
-                            "`{type_name}` TypeMismatch: Expected {expected}, found {actual}, \
-                            extracting inner value"
-                        );
-                        return Some((value.clone(), hint));
-                    }
-                }
-                Value::Array(arr) if !arr.is_empty() => {
-                    let hint = format!(
-                        "`{type_name}` TypeMismatch: Expected {expected}, found {actual}, \
-                        using first element"
+                Value::Object(obj) => {
+                    let context = format!(
+                        "TypeMismatch: Expected {expected}, found {actual}, extracting inner value"
                     );
-                    return Some((arr[0].clone(), hint));
+                    return convert_object_to_tuple_access(type_name, obj, &context);
+                }
+                Value::Array(arr) => {
+                    let context = format!("TypeMismatch: Expected {expected}, found {actual}");
+                    return convert_array_to_struct_access(type_name, arr, &context);
                 }
                 _ => {}
             }
@@ -616,35 +805,27 @@ fn fix_type_mismatch(
         "Field" | "FieldMut" => {
             // Field access mismatch, try extracting single field
             if let Value::Object(obj) = original_value {
-                if obj.len() == 1 {
-                    if let Some((field_name, value)) = obj.iter().next() {
-                        let hint = format!(
-                            "`{type_name}` TypeMismatch with {access} access: using field '{field_name}'"
-                        );
-                        return Some((value.clone(), hint));
-                    }
+                let context = format!("TypeMismatch with {access} access");
+                if let Some((field_name, value)) = extract_single_field_value(obj) {
+                    let hint = format!("`{type_name}` {context}: using field '{field_name}'");
+                    return Some((value.clone(), hint));
                 }
             }
         }
         "TupleIndex" => {
             // Tuple index access mismatch
             if let Value::Array(arr) = original_value {
-                if !arr.is_empty() {
-                    let hint = format!(
-                        "`{type_name}` TypeMismatch with {access} access: using array element"
-                    );
-                    return Some((arr[0].clone(), hint));
-                }
+                let context = format!("TypeMismatch with {access} access");
+                return convert_array_to_struct_access(type_name, arr, &context);
             }
         }
         _ => {}
     }
-
     None
 }
 
-/// Fix variant type mismatch for enums
-fn fix_variant_type_mismatch(
+/// Handle variant type mismatch scenarios
+fn handle_variant_type_mismatch(
     type_name: &str,
     original_value: &Value,
     expected: &str,
@@ -654,29 +835,24 @@ fn fix_variant_type_mismatch(
     // Common enum variant mismatches
     match (expected, actual) {
         // Tuple variant vs struct variant
-        ("tuple", "struct") => match original_value {
-            Value::Object(obj) if obj.len() == 1 => {
-                if let Some((variant_name, value)) = obj.iter().next() {
+        ("tuple", "struct") => {
+            if let Value::Object(obj) = original_value {
+                if let Some((variant_name, value)) = extract_single_field_value(obj) {
                     let hint = format!(
                         "`{type_name}` VariantTypeMismatch: Expected {expected} variant access to access a {actual} variant, \
-                            converted '{variant_name}' to tuple variant format"
+                                    converted '{variant_name}' to tuple variant format"
                     );
                     return Some((value.clone(), hint));
                 }
             }
-            _ => {}
-        },
+        }
         // Struct variant vs tuple variant
         ("struct", "tuple") => {
             if let Value::Array(arr) = original_value {
-                if arr.len() == 1 {
-                    // Single element tuple variant, convert to struct-like format
-                    let hint = format!(
-                        "`{type_name}` VariantTypeMismatch: Expected {expected} variant access to access a {actual} variant, \
-                        converted array to struct variant format"
-                    );
-                    return Some((arr[0].clone(), hint));
-                }
+                let context = format!(
+                    "VariantTypeMismatch: Expected {expected} variant access to access a {actual} variant, converted array to struct variant format"
+                );
+                return convert_array_to_struct_access(type_name, arr, &context);
             }
         }
         _ => {}
@@ -686,37 +862,28 @@ fn fix_variant_type_mismatch(
     match access {
         "Field" | "FieldMut" => {
             // Field access on enum variant, likely needs tuple conversion
-            match original_value {
-                Value::Object(obj) if obj.len() == 1 => {
-                    if let Some((_, value)) = obj.iter().next() {
-                        let hint = format!(
-                            "`{type_name}` VariantTypeMismatch with {access} access: converted to variant element"
-                        );
-                        return Some((value.clone(), hint));
-                    }
-                }
-                _ => {}
+            if let Value::Object(obj) = original_value {
+                let context = format!(
+                    "VariantTypeMismatch with {access} access: converted to variant element"
+                );
+                return convert_object_to_tuple_access(type_name, obj, &context);
             }
         }
         "TupleIndex" => {
             // Tuple index access on enum variant
             if let Value::Array(arr) = original_value {
-                if !arr.is_empty() {
-                    let hint = format!(
-                        "`{type_name}` VariantTypeMismatch with {access} access: using variant element"
-                    );
-                    return Some((arr[0].clone(), hint));
-                }
+                let context =
+                    format!("VariantTypeMismatch with {access} access: using variant element");
+                return convert_array_to_struct_access(type_name, arr, &context);
             }
         }
         _ => {}
     }
-
     None
 }
 
-/// Fix missing field errors
-fn fix_missing_field(
+/// Handle missing field scenarios
+fn handle_missing_field(
     type_name: &str,
     original_value: &Value,
     field_name: &str,
@@ -733,35 +900,8 @@ fn fix_missing_field(
         .is_some_and(|c| c.is_ascii_lowercase())
     {
         // Likely a field name like "red", "x", "y", etc.
-        // Try to convert to tuple struct access
-        let fixed_path = fix_tuple_struct_path(&format!(".{field_name}"));
-        if fixed_path != format!(".{field_name}") {
-            // The path was transformed, so it's likely a tuple struct
-            match original_value {
-                Value::Array(arr) => {
-                    // Extract the correct index from the fixed path
-                    if let Some(index_str) = fixed_path.strip_prefix('.') {
-                        if let Ok(index) = index_str.parse::<usize>() {
-                            if let Some(element) = arr.get(index) {
-                                let hint = format!(
-                                    "`{type_name}` MissingField '{field_name}': converted to tuple struct index {index}"
-                                );
-                                return Some((element.clone(), hint));
-                            }
-                        }
-                    }
-                }
-                Value::Object(obj) if obj.len() == 1 => {
-                    // Single field object, likely needs tuple conversion
-                    if let Some((_, value)) = obj.iter().next() {
-                        let hint = format!(
-                            "`{type_name}` MissingField '{field_name}': converted object to tuple struct access"
-                        );
-                        return Some((value.clone(), hint));
-                    }
-                }
-                _ => {}
-            }
+        if let Some(result) = try_tuple_struct_field_access(type_name, field_name, original_value) {
+            return Some(result);
         }
     }
 
@@ -773,41 +913,89 @@ fn fix_missing_field(
     {
         // Likely an enum variant name like "LinearRgba"
         if let Value::Object(obj) = original_value {
-            // Try to find the variant field
-            if let Some(variant_value) = obj.get(field_name) {
-                let hint = format!(
-                    "`{type_name}` MissingField '{field_name}': extracted enum variant value"
-                );
-                return Some((variant_value.clone(), hint));
-            } else if obj.len() == 1 {
-                // Single field object, use its value
-                if let Some((actual_field, value)) = obj.iter().next() {
-                    let hint = format!(
-                        "`{type_name}` MissingField '{field_name}': used field '{actual_field}' instead"
-                    );
-                    return Some((value.clone(), hint));
-                }
+            if let Some(result) = try_enum_variant_extraction(type_name, field_name, obj) {
+                return Some(result);
             }
         }
     }
 
     // Generic fallback: try to extract any reasonable value
     match original_value {
-        Value::Object(obj) if obj.len() == 1 => {
-            if let Some((actual_field, value)) = obj.iter().next() {
+        Value::Object(obj) => {
+            if let Some((actual_field, value)) = extract_single_field_value(obj) {
                 let hint = format!(
                     "`{type_name}` MissingField '{field_name}': used available field '{actual_field}'"
                 );
                 return Some((value.clone(), hint));
             }
         }
-        Value::Array(arr) if !arr.is_empty() => {
-            let hint =
-                format!("`{type_name}` MissingField '{field_name}': used first array element");
-            return Some((arr[0].clone(), hint));
+        Value::Array(arr) => {
+            let context = format!("MissingField '{field_name}'");
+            return convert_array_to_struct_access(type_name, arr, &context);
         }
         _ => {}
     }
-
     None
+}
+
+/// Fix structure mismatch errors (consolidates type mismatch, variant type mismatch, and missing
+/// field fixes)
+fn fix_structure_mismatch(
+    type_name: &str,
+    original_value: &Value,
+    mismatch_info: StructureMismatchInfo,
+) -> Option<(Value, String)> {
+    // Handle different types of structure mismatches
+    match mismatch_info {
+        StructureMismatchInfo::TypeMismatch {
+            expected,
+            actual,
+            access,
+        } => handle_type_mismatch(type_name, original_value, &expected, &actual, &access),
+        StructureMismatchInfo::VariantTypeMismatch {
+            expected,
+            actual,
+            access,
+        } => handle_variant_type_mismatch(type_name, original_value, &expected, &actual, &access),
+        StructureMismatchInfo::MissingField { field_name } => {
+            handle_missing_field(type_name, original_value, &field_name)
+        }
+    }
+}
+
+/// Enum to represent different structure mismatch scenarios
+#[derive(Debug, Clone)]
+enum StructureMismatchInfo {
+    TypeMismatch {
+        expected: String,
+        actual:   String,
+        access:   String,
+    },
+    VariantTypeMismatch {
+        expected: String,
+        actual:   String,
+        access:   String,
+    },
+    MissingField {
+        field_name: String,
+    },
+}
+
+/// Smart format discovery that consolidates Tiers 3 and 4
+/// Combines deterministic pattern matching with generic fallback transformations
+pub fn apply_smart_format_discovery(
+    type_name: &str,
+    original_value: &Value,
+    error: &BrpError,
+    error_pattern: Option<&ErrorPattern>,
+) -> Option<(Value, String)> {
+    // First try deterministic pattern matching (Tier 3)
+    if let Some(pattern) = error_pattern {
+        if let Some(result) = apply_pattern_fix(pattern, type_name, original_value) {
+            return Some(result);
+        }
+    }
+
+    // If pattern matching didn't work, fall back to generic transformations (Tier 4)
+    try_component_format_alternatives_legacy(type_name, original_value, error)
 }

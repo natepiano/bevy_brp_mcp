@@ -30,17 +30,12 @@ pub enum ErrorPattern {
         access:     String,
         error_type: String,
     },
-    /// Type mismatch: Expected X access to access Y, found Z instead
+    /// Type mismatch: Expected X access to access Y, found Z instead (includes variant mismatches)
     TypeMismatch {
-        expected: String,
-        actual:   String,
-        access:   String,
-    },
-    /// Variant type mismatch for enums
-    VariantTypeMismatch {
-        expected: String,
-        actual:   String,
-        access:   String,
+        expected:   String,
+        actual:     String,
+        access:     String,
+        is_variant: bool,
     },
     /// Missing field in struct/tuple
     MissingField {
@@ -125,142 +120,99 @@ impl TierManager {
     }
 }
 
-/// Check for access error pattern
-fn check_access_error(message: &str) -> Option<ErrorPattern> {
-    ACCESS_ERROR_REGEX.captures(message).map(|captures| {
+/// Consolidated pattern matcher that checks all patterns in a single pass
+fn match_all_patterns(message: &str) -> Option<ErrorPattern> {
+    // Try patterns in order of specificity/importance
+
+    // 1. Access errors have highest priority
+    if let Some(captures) = ACCESS_ERROR_REGEX.captures(message) {
         let access = captures[1].to_string();
         let error_type = captures[2].to_string();
-        ErrorPattern::AccessError { access, error_type }
-    })
-}
+        return Some(ErrorPattern::AccessError { access, error_type });
+    }
 
-/// Check for type mismatch pattern
-fn check_type_mismatch(message: &str) -> Option<ErrorPattern> {
-    TYPE_MISMATCH_REGEX.captures(message).map(|captures| {
+    // 2. Type mismatch patterns (regular and variant)
+    if let Some(captures) = TYPE_MISMATCH_REGEX.captures(message) {
         let access = captures[1].to_string();
         let expected = captures[2].to_string();
         let actual = captures[3].to_string();
-        ErrorPattern::TypeMismatch {
+        return Some(ErrorPattern::TypeMismatch {
             expected,
             actual,
             access,
-        }
-    })
-}
+            is_variant: false,
+        });
+    }
 
-/// Check for variant type mismatch pattern
-fn check_variant_type_mismatch(message: &str) -> Option<ErrorPattern> {
-    VARIANT_TYPE_MISMATCH_REGEX
-        .captures(message)
-        .map(|captures| {
-            let access = captures[1].to_string();
-            let expected = captures[2].to_string();
-            let actual = captures[3].to_string();
-            ErrorPattern::VariantTypeMismatch {
-                expected,
-                actual,
-                access,
-            }
-        })
-}
+    if let Some(captures) = VARIANT_TYPE_MISMATCH_REGEX.captures(message) {
+        let access = captures[1].to_string();
+        let expected = captures[2].to_string();
+        let actual = captures[3].to_string();
+        return Some(ErrorPattern::TypeMismatch {
+            expected,
+            actual,
+            access,
+            is_variant: true,
+        });
+    }
 
-/// Check for missing field pattern
-fn check_missing_field(message: &str) -> Option<ErrorPattern> {
-    MISSING_FIELD_REGEX.captures(message).map(|captures| {
+    // 3. Missing field pattern
+    if let Some(captures) = MISSING_FIELD_REGEX.captures(message) {
         let type_name = captures[1].to_string();
         let field_name = captures[2].to_string();
-        ErrorPattern::MissingField {
+        return Some(ErrorPattern::MissingField {
             field_name,
             type_name,
-        }
-    })
-}
+        });
+    }
 
-/// Check for unknown component pattern
-fn check_unknown_component(message: &str) -> Option<ErrorPattern> {
-    UNKNOWN_COMPONENT_REGEX.captures(message).map(|captures| {
+    // 4. Unknown component pattern
+    if let Some(captures) = UNKNOWN_COMPONENT_REGEX.captures(message) {
         let component_path = captures[1].to_string();
-        ErrorPattern::UnknownComponent { component_path }
-    })
-}
+        return Some(ErrorPattern::UnknownComponent { component_path });
+    }
 
-/// Check for transform sequence pattern
-fn check_transform_sequence(message: &str) -> Option<ErrorPattern> {
-    TRANSFORM_SEQUENCE_REGEX
-        .captures(message)
-        .and_then(|captures| {
-            captures[1]
-                .parse::<usize>()
-                .ok()
-                .map(|count| ErrorPattern::TransformSequence {
-                    expected_count: count,
-                })
-        })
-}
+    // 5. Transform sequence pattern
+    if let Some(captures) = TRANSFORM_SEQUENCE_REGEX.captures(message) {
+        if let Ok(count) = captures[1].parse::<usize>() {
+            return Some(ErrorPattern::TransformSequence {
+                expected_count: count,
+            });
+        }
+    }
 
-/// Check for expected type pattern
-fn check_expected_type(message: &str) -> Option<ErrorPattern> {
-    EXPECTED_TYPE_REGEX.captures(message).map(|captures| {
+    // 6. Expected type pattern
+    if let Some(captures) = EXPECTED_TYPE_REGEX.captures(message) {
         let expected_type = captures[1].to_string();
-        ErrorPattern::ExpectedType { expected_type }
-    })
-}
+        return Some(ErrorPattern::ExpectedType { expected_type });
+    }
 
-/// Check for math type array pattern
-fn check_math_type_array(message: &str) -> Option<ErrorPattern> {
-    MATH_TYPE_ARRAY_REGEX.captures(message).map(|captures| {
+    // 7. Math type array pattern
+    if let Some(captures) = MATH_TYPE_ARRAY_REGEX.captures(message) {
         let math_type = captures[1].to_string();
-        ErrorPattern::MathTypeArray { math_type }
-    })
-}
+        return Some(ErrorPattern::MathTypeArray { math_type });
+    }
 
-/// Check for tuple struct path pattern
-fn check_tuple_struct_path(message: &str) -> Option<ErrorPattern> {
-    TUPLE_STRUCT_PATH_REGEX.captures(message).map(|captures| {
+    // 8. Tuple struct path pattern
+    if let Some(captures) = TUPLE_STRUCT_PATH_REGEX.captures(message) {
         let field_path = captures[1].to_string();
-        ErrorPattern::TupleStructAccess { field_path }
-    })
-}
+        return Some(ErrorPattern::TupleStructAccess { field_path });
+    }
 
-/// Check for unknown component type pattern
-fn check_unknown_component_type(message: &str) -> Option<ErrorPattern> {
-    UNKNOWN_COMPONENT_TYPE_REGEX
-        .captures(message)
-        .map(|captures| {
-            let component_type = captures[1].to_string();
-            ErrorPattern::UnknownComponentType { component_type }
-        })
+    // 9. Unknown component type pattern
+    if let Some(captures) = UNKNOWN_COMPONENT_TYPE_REGEX.captures(message) {
+        let component_type = captures[1].to_string();
+        return Some(ErrorPattern::UnknownComponentType { component_type });
+    }
+
+    None
 }
 
 /// Analyze error message to identify known patterns using exact regex matching
 pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
-    let message = &error.message;
-
-    // Pattern 1: Access errors
-    if let Some(pattern) = check_access_error(message) {
-        return ErrorAnalysis {
-            pattern: Some(pattern),
-        };
+    ErrorAnalysis {
+        pattern: match_all_patterns(&error.message),
     }
-
-    // Check all patterns
-    if let Some(pattern) = check_type_mismatch(message)
-        .or_else(|| check_variant_type_mismatch(message))
-        .or_else(|| check_missing_field(message))
-        .or_else(|| check_unknown_component(message))
-        .or_else(|| check_transform_sequence(message))
-        .or_else(|| check_expected_type(message))
-        .or_else(|| check_math_type_array(message))
-        .or_else(|| check_tuple_struct_path(message))
-        .or_else(|| check_unknown_component_type(message))
-    {
-        return ErrorAnalysis {
-            pattern: Some(pattern),
-        };
-    }
-
-    // No pattern matched
-    ErrorAnalysis { pattern: None }
 }
 
 /// Check if a type supports serialization by querying the registry schema
