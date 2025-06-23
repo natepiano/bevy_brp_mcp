@@ -15,7 +15,7 @@
 //! # Code Generation Process
 //!
 //! ## Tool Registration Generation
-//! ```
+//! ```text
 //! BrpToolDef → generate_tool_registration() → rmcp::model::Tool
 //! ```
 //!
@@ -25,7 +25,7 @@
 //! 3. Creates the MCP Tool structure for discovery
 //!
 //! ## Handler Generation
-//! ```
+//! ```text
 //! BrpToolDef + Request → generate_tool_handler() → CallToolResult
 //! ```
 //!
