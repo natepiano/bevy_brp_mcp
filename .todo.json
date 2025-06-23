@@ -1,7 +1,7 @@
 [
   {
     "id": "1",
-    "content": "Set terminal title: echo -e \"\\e]2;Implementation: Macro-based consistent naming migration\\007\"",
+    "content": "Set terminal title: echo -e \"\\e]2;Implementation: Clippy fixes for expect() and missing docs\\007\"",
     "status": "pending",
     "priority": "high",
     "notes": ""
@@ -15,189 +15,105 @@
   },
   {
     "id": "3",
-    "content": "Phase 1: Add paste = \"1.0\" to Cargo.toml dependencies",
+    "content": "Fix 10 regex constants in format_discovery/constants.rs - replace .expect() with proper error handling",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "4",
-    "content": "Phase 1: Add the define_method macro to tools.rs",
+    "content": "Build and fix any compile errors and any compile warnings (no dead code, no _ prefixes)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "5",
-    "content": "Phase 1: Build and fix any compile errors and warnings (no dead code, no _ prefixes)",
+    "content": "Fix all .expect() calls in format_discovery tests (8+ instances) - replace with .unwrap() in tests",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "6",
-    "content": "Phase 2: Rename help files in brp_tools/ - brp_*.txt to bevy_*.txt for Bevy protocol methods",
+    "content": "Build and fix any compile errors and any compile warnings (no dead code, no _ prefixes)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "7",
-    "content": "Phase 2: Rename watch-related files - bevy_stop_watch.txt to brp_stop_watch.txt, bevy_list_active_watches.txt to brp_list_active_watches.txt",
+    "content": "Add missing crate-level documentation comment to main.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "8",
-    "content": "Phase 2: Rename app_tools files - add brp_ prefix to all files",
+    "content": "Add missing documentation for BrpMcpService struct in main.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "9",
-    "content": "Phase 2: Rename log_tools files - add brp_ prefix to all files",
+    "content": "Add missing documentation for BrpMcpService.roots field in main.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "10",
-    "content": "Phase 2: Build and fix any compile errors and warnings",
+    "content": "Build and fix any compile errors and any compile warnings (no dead code, no _ prefixes)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "11",
-    "content": "Phase 3: Replace Bevy protocol method constants with macro invocations",
+    "content": "Run cargo clippy --workspace --all-targets --all-features",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "12",
-    "content": "Phase 3: Replace BRP extras method constants with macro invocations",
+    "content": "Fix any clippy issues (no dead code, no _ prefixes)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "13",
-    "content": "Phase 3: Replace BRP internal tool constants with macro invocations",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "14",
-    "content": "Phase 3: Replace app tool constants with macro invocations",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "15",
-    "content": "Phase 3: Replace log tool constants with macro invocations",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "16",
-    "content": "Phase 3: Add special case for rpc.discover",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "17",
-    "content": "Phase 3: Remove old constant definitions and old with_prefix macro",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "18",
-    "content": "Phase 3: Build and fix any compile errors and warnings",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "19",
-    "content": "Phase 4: Update code references - fix TOOL_CLEANUP_LOGS to TOOL_BRP_CLEANUP_LOGS",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "20",
-    "content": "Phase 4: Update code references - fix TOOL_LIST_LOGS to TOOL_BRP_LIST_LOGS",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "21",
-    "content": "Phase 4: Update code references - fix TOOL_READ_LOG to TOOL_BRP_READ_LOG",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "22",
-    "content": "Phase 4: Update code references - fix TOOL_BRP_STOP_WATCH underscore issue",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "23",
-    "content": "Phase 4: Update code references - fix TOOL_BRP_LIST_ACTIVE_WATCHES underscore issue",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "24",
-    "content": "Phase 4: Build and fix any compile errors and warnings",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "25",
-    "content": "Run cargo clippy with strict settings and fix all issues (no dead code, no _ prefixes)",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "26",
     "content": "Run cargo +nightly fmt",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "27",
-    "content": "Run cargo nextest run - STOP if test issues",
+    "id": "14",
+    "content": "Run cargo nextest run",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "28",
-    "content": "CodeReview: Task subagent to review changes for duplication and complexity (read-only)",
+    "id": "15",
+    "content": "If there are test issues, STOP and review them with the user",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "29",
-    "content": "CodeReview: Review suggested changes with user",
+    "id": "16",
+    "content": "Task a new subagent to do a code review of the changes - focus on identifying duplication and complexity (read-only)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "17",
+    "content": "When subagent returns, STOP and review the suggested changes with the user",
     "status": "pending",
     "priority": "high",
     "notes": ""
