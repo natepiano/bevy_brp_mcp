@@ -424,7 +424,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_brp_mcp"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "anyhow",
  "bevy",
