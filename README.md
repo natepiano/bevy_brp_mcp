@@ -1,11 +1,12 @@
-# bevy_brp_mcp
+# About
 
 [![Crates.io](https://img.shields.io/crates/v/bevy_brp_mcp.svg)](https://crates.io/crates/bevy_brp_mcp)
 [![Documentation](https://docs.rs/bevy_brp_mcp/badge.svg)](https://docs.rs/bevy_brp_mcp/)
-[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/yourusername/bevy_brp_mcp#license)
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/natepiano/bevy_brp_mcp#license)
 [![Crates.io](https://img.shields.io/crates/d/bevy_brp_mcp.svg)](https://crates.io/crates/bevy_brp_mcp)
+[![CI](https://github.com/natepiano/bevy_brp_mcp/workflows/CI/badge.svg)](https://github.com/natepiano/bevy_brp_mcp/actions)
 
-A Model Context Protocol (MCP) server that enables AI coding assistants to control launch, inspect and mutateBevy applications via the Bevy Remote Protocol (BRP). This tool bridges the gap between coding agents and Bevy by providing comprehensive BRP integration as an MCP server.
+A Model Context Protocol (MCP) server that enables AI coding assistants to control launch, inspect and mutate Bevy applications via the Bevy Remote Protocol (BRP). This tool bridges the gap between coding agents and Bevy by providing comprehensive BRP integration as an MCP server.
 
 ## Bevy Compatibility
 
@@ -36,18 +37,29 @@ The bevy_brp_mcp crate follows Bevy's version numbering and releases new version
 - **Process Status**: Check if apps are running with BRP enabled
 
 ### Enhanced BRP Integration
+requires `bevy_brp_extras`
+
 - **Format Discovery**: Get correct JSON formats for BRP operations (via bevy_brp_extras)
 - **Screenshot Capture**: Take screenshots of running Bevy applications
 - **Graceful Shutdown**: Clean application termination
 
-## Installation
+## Getting started
+first, install via cargo:
+`cargo install bevy_brp_mcp`
 
-Add to your `Cargo.toml`:
+configure your mcp server - for claude code this would be in the `~/.claude.json` file.
 
-```toml
-[dependencies]
-bevy_brp_mcp = "0.1"
+```json
+"mcpServers": {
+  "brp": {
+    "type": "stdio",
+    "command": "bevy_brp_mcp",
+    "args": [],
+    "env": {}
+  }
+},
 ```
+that's it!
 
 ## Usage
 
@@ -55,20 +67,10 @@ bevy_brp_mcp = "0.1"
 
 bevy_brp_mcp is designed to be used with AI coding assistants that support MCP (like Claude). The MCP server provides tools that allow the AI to:
 
-1. Discover and launch your Bevy applications
+1. Discover and launch your Bevy applications - with logs stored in your temp dir so they can be accessed by the coding assistant.
 2. Inspect and modify entity components in real-time
 3. Monitor application state and debug issues
-4. Take screenshots and manage application lifecycle
-
-### Standalone Usage
-
-You can also run the MCP server directly:
-
-```bash
-cargo run --bin bevy_brp_mcp
-```
-
-The server will start and listen for MCP connections on stdio.
+4. Take screenshots and manage application lifecycle (requries `bevy_brp_extras`)
 
 ### Setting Up Your Bevy App
 
@@ -99,49 +101,7 @@ fn main() {
 }
 ```
 
-## Tool Categories
-
-### BRP Core Tools
-- `bevy_get` - Get component data from entities
-- `bevy_insert` - Insert components into entities
-- `bevy_remove` - Remove components from entities
-- `bevy_mutate_component` - Modify specific component fields
-- `bevy_spawn` - Create new entities with components
-- `bevy_destroy` - Remove entities from the world
-- `bevy_query` - Query entities by component filters
-- `bevy_list` - List available components and entities
-- `bevy_get_resource` - Access global resources
-- `bevy_insert_resource` - Set global resources
-- `bevy_remove_resource` - Remove global resources
-- `bevy_mutate_resource` - Modify resource fields
-- `bevy_list_resources` - List available resources
-- `bevy_reparent` - Change entity hierarchy
-- `bevy_registry_schema` - Get type schemas
-- `bevy_rpc_discover` - Discover available BRP methods
-
-### Application Management Tools
-- `list_bevy_apps` - Find Bevy applications in workspace
-- `list_brp_apps` - Find BRP-enabled applications
-- `list_bevy_examples` - Find Bevy examples
-- `launch_bevy_app` - Launch applications with proper setup
-- `launch_bevy_example` - Run examples with cargo
-- `brp_status` - Check if apps are running with BRP
-
-### Enhanced Features (via bevy_brp_extras)
-- `brp_extras_screenshot` - Capture application screenshots
-- `brp_extras_shutdown` - Gracefully shutdown applications
-- `brp_extras_discover_format` - Get correct JSON formats for BRP operations
-
-### Monitoring & Debugging Tools
-- `brp_get_watch` - Monitor component changes on entities
-- `brp_list_watch` - Monitor component additions/removals
-- `bevy_stop_watch` - Stop monitoring subscriptions
-- `bevy_list_active_watches` - List active monitoring sessions
-
-### Log Management Tools
-- `list_logs` - List application log files
-- `read_log` - Read log file contents with filtering
-- `cleanup_logs` - Remove old log files
+In either case you'll need to make sure to enable bevy's "bevy_remote" feature.
 
 ## Integration with bevy_brp_extras
 
@@ -150,7 +110,9 @@ This crate is designed to work seamlessly with [bevy_brp_extras](https://github.
 1. Add `BrpExtrasPlugin` to your Bevy app for enhanced BRP features
 2. Use `bevy_brp_mcp` with your AI coding assistant
 3. Additional methods like screenshot, shutdown, and format discovery will be automatically available
-4. Get proper JSON formats for complex BRP operations
+4. Get proper JSON formats for complex BRP operations. The brp_extras/discover_format feature is especially useful. The value returned from bevy/registry/schema does not tell you exactly what is expected by the brp spawn/insert/mutate calls.  As a result your coding agent will engage in trial and error to figure it out but it's not 100% reliable.
+
+If you have bevy_brp_extras installed, it can get the type information directly from the running app andand provide it if queried via brp_extras/discover_format - or it will provide it in the error message if your coding agent tries a call and fails.
 
 ## Example Workflow
 
