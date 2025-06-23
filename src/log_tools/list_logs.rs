@@ -1,26 +1,11 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::CallToolResult;
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
 use super::support::log_utils;
 use crate::BrpMcpService;
-use crate::support::{params, response, schema};
-use crate::tools::{DESC_LIST_LOGS, TOOL_LIST_LOGS};
-
-pub fn register_tool() -> Tool {
-    Tool {
-        name:         TOOL_LIST_LOGS.into(),
-        description:  DESC_LIST_LOGS.into(),
-        input_schema: schema::SchemaBuilder::new()
-            .add_string_property(
-                "app_name",
-                "Optional filter to list logs for a specific app only",
-                false,
-            )
-            .build(),
-    }
-}
+use crate::support::{params, response};
 
 pub fn handle(
     _service: &BrpMcpService,

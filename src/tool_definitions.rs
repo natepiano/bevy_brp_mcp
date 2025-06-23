@@ -37,14 +37,123 @@
 //! - Watch operations: `brp_get_watch`, `brp_list_watch`, etc.
 //! - App management: `launch_bevy_app`, `list_bevy_apps`, etc.
 //!
+//! # Tool Types and Handler Support
+//!
+//! The system supports two handler types:
+//!
+//! ## BRP Handlers (`HandlerType::Brp`)
+//! Execute remote BRP method calls over network. Used for most core Bevy operations.
+//! Example: `bevy/destroy`, `bevy/get`, `bevy/insert`
+//!
+//! ## Local Handlers (`HandlerType::Local`)
+//! Execute local functions within the MCP server. Used for log management, app lifecycle, etc.
+//! Example: `list_logs`, `launch_bevy_app`, `cleanup_logs`
+//!
+//! # Response Formatting
+//!
+//! ## `FormatterDef::default()`
+//! For local tools that don't need special response formatting. Returns empty formatter
+//! with `FormatterType::Simple`, empty template, and no response fields.
+//!
+//! ## Custom Formatters
+//! For BRP tools that need structured responses with field extraction and templating.
+//!
+//! # Helper Functions
+//!
+//! Common parameter patterns are available as helper functions:
+//! - `add_port_param()`: Standard port parameter (optional, numeric)
+//! - `add_entity_param()`: Entity ID parameter (required, numeric)
+//! - `add_components_param()`: Component types array parameter (required, any)
+//!
 //! # Adding New Tools
 //!
-//! To add a new standard BRP tool:
-//!
+//! ## Standard BRP Tools
 //! 1. **Define constants** in `constants.rs` for the tool name, description, and BRP method
-//! 2. **Add tool definition** to the appropriate function with the required parameters and
-//!    formatters
-//! 3. **Register in generator** (automatic if added to `get_standard_tools()`)
+//! 2. **Add tool definition** to `get_standard_tools()` with:
+//!    - `HandlerType::Brp { method: "bevy/method_name" }`
+//!    - Appropriate parameter extractors
+//!    - Response formatters with field extraction
+//! 3. **Registration is automatic** via `get_all_tools()`
+//!
+//! ## Local Tools
+//! 1. **Add tool definition** to `get_log_tools()` or `get_app_tools()` with:
+//!    - `HandlerType::Local { handler: "function_name" }`
+//!    - `FormatterDef::default()` for simple responses
+//! 2. **Implement handler** in `tool_generator.rs` `generate_local_handler()` match
+//! 3. **Create handler function** in appropriate module (e.g., `log_tools::function_name`)
+//!
+//! ## Special BRP Tools
+//! For tools with custom parameter extraction or response formatting:
+//! 1. **Add to `get_special_tools()`** instead of standard tools
+//! 2. **Use custom `ParamExtractorType`** (e.g., `BrpExecute`, `RegistrySchema`)
+//! 3. **Implement custom extractors** in `tool_generator.rs` if needed
+//!
+//! # Best Practices
+//!
+//! - **Use helper functions** for common parameters (`add_port_param()`, etc.)
+//! - **Use `FormatterDef::default()`** for local tools
+//! - **Group related tools** in appropriate getter functions
+//! - **Prefer declarative definitions** over custom handlers when possible
+//! - **Add unit tests** for new parameter extractors and formatters
+//!
+//! # Example: Adding a New BRP Tool
+//!
+//! ```rust
+//! // 1. Add to get_standard_tools()
+//! BrpToolDef {
+//!     name:            "bevy_new_operation",
+//!     description:     "Performs a new operation",
+//!     handler:         HandlerType::Brp {
+//!         method: "bevy/new_operation",
+//!     },
+//!     params:          vec![
+//!         add_entity_param(), // Use helper for common params
+//!         add_port_param(),
+//!     ],
+//!     param_extractor: ParamExtractorType::Entity { required: true },
+//!     formatter:       FormatterDef {
+//!         formatter_type:  FormatterType::EntityOperation("entity"),
+//!         template:        "Operation completed on entity {entity}",
+//!         response_fields: vec![ResponseField {
+//!             name:      "entity",
+//!             extractor: ExtractorType::EntityFromParams,
+//!         }],
+//!     },
+//! }
+//! ```
+//!
+//! # Example: Adding a New Local Tool
+//!
+//! ```rust
+//! // 1. Add to get_log_tools() or get_app_tools()
+//! BrpToolDef {
+//!     name: "my_local_tool",
+//!     description: "Does something locally",
+//!     handler: HandlerType::Local { handler: "my_function" },
+//!     params: vec![
+//!         ParamDef {
+//!             name: "input",
+//!             description: "Input parameter",
+//!             required: true,
+//!             param_type: ParamType::String,
+//!         }
+//!     ],
+//!     param_extractor: ParamExtractorType::Passthrough,
+//!     formatter: FormatterDef::default(), // Simple local tool
+//! }
+//!
+//! // 2. Add handler to tool_generator.rs generate_local_handler()
+//! "my_function" => my_module::my_function::handle(service, request, context),
+//!
+//! // 3. Implement in my_module::my_function
+//! pub fn handle(
+//!     service: &BrpMcpService,
+//!     request: &CallToolRequestParam,
+//!     context: RequestContext<RoleServer>
+//! ) -> Result<CallToolResult, McpError> {
+//!     // Implementation
+//! }
+//! ```
 
 use crate::brp_tools::constants::{
     DESC_PORT, JSON_FIELD_COMPONENT, JSON_FIELD_COMPONENTS, JSON_FIELD_COUNT, JSON_FIELD_DATA,
@@ -110,6 +219,17 @@ pub struct FormatterDef {
     pub response_fields: Vec<ResponseField>,
 }
 
+impl FormatterDef {
+    /// Creates a default formatter for local tools that don't need special formatting
+    pub const fn default() -> Self {
+        Self {
+            formatter_type:  FormatterType::Simple,
+            template:        "",
+            response_fields: vec![],
+        }
+    }
+}
+
 /// Types of formatters available
 #[derive(Clone)]
 pub enum FormatterType {
@@ -172,6 +292,21 @@ pub enum ParamExtractorType {
     RegistrySchema,
 }
 
+/// Type of handler for the tool
+#[derive(Clone)]
+pub enum HandlerType {
+    /// BRP handler - calls a BRP method
+    Brp {
+        /// BRP method to call (e.g., "bevy/destroy")
+        method: &'static str,
+    },
+    /// Local handler - executes local logic  
+    Local {
+        /// Handler function name (e.g., "`list_logs`", "`read_log`")
+        handler: &'static str,
+    },
+}
+
 /// Complete definition of a BRP tool
 #[derive(Clone)]
 pub struct BrpToolDef {
@@ -179,8 +314,8 @@ pub struct BrpToolDef {
     pub name:            &'static str,
     /// Tool description
     pub description:     &'static str,
-    /// BRP method to call (e.g., "bevy/destroy")
-    pub method:          &'static str,
+    /// Handler type (BRP or Local)
+    pub handler:         HandlerType,
     /// Parameters for the tool
     pub params:          Vec<ParamDef>,
     /// Parameter extractor type
@@ -197,7 +332,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_DESTROY,
             description:     DESC_BEVY_DESTROY,
-            method:          BRP_METHOD_DESTROY,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_DESTROY,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_ENTITY,
@@ -226,7 +363,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_GET,
             description:     DESC_BEVY_GET,
-            method:          BRP_METHOD_GET,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_GET,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_ENTITY,
@@ -267,7 +406,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_LIST,
             description:     DESC_BEVY_LIST,
-            method:          BRP_METHOD_LIST,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_LIST,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_ENTITY,
@@ -302,7 +443,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_REMOVE,
             description:     DESC_BEVY_REMOVE,
-            method:          BRP_METHOD_REMOVE,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_REMOVE,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_ENTITY,
@@ -337,7 +480,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_INSERT,
             description:     DESC_BEVY_INSERT,
-            method:          BRP_METHOD_INSERT,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_INSERT,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_ENTITY,
@@ -372,7 +517,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_GET_RESOURCE,
             description:     DESC_BEVY_GET_RESOURCE,
-            method:          BRP_METHOD_GET_RESOURCE,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_GET_RESOURCE,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_RESOURCE,
@@ -407,7 +554,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_INSERT_RESOURCE,
             description:     DESC_BEVY_INSERT_RESOURCE,
-            method:          BRP_METHOD_INSERT_RESOURCE,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_INSERT_RESOURCE,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_RESOURCE,
@@ -442,7 +591,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_REMOVE_RESOURCE,
             description:     DESC_BEVY_REMOVE_RESOURCE,
-            method:          BRP_METHOD_REMOVE_RESOURCE,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_REMOVE_RESOURCE,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_RESOURCE,
@@ -471,7 +622,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_MUTATE_COMPONENT,
             description:     DESC_BEVY_MUTATE_COMPONENT,
-            method:          BRP_METHOD_MUTATE_COMPONENT,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_MUTATE_COMPONENT,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_ENTITY,
@@ -518,7 +671,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_MUTATE_RESOURCE,
             description:     DESC_BEVY_MUTATE_RESOURCE,
-            method:          BRP_METHOD_MUTATE_RESOURCE,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_MUTATE_RESOURCE,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_RESOURCE,
@@ -559,7 +714,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_LIST_RESOURCES,
             description:     DESC_BEVY_LIST_RESOURCES,
-            method:          BRP_METHOD_LIST_RESOURCES,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_LIST_RESOURCES,
+            },
             params:          vec![ParamDef {
                 name:        JSON_FIELD_PORT,
                 description: DESC_PORT,
@@ -586,7 +743,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BEVY_RPC_DISCOVER,
             description:     DESC_BEVY_RPC_DISCOVER,
-            method:          BRP_METHOD_RPC_DISCOVER,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_RPC_DISCOVER,
+            },
             params:          vec![ParamDef {
                 name:        JSON_FIELD_PORT,
                 description: DESC_PORT,
@@ -607,7 +766,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BRP_EXTRAS_DISCOVER_FORMAT,
             description:     DESC_BRP_EXTRAS_DISCOVER_FORMAT,
-            method:          BRP_METHOD_EXTRAS_DISCOVER_FORMAT,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_EXTRAS_DISCOVER_FORMAT,
+            },
             params:          vec![
                 ParamDef {
                     name:        PARAM_TYPES,
@@ -636,7 +797,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            TOOL_BRP_EXTRAS_SCREENSHOT,
             description:     DESC_BRP_EXTRAS_SCREENSHOT,
-            method:          BRP_METHOD_EXTRAS_SCREENSHOT,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_EXTRAS_SCREENSHOT,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_PATH,
@@ -678,7 +841,9 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            crate::tools::TOOL_BEVY_QUERY,
             description:     crate::tools::DESC_BEVY_QUERY,
-            method:          crate::tools::BRP_METHOD_QUERY,
+            handler:         HandlerType::Brp {
+                method: crate::tools::BRP_METHOD_QUERY,
+            },
             params:          vec![
                 ParamDef {
                     name:        PARAM_DATA,
@@ -733,7 +898,9 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            crate::tools::TOOL_BEVY_SPAWN,
             description:     crate::tools::DESC_BEVY_SPAWN,
-            method:          crate::tools::BRP_METHOD_SPAWN,
+            handler:         HandlerType::Brp {
+                method: crate::tools::BRP_METHOD_SPAWN,
+            },
             params:          vec![
                 ParamDef {
                     name:        JSON_FIELD_COMPONENTS,
@@ -768,7 +935,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            crate::tools::TOOL_BRP_EXECUTE,
             description:     crate::tools::DESC_BRP_EXECUTE,
-            method:          "", // Dynamic method
+            handler:         HandlerType::Brp { method: "" }, // Dynamic method
             params:          vec![
                 ParamDef {
                     name:        PARAM_METHOD,
@@ -803,7 +970,9 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            crate::tools::TOOL_BEVY_REGISTRY_SCHEMA,
             description:     crate::tools::DESC_BEVY_REGISTRY_SCHEMA,
-            method:          crate::tools::BRP_METHOD_REGISTRY_SCHEMA,
+            handler:         HandlerType::Brp {
+                method: crate::tools::BRP_METHOD_REGISTRY_SCHEMA,
+            },
             params:          vec![
                 ParamDef {
                     name:        PARAM_WITH_CRATES,
@@ -850,7 +1019,9 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         BrpToolDef {
             name:            crate::tools::TOOL_BEVY_REPARENT,
             description:     crate::tools::DESC_BEVY_REPARENT,
-            method:          crate::tools::BRP_METHOD_REPARENT,
+            handler:         HandlerType::Brp {
+                method: crate::tools::BRP_METHOD_REPARENT,
+            },
             params:          vec![
                 ParamDef {
                     name:        PARAM_ENTITIES,
@@ -889,3 +1060,186 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         },
     ]
 }
+
+/// Get log tool definitions
+pub fn get_log_tools() -> Vec<BrpToolDef> {
+    vec![
+        // list_logs
+        BrpToolDef {
+            name:            crate::tools::TOOL_LIST_LOGS,
+            description:     crate::tools::DESC_LIST_LOGS,
+            handler:         HandlerType::Local {
+                handler: "list_logs",
+            },
+            params:          vec![ParamDef {
+                name:        "app_name",
+                description: "Optional filter to list logs for a specific app only",
+                required:    false,
+                param_type:  ParamType::String,
+            }],
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef::default(),
+        },
+        // read_log
+        BrpToolDef {
+            name:            crate::tools::TOOL_READ_LOG,
+            description:     crate::tools::DESC_READ_LOG,
+            handler:         HandlerType::Local {
+                handler: "read_log",
+            },
+            params:          vec![
+                ParamDef {
+                    name:        "filename",
+                    description: "The log filename (e.g., bevy_brp_mcp_myapp_1234567890.log)",
+                    required:    true,
+                    param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        "keyword",
+                    description: "Optional keyword to filter lines (case-insensitive)",
+                    required:    false,
+                    param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        "tail_lines",
+                    description: "Optional number of lines to read from the end of file",
+                    required:    false,
+                    param_type:  ParamType::Number,
+                },
+            ],
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef::default(),
+        },
+        // cleanup_logs
+        BrpToolDef {
+            name:            crate::tools::TOOL_CLEANUP_LOGS,
+            description:     crate::tools::DESC_CLEANUP_LOGS,
+            handler:         HandlerType::Local {
+                handler: "cleanup_logs",
+            },
+            params:          vec![
+                ParamDef {
+                    name:        "app_name",
+                    description: "Optional filter to delete logs for a specific app only",
+                    required:    false,
+                    param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        "older_than_seconds",
+                    description: "Optional filter to delete logs older than N seconds",
+                    required:    false,
+                    param_type:  ParamType::Number,
+                },
+            ],
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef::default(),
+        },
+    ]
+}
+
+/// Get app tool definitions
+pub fn get_app_tools() -> Vec<BrpToolDef> {
+    vec![
+        // list_bevy_apps
+        BrpToolDef {
+            name:            crate::tools::TOOL_LIST_BEVY_APPS,
+            description:     crate::tools::DESC_LIST_BEVY_APPS,
+            handler:         HandlerType::Local {
+                handler: "list_bevy_apps",
+            },
+            params:          vec![],
+            param_extractor: ParamExtractorType::EmptyParams,
+            formatter:       FormatterDef::default(),
+        },
+        // list_brp_apps
+        BrpToolDef {
+            name:            crate::tools::TOOL_LIST_BRP_APPS,
+            description:     crate::tools::DESC_LIST_BRP_APPS,
+            handler:         HandlerType::Local {
+                handler: "list_brp_apps",
+            },
+            params:          vec![],
+            param_extractor: ParamExtractorType::EmptyParams,
+            formatter:       FormatterDef::default(),
+        },
+        // list_bevy_examples
+        BrpToolDef {
+            name:            crate::tools::TOOL_LIST_BEVY_EXAMPLES,
+            description:     crate::tools::DESC_LIST_BEVY_EXAMPLES,
+            handler:         HandlerType::Local {
+                handler: "list_bevy_examples",
+            },
+            params:          vec![],
+            param_extractor: ParamExtractorType::EmptyParams,
+            formatter:       FormatterDef::default(),
+        },
+        // launch_bevy_app
+        BrpToolDef {
+            name:            crate::tools::TOOL_LAUNCH_BEVY_APP,
+            description:     crate::tools::DESC_LAUNCH_BEVY_APP,
+            handler:         HandlerType::Local {
+                handler: "launch_bevy_app",
+            },
+            params:          vec![
+                ParamDef {
+                    name:        "app_name",
+                    description: "Name of the Bevy app to launch",
+                    required:    true,
+                    param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        "profile",
+                    description: "Build profile to use (debug or release)",
+                    required:    false,
+                    param_type:  ParamType::String,
+                },
+            ],
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef::default(),
+        },
+        // launch_bevy_example
+        BrpToolDef {
+            name:            crate::tools::TOOL_LAUNCH_BEVY_EXAMPLE,
+            description:     crate::tools::DESC_LAUNCH_BEVY_EXAMPLE,
+            handler:         HandlerType::Local {
+                handler: "launch_bevy_example",
+            },
+            params:          vec![
+                ParamDef {
+                    name:        "example_name",
+                    description: "Name of the Bevy example to launch",
+                    required:    true,
+                    param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        "profile",
+                    description: "Build profile to use (debug or release)",
+                    required:    false,
+                    param_type:  ParamType::String,
+                },
+            ],
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef::default(),
+        },
+    ]
+}
+
+/// Get all tool definitions - combines standard, special, log, and app tools
+pub fn get_all_tools() -> Vec<BrpToolDef> {
+    let mut tools = Vec::new();
+
+    // Add standard tools
+    tools.extend(get_standard_tools());
+
+    // Add special tools
+    tools.extend(get_special_tools());
+
+    // Add log tools
+    tools.extend(get_log_tools());
+
+    // Add app tools
+    tools.extend(get_app_tools());
+
+    tools
+}
+

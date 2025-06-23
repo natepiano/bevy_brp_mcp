@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::CallToolResult;
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
@@ -11,32 +11,7 @@ use super::constants::PARAM_FILE_PATH;
 use super::support::log_utils;
 use crate::BrpMcpService;
 use crate::error::BrpMcpError;
-use crate::support::{params, response, schema};
-use crate::tools::{DESC_READ_LOG, TOOL_READ_LOG};
-
-pub fn register_tool() -> Tool {
-    Tool {
-        name:         TOOL_READ_LOG.into(),
-        description:  DESC_READ_LOG.into(),
-        input_schema: schema::SchemaBuilder::new()
-            .add_string_property(
-                "filename",
-                "The log filename (e.g., bevy_brp_mcp_myapp_1234567890.log)",
-                true,
-            )
-            .add_string_property(
-                "keyword",
-                "Optional keyword to filter lines (case-insensitive)",
-                false,
-            )
-            .add_number_property(
-                "tail_lines",
-                "Optional number of lines to read from the end of file",
-                false,
-            )
-            .build(),
-    }
-}
+use crate::support::{params, response};
 
 pub fn handle(
     _service: &BrpMcpService,
@@ -50,7 +25,6 @@ pub fn handle(
         .map_err(|_| -> McpError {
             BrpMcpError::validation_failed("tail_lines", "value too large").into()
         })?;
-
     // Validate filename format for security
     if !log_utils::is_valid_log_filename(filename) {
         return Err(BrpMcpError::validation_failed(

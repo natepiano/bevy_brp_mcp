@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::CallToolResult;
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
@@ -10,23 +10,7 @@ use super::support::{logging, process, scanning};
 use crate::BrpMcpService;
 use crate::constants::{DEFAULT_PROFILE, PARAM_EXAMPLE_NAME, PARAM_PROFILE, PROFILE_RELEASE};
 use crate::error::BrpMcpError;
-use crate::support::{params, response, schema, service};
-use crate::tools::{DESC_LAUNCH_BEVY_EXAMPLE, TOOL_LAUNCH_BEVY_EXAMPLE};
-
-pub fn register_tool() -> Tool {
-    Tool {
-        name:         TOOL_LAUNCH_BEVY_EXAMPLE.into(),
-        description:  DESC_LAUNCH_BEVY_EXAMPLE.into(),
-        input_schema: schema::SchemaBuilder::new()
-            .add_string_property(
-                PARAM_EXAMPLE_NAME,
-                "Name of the Bevy example to launch",
-                true,
-            )
-            .add_profile_property()
-            .build(),
-    }
-}
+use crate::support::{params, response, service};
 
 pub async fn handle(
     service: &BrpMcpService,

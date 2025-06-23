@@ -79,16 +79,16 @@ use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
-use super::constants::{
+use crate::brp_tools::constants::{
     JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITIES, JSON_FIELD_ENTITY, JSON_FIELD_PARENT,
 };
-use super::support::{
+use crate::brp_tools::support::{
     BrpExecuteExtractor, BrpHandlerConfig, EntityParamExtractor, FormatterContext, ParamExtractor,
     PassthroughExtractor, RegistrySchemaParamExtractor, ResourceParamExtractor,
     ResponseFormatterFactory, SimplePortExtractor, extractors, handle_brp_request,
 };
-use super::tool_definitions::{
-    BrpToolDef, ExtractorType, FormatterType, ParamExtractorType, ParamType,
+use crate::tool_definitions::{
+    BrpToolDef, ExtractorType, FormatterType, HandlerType, ParamExtractorType, ParamType,
 };
 use crate::BrpMcpService;
 use crate::support::schema;
@@ -132,6 +132,26 @@ pub async fn generate_tool_handler(
     request: CallToolRequestParam,
     context: RequestContext<RoleServer>,
 ) -> Result<CallToolResult, McpError> {
+    match &def.handler {
+        HandlerType::Brp { method } => {
+            // Handle BRP method calls
+            generate_brp_handler(def, service, request, context, method).await
+        }
+        HandlerType::Local { handler } => {
+            // Handle local method calls
+            generate_local_handler(def, service, request, context, handler).await
+        }
+    }
+}
+
+/// Generate a BRP handler
+async fn generate_brp_handler(
+    def: &BrpToolDef,
+    service: &BrpMcpService,
+    request: CallToolRequestParam,
+    context: RequestContext<RoleServer>,
+    method: &'static str,
+) -> Result<CallToolResult, McpError> {
     // Create the parameter extractor based on the definition
     let param_extractor: Box<dyn ParamExtractor> = match &def.param_extractor {
         ParamExtractorType::Passthrough => Box::new(PassthroughExtractor),
@@ -166,7 +186,7 @@ pub async fn generate_tool_handler(
     formatter_builder = formatter_builder.with_default_error();
 
     let config = BrpHandlerConfig {
-        method: Some(def.method),
+        method: Some(method),
         param_extractor,
         formatter_factory: formatter_builder.build(),
     };
@@ -174,13 +194,53 @@ pub async fn generate_tool_handler(
     handle_brp_request(service, request, context, &config).await
 }
 
+/// Generate a local handler
+async fn generate_local_handler(
+    _def: &BrpToolDef,
+    service: &BrpMcpService,
+    request: CallToolRequestParam,
+    context: RequestContext<RoleServer>,
+    handler: &str,
+) -> Result<CallToolResult, McpError> {
+    // Route to the appropriate local handler based on the handler name
+    match handler {
+        "list_logs" => crate::log_tools::list_logs::handle(service, &request, context),
+        "read_log" => crate::log_tools::read_log::handle(service, &request, context),
+        "cleanup_logs" => crate::log_tools::cleanup_logs::handle(service, &request, context),
+        "list_bevy_apps" => crate::app_tools::list_apps::handle(service, context).await,
+        "list_brp_apps" => crate::app_tools::list_brp_apps::handle(service, context).await,
+        "list_bevy_examples" => crate::app_tools::list_examples::handle(service, context).await,
+        "launch_bevy_app" => crate::app_tools::launch_app::handle(service, request, context).await,
+        "launch_bevy_example" => {
+            crate::app_tools::launch_example::handle(service, request, context).await
+        }
+        _ => Err(crate::error::BrpMcpError::invalid(
+            "handler",
+            format!("unknown local handler: {handler}"),
+        )
+        .into()),
+    }
+}
+
 /// Convert our `ExtractorType` enum to the actual extractor function
-fn convert_extractor_type(extractor_type: &ExtractorType) -> super::support::FieldExtractor {
+fn convert_extractor_type(extractor_type: &ExtractorType) -> crate::brp_tools::support::FieldExtractor {
+    // Pre-create common extractors to avoid repetitive closures
+    static PASS_THROUGH_RESULT: fn(&serde_json::Value, &FormatterContext) -> serde_json::Value =
+        |data, _| data.clone();
+    static NULL_EXTRACTOR: fn(&serde_json::Value, &FormatterContext) -> serde_json::Value =
+        |_data, _context| serde_json::Value::Null;
+    static COMPONENTS_EXTRACTOR: fn(&serde_json::Value, &FormatterContext) -> serde_json::Value =
+        |data, context| extract_field_from_context(JSON_FIELD_COMPONENTS, data, context);
+    static ENTITIES_EXTRACTOR: fn(&serde_json::Value, &FormatterContext) -> serde_json::Value =
+        |data, context| extract_field_from_context(JSON_FIELD_ENTITIES, data, context);
+    static PARENT_EXTRACTOR: fn(&serde_json::Value, &FormatterContext) -> serde_json::Value =
+        |data, context| extract_field_from_context(JSON_FIELD_PARENT, data, context);
+
     match extractor_type {
         ExtractorType::EntityFromParams => extractors::entity_from_params,
         ExtractorType::ResourceFromParams => extractors::resource_from_params,
         ExtractorType::PassThroughData => extractors::pass_through_data,
-        ExtractorType::PassThroughResult => |data, _| data.clone(),
+        ExtractorType::PassThroughResult => PASS_THROUGH_RESULT,
         ExtractorType::EntityCountFromData | ExtractorType::ComponentCountFromData => {
             extractors::array_count
         }
@@ -188,16 +248,10 @@ fn convert_extractor_type(extractor_type: &ExtractorType) -> super::support::Fie
         ExtractorType::QueryComponentCount => extract_query_component_count,
         ExtractorType::QueryParamsFromContext => extract_query_params_from_context,
         ExtractorType::ParamFromContext(param_name) => match *param_name {
-            "components" => {
-                |data, context| extract_field_from_context(JSON_FIELD_COMPONENTS, data, context)
-            }
-            "entities" => {
-                |data, context| extract_field_from_context(JSON_FIELD_ENTITIES, data, context)
-            }
-            "parent" => {
-                |data, context| extract_field_from_context(JSON_FIELD_PARENT, data, context)
-            }
-            _ => |_data, _context| serde_json::Value::Null,
+            "components" => COMPONENTS_EXTRACTOR,
+            "entities" => ENTITIES_EXTRACTOR,
+            "parent" => PARENT_EXTRACTOR,
+            _ => NULL_EXTRACTOR,
         },
     }
 }
@@ -247,4 +301,143 @@ fn extract_field_from_context(
         .and_then(|p| p.get(field_name))
         .cloned()
         .unwrap_or(serde_json::Value::Null)
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::tool_definitions::{FormatterDef, ParamDef, ParamType};
+
+    #[test]
+    fn test_generate_tool_registration() {
+        let def = BrpToolDef {
+            name:            "test_tool",
+            description:     "A test tool",
+            handler:         HandlerType::Brp {
+                method: "test/method",
+            },
+            params:          vec![
+                ParamDef {
+                    name:        "entity",
+                    description: "Entity ID",
+                    required:    true,
+                    param_type:  ParamType::Number,
+                },
+                ParamDef {
+                    name:        "optional_param",
+                    description: "Optional parameter",
+                    required:    false,
+                    param_type:  ParamType::String,
+                },
+            ],
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef {
+                formatter_type:  FormatterType::Simple,
+                template:        "Test successful",
+                response_fields: vec![],
+            },
+        };
+
+        let tool = generate_tool_registration(&def);
+
+        assert_eq!(tool.name, "test_tool");
+        assert_eq!(tool.description, "A test tool");
+        assert!(tool.input_schema.contains_key("type"));
+        assert_eq!(tool.input_schema.get("type"), Some(&"object".into()));
+    }
+
+    #[test]
+    fn test_convert_extractor_type_pass_through_result() {
+        let extractor = convert_extractor_type(&ExtractorType::PassThroughResult);
+        let test_data = json!({"key": "value"});
+        let context = FormatterContext { params: None };
+
+        let result = extractor(&test_data, &context);
+        assert_eq!(result, test_data);
+    }
+
+    #[test]
+    fn test_convert_extractor_type_param_from_context() {
+        let extractor = convert_extractor_type(&ExtractorType::ParamFromContext("components"));
+        let test_data = json!({});
+        let context = FormatterContext {
+            params: Some(json!({"components": ["Component1", "Component2"]})),
+        };
+
+        let result = extractor(&test_data, &context);
+        assert_eq!(result, json!(["Component1", "Component2"]));
+    }
+
+    #[test]
+    fn test_convert_extractor_type_unknown_param() {
+        let extractor = convert_extractor_type(&ExtractorType::ParamFromContext("unknown"));
+        let test_data = json!({});
+        let context = FormatterContext {
+            params: Some(json!({"components": ["Component1"]})),
+        };
+
+        let result = extractor(&test_data, &context);
+        assert_eq!(result, serde_json::Value::Null);
+    }
+
+    #[test]
+    fn test_extract_entity_from_response() {
+        let data = json!({"entity": 123});
+        let context = FormatterContext { params: None };
+
+        let result = extract_entity_from_response(&data, &context);
+        assert_eq!(result, json!(123));
+    }
+
+    #[test]
+    fn test_extract_entity_from_response_missing() {
+        let data = json!({});
+        let context = FormatterContext { params: None };
+
+        let result = extract_entity_from_response(&data, &context);
+        assert_eq!(result, json!(0));
+    }
+
+    #[test]
+    fn test_extract_query_component_count() {
+        let data = json!([
+            {"Component1": {}, "Component2": {}},
+            {"Component1": {}}
+        ]);
+        let context = FormatterContext { params: None };
+
+        let result = extract_query_component_count(&data, &context);
+        assert_eq!(result, json!(3)); // 2 + 1 components
+    }
+
+    #[test]
+    fn test_extract_query_params_from_context() {
+        let data = json!({});
+        let test_params = json!({"filter": {"with": ["Transform"]}});
+        let context = FormatterContext {
+            params: Some(test_params.clone()),
+        };
+
+        let result = extract_query_params_from_context(&data, &context);
+        assert_eq!(result, test_params);
+    }
+
+    #[test]
+    fn test_extract_field_from_context() {
+        let data = json!({});
+        let context = FormatterContext {
+            params: Some(json!({"components": ["Transform"], "entity": 42})),
+        };
+
+        let result = extract_field_from_context("components", &data, &context);
+        assert_eq!(result, json!(["Transform"]));
+
+        let result = extract_field_from_context("entity", &data, &context);
+        assert_eq!(result, json!(42));
+
+        let result = extract_field_from_context("missing", &data, &context);
+        assert_eq!(result, serde_json::Value::Null);
+    }
 }

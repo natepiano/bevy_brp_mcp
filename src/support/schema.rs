@@ -2,8 +2,6 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value};
 
-use crate::constants::{DEFAULT_PROFILE, PARAM_PROFILE, PROFILE_DEBUG, PROFILE_RELEASE};
-
 /// Builder for creating JSON schemas for tool registration
 pub struct SchemaBuilder {
     properties: Map<String, Value>,
@@ -98,44 +96,6 @@ impl SchemaBuilder {
         self
     }
 
-    /// Add an enum property to the schema
-    pub fn add_enum_property(
-        mut self,
-        name: &str,
-        description: &str,
-        values: Vec<&str>,
-        default: Option<&str>,
-        required: bool,
-    ) -> Self {
-        let mut prop = Map::new();
-        prop.insert("type".to_string(), "string".into());
-        prop.insert("enum".to_string(), values.into());
-        prop.insert("description".to_string(), description.into());
-
-        if let Some(default_value) = default {
-            prop.insert("default".to_string(), default_value.into());
-        }
-
-        self.properties.insert(name.to_string(), prop.into());
-
-        if required {
-            self.required.push(name.to_string());
-        }
-
-        self
-    }
-
-    /// Add a standard profile property (debug/release) to the schema
-    pub fn add_profile_property(self) -> Self {
-        self.add_enum_property(
-            PARAM_PROFILE,
-            "Build profile to use (debug or release)",
-            vec![PROFILE_DEBUG, PROFILE_RELEASE],
-            Some(DEFAULT_PROFILE),
-            false,
-        )
-    }
-
     /// Build the final schema
     pub fn build(self) -> Arc<Map<String, Value>> {
         let mut schema = Map::new();
@@ -148,12 +108,4 @@ impl SchemaBuilder {
 
         Arc::new(schema)
     }
-}
-
-/// Create a simple object schema with no properties (for tools with no parameters)
-pub fn empty_object_schema() -> Arc<Map<String, Value>> {
-    let mut schema = Map::new();
-    schema.insert("type".to_string(), "object".into());
-    schema.insert("properties".to_string(), Map::new().into());
-    Arc::new(schema)
 }

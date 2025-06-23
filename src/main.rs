@@ -27,6 +27,8 @@ mod error;
 mod log_tools;
 mod registry;
 mod support;
+mod tool_definitions;
+mod tool_generator;
 mod tools;
 
 /// MCP service implementation for Bevy Remote Protocol integration.

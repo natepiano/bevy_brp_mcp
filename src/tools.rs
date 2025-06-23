@@ -2,27 +2,6 @@
 //!
 //! This module consolidates all tool names, descriptions, and help text for the MCP server.
 //! It provides a single source of truth for all tool-related constants.
-//!
-//! # Naming Conventions
-//!
-//! Tool names follow a consistent pattern based on their origin:
-//!
-//! ## Bevy Remote Protocol (BRP) Tools
-//! - **`mcp__brp__bevy_*`** - Direct BRP methods (e.g., `bevy/list` → `mcp__brp__bevy_list`)
-//! - **`mcp__brp__brp_extras_*`** - Methods from `bevy_brp_extras` plugin (e.g.,
-//!   `brp_extras/shutdown` → `mcp__brp__brp_extras_shutdown`)
-//! - **`mcp__brp__brp_*`** - Server-only functionality (e.g., `mcp__brp__brp_status`)
-//!
-//! ## Application Management Tools
-//! - **`mcp__brp__*`** - App discovery and launch tools (e.g., `mcp__brp__list_bevy_apps`)
-//!
-//! ## Help Text Organization
-//!
-//! Help text files are organized by category and use simplified names (without the `mcp__brp__`
-//! prefix):
-//! - `help_text/brp_tools/bevy_list.txt` for `mcp__brp__bevy_list`
-//! - `help_text/app_tools/list_bevy_apps.txt` for `mcp__brp__list_bevy_apps`
-//! - `help_text/log_tools/list_logs.txt` for `mcp__brp__list_logs`
 
 // Macro to include help text files
 macro_rules! include_help_text {

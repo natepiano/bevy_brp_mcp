@@ -1,35 +1,14 @@
 use std::fs;
 use std::time::{Duration, SystemTime};
 
-use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
+use rmcp::model::{CallToolRequestParam, CallToolResult};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
 use super::support::log_utils;
 use crate::BrpMcpService;
-use crate::support::schema::SchemaBuilder;
 use crate::support::{params, response};
-use crate::tools::{DESC_CLEANUP_LOGS, TOOL_CLEANUP_LOGS};
-
-pub fn register_tool() -> Tool {
-    Tool {
-        name:         TOOL_CLEANUP_LOGS.into(),
-        description:  DESC_CLEANUP_LOGS.into(),
-        input_schema: SchemaBuilder::new()
-            .add_string_property(
-                "app_name",
-                "Optional filter to delete logs for a specific app only",
-                false,
-            )
-            .add_number_property(
-                "older_than_seconds",
-                "Optional filter to delete logs older than N seconds",
-                false,
-            )
-            .build(),
-    }
-}
 
 pub fn handle(
     _service: &BrpMcpService,

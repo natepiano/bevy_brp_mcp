@@ -1,20 +1,11 @@
-use rmcp::model::{CallToolResult, Tool};
+use rmcp::model::CallToolResult;
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
 use super::support::scanning;
 use crate::BrpMcpService;
-use crate::support::{response, schema, service};
-use crate::tools::{DESC_LIST_BEVY_EXAMPLES, TOOL_LIST_BEVY_EXAMPLES};
-
-pub fn register_tool() -> Tool {
-    Tool {
-        name:         TOOL_LIST_BEVY_EXAMPLES.into(),
-        description:  DESC_LIST_BEVY_EXAMPLES.into(),
-        input_schema: schema::empty_object_schema(),
-    }
-}
+use crate::support::{response, service};
 
 pub async fn handle(
     service: &BrpMcpService,
