@@ -8,10 +8,10 @@ use super::constants::*;
 use super::detection::{ErrorPattern, analyze_error_pattern};
 use super::engine::is_type_format_error;
 use super::transformations::{
-    apply_pattern_fix, convert_to_math_type_array, extract_string_value, fix_tuple_struct_path,
+    apply_pattern_fix, convert_to_math_type_array, extract_string_value, fix_access_error,
+    fix_tuple_struct_path,
 };
 use crate::brp_tools::support::brp_client::BrpError;
-use crate::brp_tools::support::request_handler::format_discovery::transformations::fix_access_error;
 
 #[test]
 fn test_fix_tuple_struct_path_linear_rgba() {

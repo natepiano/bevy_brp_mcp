@@ -79,19 +79,20 @@ use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
+use crate::BrpMcpService;
 use crate::brp_tools::constants::{
     JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITIES, JSON_FIELD_ENTITY, JSON_FIELD_PARENT,
 };
-use crate::brp_tools::support::{
+use crate::brp_tools::request_handler::{
     BrpExecuteExtractor, BrpHandlerConfig, EntityParamExtractor, FormatterContext, ParamExtractor,
     PassthroughExtractor, RegistrySchemaParamExtractor, ResourceParamExtractor,
-    ResponseFormatterFactory, SimplePortExtractor, extractors, handle_brp_request,
+    SimplePortExtractor, handle_brp_request,
 };
+use crate::brp_tools::support::{ResponseFormatterFactory, extractors};
+use crate::support::schema;
 use crate::tool_definitions::{
     BrpToolDef, ExtractorType, FormatterType, HandlerType, ParamExtractorType, ParamType,
 };
-use crate::BrpMcpService;
-use crate::support::schema;
 
 /// Generate tool registration from a declarative definition
 pub fn generate_tool_registration(def: &BrpToolDef) -> Tool {
@@ -207,12 +208,16 @@ async fn generate_local_handler(
         "list_logs" => crate::log_tools::list_logs::handle(service, &request, context),
         "read_log" => crate::log_tools::read_log::handle(service, &request, context),
         "cleanup_logs" => crate::log_tools::cleanup_logs::handle(service, &request, context),
-        "list_bevy_apps" => crate::app_tools::list_apps::handle(service, context).await,
-        "list_brp_apps" => crate::app_tools::list_brp_apps::handle(service, context).await,
-        "list_bevy_examples" => crate::app_tools::list_examples::handle(service, context).await,
-        "launch_bevy_app" => crate::app_tools::launch_app::handle(service, request, context).await,
+        "list_bevy_apps" => crate::app_tools::brp_list_bevy_apps::handle(service, context).await,
+        "list_brp_apps" => crate::app_tools::brp_list_brp_apps::handle(service, context).await,
+        "list_bevy_examples" => {
+            crate::app_tools::brp_list_bevy_examples::handle(service, context).await
+        }
+        "launch_bevy_app" => {
+            crate::app_tools::brp_launch_bevy_app::handle(service, request, context).await
+        }
         "launch_bevy_example" => {
-            crate::app_tools::launch_example::handle(service, request, context).await
+            crate::app_tools::brp_launch_bevy_example::handle(service, request, context).await
         }
         _ => Err(crate::error::BrpMcpError::invalid(
             "handler",
@@ -223,7 +228,9 @@ async fn generate_local_handler(
 }
 
 /// Convert our `ExtractorType` enum to the actual extractor function
-fn convert_extractor_type(extractor_type: &ExtractorType) -> crate::brp_tools::support::FieldExtractor {
+fn convert_extractor_type(
+    extractor_type: &ExtractorType,
+) -> crate::brp_tools::support::FieldExtractor {
     // Pre-create common extractors to avoid repetitive closures
     static PASS_THROUGH_RESULT: fn(&serde_json::Value, &FormatterContext) -> serde_json::Value =
         |data, _| data.clone();

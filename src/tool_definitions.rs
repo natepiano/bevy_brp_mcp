@@ -1242,4 +1242,3 @@ pub fn get_all_tools() -> Vec<BrpToolDef> {
 
     tools
 }
-

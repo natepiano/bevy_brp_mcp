@@ -172,7 +172,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     tracing::debug!("MCP Server starting with logging enabled");
 
     // Initialize the watch manager
-    brp_tools::support::watch_manager::initialize_watch_manager().await;
+    brp_tools::watch::support::manager::initialize_watch_manager().await;
 
     let service = BrpMcpService::new();
 

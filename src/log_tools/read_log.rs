@@ -8,7 +8,7 @@ use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
 use super::constants::PARAM_FILE_PATH;
-use super::support::log_utils;
+use super::support;
 use crate::BrpMcpService;
 use crate::error::BrpMcpError;
 use crate::support::{params, response};
@@ -26,7 +26,7 @@ pub fn handle(
             BrpMcpError::validation_failed("tail_lines", "value too large").into()
         })?;
     // Validate filename format for security
-    if !log_utils::is_valid_log_filename(filename) {
+    if !support::is_valid_log_filename(filename) {
         return Err(BrpMcpError::validation_failed(
             "filename",
             "only bevy_brp_mcp log files can be read",
@@ -35,7 +35,7 @@ pub fn handle(
     }
 
     // Build full path
-    let log_path = log_utils::get_log_file_path(filename);
+    let log_path = support::get_log_file_path(filename);
 
     // Check if file exists
     if !log_path.exists() {
@@ -51,7 +51,7 @@ pub fn handle(
             "filename": filename,
             PARAM_FILE_PATH: log_path.display().to_string(),
             "size_bytes": metadata.len(),
-            "size_human": log_utils::format_bytes(metadata.len()),
+            "size_human": support::format_bytes(metadata.len()),
             "lines_read": content.lines().count(),
             "content": content,
             "filtered_by_keyword": !keyword.is_empty(),

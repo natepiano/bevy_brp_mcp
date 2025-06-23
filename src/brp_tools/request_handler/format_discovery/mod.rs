@@ -10,7 +10,7 @@ mod engine;
 mod field_mapper;
 mod path_parser;
 mod transformations;
-mod types;
+pub mod types;
 
 #[cfg(test)]
 mod tests;

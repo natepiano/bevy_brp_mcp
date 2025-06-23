@@ -12,6 +12,7 @@ use super::format_discovery::{
 };
 use super::traits::ExtractedParams;
 use crate::BrpMcpService;
+use crate::brp_tools::brp_set_debug_mode;
 use crate::brp_tools::constants::{
     JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO, JSON_FIELD_FORMAT_CORRECTIONS,
     JSON_FIELD_ORIGINAL_ERROR, MAX_RESPONSE_TOKENS,
@@ -19,7 +20,6 @@ use crate::brp_tools::constants::{
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult};
 use crate::brp_tools::support::response_formatter::{BrpMetadata, ResponseFormatter};
 use crate::error::BrpMcpError;
-use crate::support::debug_tools;
 
 const CHARS_PER_TOKEN: usize = 4;
 
@@ -122,7 +122,7 @@ fn add_format_corrections(
         additions[JSON_FIELD_FORMAT_CORRECTIONS] = corrections_value;
     }
 
-    if !debug_info.is_empty() && debug_tools::is_debug_enabled() {
+    if !debug_info.is_empty() && brp_set_debug_mode::is_debug_enabled() {
         additions[JSON_FIELD_DEBUG_INFO] = json!(debug_info);
     }
 
@@ -139,7 +139,7 @@ fn add_format_corrections(
         });
 
         // Only add debug_info if debug mode is enabled
-        if debug_tools::is_debug_enabled() {
+        if brp_set_debug_mode::is_debug_enabled() {
             wrapped[JSON_FIELD_DEBUG_INFO] = additions
                 .get(JSON_FIELD_DEBUG_INFO)
                 .cloned()
@@ -220,7 +220,7 @@ fn process_error_response(
             }
 
             // Add debug info only if debug mode is enabled
-            if !enhanced_result.debug_info.is_empty() && debug_tools::is_debug_enabled() {
+            if !enhanced_result.debug_info.is_empty() && brp_set_debug_mode::is_debug_enabled() {
                 map.insert(
                     JSON_FIELD_DEBUG_INFO.to_string(),
                     json!(enhanced_result.debug_info),

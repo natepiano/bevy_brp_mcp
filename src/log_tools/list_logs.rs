@@ -3,8 +3,9 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
-use super::support::log_utils;
+use super::support::LogFileEntry;
 use crate::BrpMcpService;
+use crate::log_tools::support;
 use crate::support::{params, response};
 
 pub fn handle(
@@ -21,18 +22,18 @@ pub fn handle(
         format!("Found {} log files", logs.len()),
         json!({
             "logs": logs,
-            "temp_directory": log_utils::get_log_directory().display().to_string(),
+            "temp_directory": support::get_log_directory().display().to_string(),
         }),
     ))
 }
 
 fn list_log_files(app_name_filter: &str) -> Result<Vec<serde_json::Value>, McpError> {
     // Use the iterator to get all log files with optional filter
-    let filter = |entry: &log_utils::LogFileEntry| -> bool {
+    let filter = |entry: &LogFileEntry| -> bool {
         app_name_filter.is_empty() || entry.app_name == app_name_filter
     };
 
-    let mut log_entries = log_utils::iterate_log_files(filter)?;
+    let mut log_entries = support::iterate_log_files(filter)?;
 
     // Sort by timestamp (newest first)
     log_entries.sort_by(|a, b| {

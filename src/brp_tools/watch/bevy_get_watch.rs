@@ -5,11 +5,10 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::Value;
 
-use super::constants::{
+use crate::BrpMcpService;
+use crate::brp_tools::constants::{
     DEFAULT_BRP_PORT, JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITY, JSON_FIELD_PORT,
 };
-use crate::BrpMcpService;
-use crate::brp_tools::support;
 use crate::support::{params, schema};
 use crate::tools::{DESC_BEVY_GET_WATCH, TOOL_BEVY_GET_WATCH};
 
@@ -42,8 +41,8 @@ pub async fn handle(
     let port = params::extract_optional_u16(&arguments, JSON_FIELD_PORT, DEFAULT_BRP_PORT);
 
     // Start the watch task
-    let result = support::start_entity_watch_task(entity_id, components, port).await;
-    Ok(support::format_watch_start_response(
+    let result = super::support::start_entity_watch_task(entity_id, components, port).await;
+    Ok(super::support::format_watch_start_response(
         result,
         "entity watch",
         entity_id,

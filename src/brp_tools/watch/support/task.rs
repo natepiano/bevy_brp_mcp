@@ -6,10 +6,10 @@ use futures::StreamExt;
 use serde_json::Value;
 use tracing::{debug, error, info};
 
-use super::watch_manager::{WATCH_MANAGER, WatchInfo};
+use super::logger::{self as watch_logger, BufferedWatchLogger};
+use super::manager::{WATCH_MANAGER, WatchInfo};
 use crate::brp_tools::constants::{BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH};
-use crate::brp_tools::support::json_rpc_builder::BrpJsonRpcBuilder;
-use crate::brp_tools::support::watch_logger::{self, BufferedWatchLogger};
+use crate::brp_tools::support::BrpJsonRpcBuilder;
 use crate::error::BrpMcpError;
 use crate::tools::{BRP_METHOD_GET_WATCH, BRP_METHOD_LIST_WATCH};
 

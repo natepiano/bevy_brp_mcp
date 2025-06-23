@@ -5,10 +5,9 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::Value;
 
-use super::constants::JSON_FIELD_WATCH_ID;
-use super::support;
+use super::support::manager::WATCH_MANAGER;
 use crate::BrpMcpService;
-use crate::brp_tools::support::watch_manager::WATCH_MANAGER;
+use crate::brp_tools::constants::JSON_FIELD_WATCH_ID;
 use crate::support::{params, schema};
 use crate::tools::{DESC_BRP_STOP_WATCH, TOOL_BRP_STOP_WATCH};
 
@@ -41,5 +40,5 @@ pub async fn handle(
         let mut manager = WATCH_MANAGER.lock().await;
         manager.stop_watch(watch_id)
     };
-    Ok(support::format_watch_stop_response(result, watch_id))
+    Ok(super::support::format_watch_stop_response(result, watch_id))
 }

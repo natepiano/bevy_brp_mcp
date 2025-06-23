@@ -6,7 +6,7 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
-use super::support::log_utils;
+use super::support::{self, LogFileEntry};
 use crate::BrpMcpService;
 use crate::support::{params, response};
 
@@ -46,7 +46,7 @@ fn cleanup_log_files(
     };
 
     // Use the iterator to get all log files with filters
-    let filter = |entry: &log_utils::LogFileEntry| -> bool {
+    let filter = |entry: &LogFileEntry| -> bool {
         // Apply app name filter
         if !app_name_filter.is_empty() && entry.app_name != app_name_filter {
             return false;
@@ -65,7 +65,7 @@ fn cleanup_log_files(
         true
     };
 
-    let log_entries = log_utils::iterate_log_files(filter)?;
+    let log_entries = support::iterate_log_files(filter)?;
 
     // Delete the files
     for entry in log_entries {

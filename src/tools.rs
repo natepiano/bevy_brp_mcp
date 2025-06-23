@@ -16,7 +16,7 @@ macro_rules! define_method {
     (bevy, $method:ident) => {
         paste::paste! {
             pub const [<BRP_METHOD_ $method:upper>]: &str = concat!("bevy/", stringify!($method));
-            pub const [<TOOL_BEVY_ $method:upper>]: &str = concat!("mcp__brp__bevy_", stringify!($method));
+            pub const [<TOOL_BEVY_ $method:upper>]: &str = concat!("bevy_", stringify!($method));
             pub const [<DESC_BEVY_ $method:upper>]: &str = include_help_text!(concat!("brp_tools/bevy_", stringify!($method), ".txt"));
         }
     };
@@ -25,7 +25,7 @@ macro_rules! define_method {
     (bevy, $method:ident => $brp_path:expr) => {
         paste::paste! {
             pub const [<BRP_METHOD_ $method:upper>]: &str = $brp_path;
-            pub const [<TOOL_BEVY_ $method:upper>]: &str = concat!("mcp__brp__bevy_", stringify!($method));
+            pub const [<TOOL_BEVY_ $method:upper>]: &str = concat!("bevy_", stringify!($method));
             pub const [<DESC_BEVY_ $method:upper>]: &str = include_help_text!(concat!("brp_tools/bevy_", stringify!($method), ".txt"));
         }
     };
@@ -34,7 +34,7 @@ macro_rules! define_method {
     (brp_extras, $method:ident) => {
         paste::paste! {
             pub const [<BRP_METHOD_EXTRAS_ $method:upper>]: &str = concat!("brp_extras/", stringify!($method));
-            pub const [<TOOL_BRP_EXTRAS_ $method:upper>]: &str = concat!("mcp__brp__brp_extras_", stringify!($method));
+            pub const [<TOOL_BRP_EXTRAS_ $method:upper>]: &str = concat!("brp_extras_", stringify!($method));
             pub const [<DESC_BRP_EXTRAS_ $method:upper>]: &str = include_help_text!(concat!("brp_tools/brp_extras_", stringify!($method), ".txt"));
         }
     };
@@ -42,7 +42,7 @@ macro_rules! define_method {
     // For BRP internal tools (server-side functionality)
     (brp, $method:ident) => {
         paste::paste! {
-            pub const [<TOOL_BRP_ $method:upper>]: &str = concat!("mcp__brp__brp_", stringify!($method));
+            pub const [<TOOL_BRP_ $method:upper>]: &str = concat!("brp_", stringify!($method));
             pub const [<DESC_BRP_ $method:upper>]: &str = include_help_text!(concat!("brp_tools/brp_", stringify!($method), ".txt"));
         }
     };
@@ -50,7 +50,7 @@ macro_rules! define_method {
     // For app management tools
     (app, $method:ident) => {
         paste::paste! {
-            pub const [<TOOL_ $method:upper>]: &str = concat!("mcp__brp__", stringify!($method));
+            pub const [<TOOL_ $method:upper>]: &str = concat!("brp_", stringify!($method));
             pub const [<DESC_ $method:upper>]: &str = include_help_text!(concat!("app_tools/brp_", stringify!($method), ".txt"));
         }
     };
@@ -58,7 +58,7 @@ macro_rules! define_method {
     // For log management tools
     (log, $method:ident) => {
         paste::paste! {
-            pub const [<TOOL_ $method:upper>]: &str = concat!("mcp__brp__", stringify!($method));
+            pub const [<TOOL_ $method:upper>]: &str = concat!("brp_", stringify!($method));
             pub const [<DESC_ $method:upper>]: &str = include_help_text!(concat!("log_tools/brp_", stringify!($method), ".txt"));
         }
     };

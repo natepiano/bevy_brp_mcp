@@ -2,11 +2,11 @@ use rmcp::model::CallToolResult;
 use serde_json::{Value, json};
 
 use super::brp_client::BrpError;
-use super::request_handler::FormatterContext;
 use crate::brp_tools::constants::{
     BRP_ERROR_CODE_INVALID_REQUEST, JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE,
     JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PORT,
 };
+use crate::brp_tools::request_handler::FormatterContext;
 use crate::support::response::ResponseBuilder;
 use crate::support::serialization::json_response_to_result;
 

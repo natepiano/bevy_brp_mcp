@@ -5,10 +5,10 @@ use serde_json::{Map, Value};
 use super::detection::{ErrorPattern, extract_path_from_error_context};
 use super::field_mapper::map_field_to_tuple_index;
 use super::path_parser::{parse_generic_enum_field_access, parse_path_to_field_access};
-use crate::brp_tools::support::brp_client::BrpError;
-use crate::brp_tools::support::request_handler::constants::{
+use crate::brp_tools::request_handler::constants::{
     FIELD_LABEL, FIELD_NAME, FIELD_TEXT, FIELD_VALUE,
 };
+use crate::brp_tools::support::brp_client::BrpError;
 
 /// Helper function to format type mismatch error messages
 pub fn type_format_error(type_name: &str, expected: &str, found: &str) -> String {
