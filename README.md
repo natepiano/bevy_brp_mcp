@@ -1,7 +1,6 @@
 # About
 
 [![Crates.io](https://img.shields.io/crates/v/bevy_brp_mcp.svg)](https://crates.io/crates/bevy_brp_mcp)
-[![Documentation](https://docs.rs/bevy_brp_mcp/badge.svg)](https://docs.rs/bevy_brp_mcp/)
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/natepiano/bevy_brp_mcp#license)
 [![Crates.io](https://img.shields.io/crates/d/bevy_brp_mcp.svg)](https://crates.io/crates/bevy_brp_mcp)
 [![CI](https://github.com/natepiano/bevy_brp_mcp/workflows/CI/badge.svg)](https://github.com/natepiano/bevy_brp_mcp/actions)

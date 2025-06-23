@@ -1,14 +1,14 @@
 [package]
-authors       = ["natepiano <slicks.curable.0k@icloud.com>"]
-categories    = ["development-tools", "game-development"]
-description   = "MCP server for Bevy Remote Protocol (BRP) integration"
-edition       = "2024"
-keywords      = ["bevy", "brp", "mcp", "protocol", "remote"]
-license       = "MIT OR Apache-2.0"
-name          = "bevy_brp_mcp"
-readme        = "README.md"
-repository    = "https://github.com/natepiano/bevy_brp_mcp"
-version       = "0.1.3"
+authors     = ["natepiano <slicks.curable.0k@icloud.com>"]
+categories  = ["development-tools", "game-development"]
+description = "MCP server for Bevy Remote Protocol (BRP) integration"
+edition     = "2024"
+keywords    = ["bevy", "brp", "mcp", "protocol", "remote"]
+license     = "MIT OR Apache-2.0"
+name        = "bevy_brp_mcp"
+readme      = "README.md"
+repository  = "https://github.com/natepiano/bevy_brp_mcp"
+version     = "0.1.4"
 
 [dependencies]
 bevy = { version = "0.16.1", default-features = false, features = [
