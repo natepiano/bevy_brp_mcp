@@ -1,119 +1,105 @@
 [
   {
-    "id": "1",
-    "content": "Set terminal title: echo -e \"\\e]2;Implementation: Clippy fixes for expect() and missing docs\\007\"",
+    "id": "terminal_title",
+    "content": "Set terminal title to indicate current work",
+    "status": "completed",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "create_log_constants",
+    "content": "Create src/log_tools/constants.rs and add PARAM_FILE_PATH constant",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "2",
-    "content": "MetaTodo: Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "id": "build_after_log_constants",
+    "content": "Build and fix any compile errors after creating log constants",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "3",
-    "content": "Fix 10 regex constants in format_discovery/constants.rs - replace .expect() with proper error handling",
+    "id": "move_param_constants",
+    "content": "Move PARAM_PORT, PARAM_APP_NAME, PARAM_EXAMPLE_NAME to src/constants.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "4",
-    "content": "Build and fix any compile errors and any compile warnings (no dead code, no _ prefixes)",
+    "id": "build_after_param_move",
+    "content": "Build and fix any compile errors after moving parameter constants",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "5",
-    "content": "Fix all .expect() calls in format_discovery tests (8+ instances) - replace with .unwrap() in tests",
+    "id": "update_imports",
+    "content": "Update any imports referencing the moved constants",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "6",
-    "content": "Build and fix any compile errors and any compile warnings (no dead code, no _ prefixes)",
+    "id": "build_after_imports",
+    "content": "Build and fix any compile errors after updating imports",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "7",
-    "content": "Add missing crate-level documentation comment to main.rs",
+    "id": "remove_from_tools",
+    "content": "Remove the moved constants from src/tools.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "8",
-    "content": "Add missing documentation for BrpMcpService struct in main.rs",
+    "id": "build_final",
+    "content": "Build and fix any compile errors and warnings after removing constants",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "9",
-    "content": "Add missing documentation for BrpMcpService.roots field in main.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "10",
-    "content": "Build and fix any compile errors and any compile warnings (no dead code, no _ prefixes)",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "11",
+    "id": "run_clippy",
     "content": "Run cargo clippy --workspace --all-targets --all-features",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "12",
-    "content": "Fix any clippy issues (no dead code, no _ prefixes)",
+    "id": "fix_clippy_issues",
+    "content": "Fix any clippy issues without using underscore prefixes or dead_code allows",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "13",
+    "id": "format_code",
     "content": "Run cargo +nightly fmt",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "14",
+    "id": "run_tests",
     "content": "Run cargo nextest run",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "15",
+    "id": "review_test_issues",
     "content": "If there are test issues, STOP and review them with the user",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "16",
-    "content": "Task a new subagent to do a code review of the changes - focus on identifying duplication and complexity (read-only)",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "17",
-    "content": "When subagent returns, STOP and review the suggested changes with the user",
+    "id": "code_review_prep",
+    "content": "STOP work here and return control, then task subagent for code review focusing on duplication and complexity",
     "status": "pending",
     "priority": "high",
     "notes": ""
