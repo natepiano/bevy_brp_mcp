@@ -11,12 +11,12 @@ use crate::brp_tools::support::watch_manager::WATCH_MANAGER;
 use crate::support::response::ResponseBuilder;
 use crate::support::schema;
 use crate::support::serialization::json_response_to_result;
-use crate::tools::{DESC_BEVY_LIST_ACTIVE_WATCHES, TOOL_BEVY_LIST_ACTIVE_WATCHES};
+use crate::tools::{DESC_BRP_LIST_ACTIVE_WATCHES, TOOL_BRP_LIST_ACTIVE_WATCHES};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name:         TOOL_BEVY_LIST_ACTIVE_WATCHES.into(),
-        description:  DESC_BEVY_LIST_ACTIVE_WATCHES.into(),
+        name:         TOOL_BRP_LIST_ACTIVE_WATCHES.into(),
+        description:  DESC_BRP_LIST_ACTIVE_WATCHES.into(),
         input_schema: schema::SchemaBuilder::new().build(),
     }
 }

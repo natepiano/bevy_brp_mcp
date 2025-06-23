@@ -60,14 +60,15 @@ use crate::tools::{
     BRP_METHOD_GET, BRP_METHOD_GET_RESOURCE, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE,
     BRP_METHOD_LIST, BRP_METHOD_LIST_RESOURCES, BRP_METHOD_MUTATE_COMPONENT,
     BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_REMOVE, BRP_METHOD_REMOVE_RESOURCE,
-    BRP_METHOD_RPC_DISCOVER, DESC_BEVY_SCREENSHOT, DESC_BRP_DESTROY,
-    DESC_BRP_EXTRAS_DISCOVER_FORMAT, DESC_BRP_GET, DESC_BRP_GET_RESOURCE, DESC_BRP_INSERT,
-    DESC_BRP_INSERT_RESOURCE, DESC_BRP_LIST, DESC_BRP_LIST_RESOURCES, DESC_BRP_MUTATE_COMPONENT,
-    DESC_BRP_MUTATE_RESOURCE, DESC_BRP_REMOVE, DESC_BRP_REMOVE_RESOURCE, DESC_BRP_RPC_DISCOVER,
-    TOOL_BRP_DESTROY, TOOL_BRP_EXTRAS_DISCOVER_FORMAT, TOOL_BRP_EXTRAS_SCREENSHOT, TOOL_BRP_GET,
-    TOOL_BRP_GET_RESOURCE, TOOL_BRP_INSERT, TOOL_BRP_INSERT_RESOURCE, TOOL_BRP_LIST,
-    TOOL_BRP_LIST_RESOURCES, TOOL_BRP_MUTATE_COMPONENT, TOOL_BRP_MUTATE_RESOURCE, TOOL_BRP_REMOVE,
-    TOOL_BRP_REMOVE_RESOURCE, TOOL_BRP_RPC_DISCOVER,
+    BRP_METHOD_RPC_DISCOVER, DESC_BEVY_DESTROY, DESC_BEVY_GET, DESC_BEVY_GET_RESOURCE,
+    DESC_BEVY_INSERT, DESC_BEVY_INSERT_RESOURCE, DESC_BEVY_LIST, DESC_BEVY_LIST_RESOURCES,
+    DESC_BEVY_MUTATE_COMPONENT, DESC_BEVY_MUTATE_RESOURCE, DESC_BEVY_REMOVE,
+    DESC_BEVY_REMOVE_RESOURCE, DESC_BEVY_RPC_DISCOVER, DESC_BRP_EXTRAS_DISCOVER_FORMAT,
+    DESC_BRP_EXTRAS_SCREENSHOT, TOOL_BEVY_DESTROY, TOOL_BEVY_GET, TOOL_BEVY_GET_RESOURCE,
+    TOOL_BEVY_INSERT, TOOL_BEVY_INSERT_RESOURCE, TOOL_BEVY_LIST, TOOL_BEVY_LIST_RESOURCES,
+    TOOL_BEVY_MUTATE_COMPONENT, TOOL_BEVY_MUTATE_RESOURCE, TOOL_BEVY_REMOVE,
+    TOOL_BEVY_REMOVE_RESOURCE, TOOL_BEVY_RPC_DISCOVER, TOOL_BRP_EXTRAS_DISCOVER_FORMAT,
+    TOOL_BRP_EXTRAS_SCREENSHOT,
 };
 
 /// Represents a parameter definition for a BRP tool
@@ -194,8 +195,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
     vec![
         // bevy_destroy
         BrpToolDef {
-            name:            TOOL_BRP_DESTROY,
-            description:     DESC_BRP_DESTROY,
+            name:            TOOL_BEVY_DESTROY,
+            description:     DESC_BEVY_DESTROY,
             method:          BRP_METHOD_DESTROY,
             params:          vec![
                 ParamDef {
@@ -223,8 +224,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_get
         BrpToolDef {
-            name:            TOOL_BRP_GET,
-            description:     DESC_BRP_GET,
+            name:            TOOL_BEVY_GET,
+            description:     DESC_BEVY_GET,
             method:          BRP_METHOD_GET,
             params:          vec![
                 ParamDef {
@@ -264,8 +265,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_list
         BrpToolDef {
-            name:            TOOL_BRP_LIST,
-            description:     DESC_BRP_LIST,
+            name:            TOOL_BEVY_LIST,
+            description:     DESC_BEVY_LIST,
             method:          BRP_METHOD_LIST,
             params:          vec![
                 ParamDef {
@@ -299,8 +300,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_remove
         BrpToolDef {
-            name:            TOOL_BRP_REMOVE,
-            description:     DESC_BRP_REMOVE,
+            name:            TOOL_BEVY_REMOVE,
+            description:     DESC_BEVY_REMOVE,
             method:          BRP_METHOD_REMOVE,
             params:          vec![
                 ParamDef {
@@ -334,8 +335,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_insert
         BrpToolDef {
-            name:            TOOL_BRP_INSERT,
-            description:     DESC_BRP_INSERT,
+            name:            TOOL_BEVY_INSERT,
+            description:     DESC_BEVY_INSERT,
             method:          BRP_METHOD_INSERT,
             params:          vec![
                 ParamDef {
@@ -369,8 +370,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_get_resource
         BrpToolDef {
-            name:            TOOL_BRP_GET_RESOURCE,
-            description:     DESC_BRP_GET_RESOURCE,
+            name:            TOOL_BEVY_GET_RESOURCE,
+            description:     DESC_BEVY_GET_RESOURCE,
             method:          BRP_METHOD_GET_RESOURCE,
             params:          vec![
                 ParamDef {
@@ -404,8 +405,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_insert_resource
         BrpToolDef {
-            name:            TOOL_BRP_INSERT_RESOURCE,
-            description:     DESC_BRP_INSERT_RESOURCE,
+            name:            TOOL_BEVY_INSERT_RESOURCE,
+            description:     DESC_BEVY_INSERT_RESOURCE,
             method:          BRP_METHOD_INSERT_RESOURCE,
             params:          vec![
                 ParamDef {
@@ -439,8 +440,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_remove_resource
         BrpToolDef {
-            name:            TOOL_BRP_REMOVE_RESOURCE,
-            description:     DESC_BRP_REMOVE_RESOURCE,
+            name:            TOOL_BEVY_REMOVE_RESOURCE,
+            description:     DESC_BEVY_REMOVE_RESOURCE,
             method:          BRP_METHOD_REMOVE_RESOURCE,
             params:          vec![
                 ParamDef {
@@ -468,8 +469,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_mutate_component
         BrpToolDef {
-            name:            TOOL_BRP_MUTATE_COMPONENT,
-            description:     DESC_BRP_MUTATE_COMPONENT,
+            name:            TOOL_BEVY_MUTATE_COMPONENT,
+            description:     DESC_BEVY_MUTATE_COMPONENT,
             method:          BRP_METHOD_MUTATE_COMPONENT,
             params:          vec![
                 ParamDef {
@@ -515,8 +516,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_mutate_resource
         BrpToolDef {
-            name:            TOOL_BRP_MUTATE_RESOURCE,
-            description:     DESC_BRP_MUTATE_RESOURCE,
+            name:            TOOL_BEVY_MUTATE_RESOURCE,
+            description:     DESC_BEVY_MUTATE_RESOURCE,
             method:          BRP_METHOD_MUTATE_RESOURCE,
             params:          vec![
                 ParamDef {
@@ -556,8 +557,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_list_resources
         BrpToolDef {
-            name:            TOOL_BRP_LIST_RESOURCES,
-            description:     DESC_BRP_LIST_RESOURCES,
+            name:            TOOL_BEVY_LIST_RESOURCES,
+            description:     DESC_BEVY_LIST_RESOURCES,
             method:          BRP_METHOD_LIST_RESOURCES,
             params:          vec![ParamDef {
                 name:        JSON_FIELD_PORT,
@@ -583,8 +584,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         },
         // bevy_rpc_discover
         BrpToolDef {
-            name:            TOOL_BRP_RPC_DISCOVER,
-            description:     DESC_BRP_RPC_DISCOVER,
+            name:            TOOL_BEVY_RPC_DISCOVER,
+            description:     DESC_BEVY_RPC_DISCOVER,
             method:          BRP_METHOD_RPC_DISCOVER,
             params:          vec![ParamDef {
                 name:        JSON_FIELD_PORT,
@@ -634,7 +635,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
         // bevy_screenshot
         BrpToolDef {
             name:            TOOL_BRP_EXTRAS_SCREENSHOT,
-            description:     DESC_BEVY_SCREENSHOT,
+            description:     DESC_BRP_EXTRAS_SCREENSHOT,
             method:          BRP_METHOD_EXTRAS_SCREENSHOT,
             params:          vec![
                 ParamDef {
@@ -676,7 +677,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         // bevy_query - has custom extractors for component counts
         BrpToolDef {
             name:            crate::tools::TOOL_BEVY_QUERY,
-            description:     "Query entities using the bevy/query BRP method. This powerful tool allows you to search for entities based on their components, applying filters and returning component data. This tool wraps the bevy/query method for easier use.",
+            description:     crate::tools::DESC_BEVY_QUERY,
             method:          crate::tools::BRP_METHOD_QUERY,
             params:          vec![
                 ParamDef {
@@ -731,7 +732,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         // bevy_spawn - has dynamic entity extraction from response
         BrpToolDef {
             name:            crate::tools::TOOL_BEVY_SPAWN,
-            description:     "Spawn a new entity with components using the bevy/spawn BRP method. Creates a new entity in the Bevy world with the specified components.",
+            description:     crate::tools::DESC_BEVY_SPAWN,
             method:          crate::tools::BRP_METHOD_SPAWN,
             params:          vec![
                 ParamDef {
@@ -766,7 +767,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         // brp_execute - has dynamic method selection
         BrpToolDef {
             name:            crate::tools::TOOL_BRP_EXECUTE,
-            description:     "Execute any Bevy Remote Protocol (BRP) method on a running Bevy app. This tool allows you to send arbitrary BRP commands and receive responses.",
+            description:     crate::tools::DESC_BRP_EXECUTE,
             method:          "", // Dynamic method
             params:          vec![
                 ParamDef {
@@ -801,7 +802,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         // bevy_registry_schema - has complex parameter transformation
         BrpToolDef {
             name:            crate::tools::TOOL_BEVY_REGISTRY_SCHEMA,
-            description:     "Get JSON schema information for registered types using the bevy/registry/schema BRP method. Retrieves type schema definitions from the Bevy app's reflection registry.",
+            description:     crate::tools::DESC_BEVY_REGISTRY_SCHEMA,
             method:          crate::tools::BRP_METHOD_REGISTRY_SCHEMA,
             params:          vec![
                 ParamDef {
@@ -848,7 +849,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
         // bevy_reparent - has array parameter handling
         BrpToolDef {
             name:            crate::tools::TOOL_BEVY_REPARENT,
-            description:     "Change the parent of an entity using the bevy/reparent BRP method. Modifies the hierarchical relationship between entities by setting or removing parent-child relationships.",
+            description:     crate::tools::DESC_BEVY_REPARENT,
             method:          crate::tools::BRP_METHOD_REPARENT,
             params:          vec![
                 ParamDef {

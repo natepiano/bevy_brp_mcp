@@ -10,12 +10,12 @@ use super::support;
 use crate::BrpMcpService;
 use crate::brp_tools::support::watch_manager::WATCH_MANAGER;
 use crate::support::{params, schema};
-use crate::tools::{DESC_BEVY_STOP_WATCH, TOOL_BEVY_STOP_WATCH};
+use crate::tools::{DESC_BRP_STOP_WATCH, TOOL_BRP_STOP_WATCH};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name:         TOOL_BEVY_STOP_WATCH.into(),
-        description:  DESC_BEVY_STOP_WATCH.into(),
+        name:         TOOL_BRP_STOP_WATCH.into(),
+        description:  DESC_BRP_STOP_WATCH.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_number_property(
                 JSON_FIELD_WATCH_ID,

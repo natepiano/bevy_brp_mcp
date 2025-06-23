@@ -9,12 +9,12 @@ use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT};
 use super::support;
 use crate::BrpMcpService;
 use crate::support::{params, schema};
-use crate::tools::{DESC_BRP_LIST_WATCH, TOOL_BRP_LIST_WATCH};
+use crate::tools::{DESC_BEVY_LIST_WATCH, TOOL_BEVY_LIST_WATCH};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name:         TOOL_BRP_LIST_WATCH.into(),
-        description:  DESC_BRP_LIST_WATCH.into(),
+        name:         TOOL_BEVY_LIST_WATCH.into(),
+        description:  DESC_BEVY_LIST_WATCH.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_number_property(
                 JSON_FIELD_ENTITY,

@@ -1,3 +1,11 @@
+//! # Bevy BRP MCP Server
+//!
+//! A Model Context Protocol server that provides tools for interacting with
+//! Bevy applications through the Bevy Remote Protocol (BRP).
+//!
+//! This server enables remote debugging, inspection, and manipulation of
+//! Bevy applications at runtime through a standardized MCP interface.
+
 use std::error::Error;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -21,8 +29,16 @@ mod registry;
 mod support;
 mod tools;
 
+/// MCP service implementation for Bevy Remote Protocol integration.
+///
+/// This service provides tools for interacting with Bevy applications through BRP,
+/// including entity manipulation, component management, and resource access.
 #[derive(Clone)]
 pub struct BrpMcpService {
+    /// Project root directories configured by the MCP client.
+    ///
+    /// These paths are used to locate Bevy applications and projects
+    /// for scanning and launching operations.
     pub roots: Arc<Mutex<Vec<PathBuf>>>,
 }
 

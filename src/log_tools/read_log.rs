@@ -7,11 +7,12 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
+use super::constants::PARAM_FILE_PATH;
 use super::support::log_utils;
 use crate::BrpMcpService;
 use crate::error::BrpMcpError;
 use crate::support::{params, response, schema};
-use crate::tools::{DESC_READ_LOG, PARAM_FILE_PATH, TOOL_READ_LOG};
+use crate::tools::{DESC_READ_LOG, TOOL_READ_LOG};
 
 pub fn register_tool() -> Tool {
     Tool {

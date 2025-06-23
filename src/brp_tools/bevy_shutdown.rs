@@ -10,11 +10,11 @@ use tokio::time::timeout;
 use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_STATUS, JSONRPC_FIELD};
 use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
+use crate::constants::{PARAM_APP_NAME, PARAM_PORT};
 use crate::error::BrpMcpError;
 use crate::support::{params, response, schema};
 use crate::tools::{
-    BRP_METHOD_EXTRAS_SHUTDOWN, DESC_BEVY_SHUTDOWN, PARAM_APP_NAME, PARAM_PORT,
-    TOOL_BRP_EXTRAS_SHUTDOWN,
+    BRP_METHOD_EXTRAS_SHUTDOWN, DESC_BRP_EXTRAS_SHUTDOWN, TOOL_BRP_EXTRAS_SHUTDOWN,
 };
 
 /// Result of a shutdown operation
@@ -111,7 +111,7 @@ async fn shutdown_app(app_name: &str, port: u16) -> ShutdownResult {
 pub fn register_tool() -> Tool {
     Tool {
         name:         TOOL_BRP_EXTRAS_SHUTDOWN.into(),
-        description:  DESC_BEVY_SHUTDOWN.into(),
+        description:  DESC_BRP_EXTRAS_SHUTDOWN.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property(PARAM_APP_NAME, "Name of the Bevy app to shutdown", true)
             .add_number_property(

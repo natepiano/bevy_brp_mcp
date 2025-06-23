@@ -113,21 +113,21 @@ pub async fn handle_tool_call(
         }
 
         // Streaming/watch tools (custom logic)
-        name if name == crate::tools::TOOL_BRP_GET_WATCH => {
+        name if name == crate::tools::TOOL_BEVY_GET_WATCH => {
             brp_get_watch::handle(service, request, context).await
         }
-        name if name == crate::tools::TOOL_BRP_LIST_WATCH => {
+        name if name == crate::tools::TOOL_BEVY_LIST_WATCH => {
             brp_list_watch::handle(service, request, context).await
         }
-        name if name == crate::tools::TOOL_BEVY_STOP_WATCH => {
+        name if name == crate::tools::TOOL_BRP_STOP_WATCH => {
             bevy_stop_watch::handle(service, request, context).await
         }
-        name if name == crate::tools::TOOL_BEVY_LIST_ACTIVE_WATCHES => {
+        name if name == crate::tools::TOOL_BRP_LIST_ACTIVE_WATCHES => {
             bevy_list_active_watches::handle(service, request, context).await
         }
 
         // Debug tools
-        name if name == crate::tools::TOOL_SET_DEBUG_MODE => {
+        name if name == crate::tools::TOOL_BRP_SET_DEBUG_MODE => {
             debug_tools::handle_set_debug_mode(service, request, context)
         }
 

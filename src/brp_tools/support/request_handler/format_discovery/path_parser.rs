@@ -127,6 +127,7 @@ pub fn parse_generic_enum_field_access(path: &str) -> Option<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used, clippy::unwrap_used)]
 mod tests {
     use super::*;
     use crate::brp_tools::support::request_handler::format_discovery::types::{

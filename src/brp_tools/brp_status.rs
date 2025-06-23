@@ -10,17 +10,22 @@ use tokio::time::timeout;
 use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_STATUS, JSONRPC_FIELD};
 use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
+use crate::constants::{PARAM_APP_NAME, PARAM_PORT};
 use crate::error::BrpMcpError;
 use crate::support::{params, response, schema};
-use crate::tools::{BRP_METHOD_LIST, PARAM_APP_NAME, PARAM_PORT, TOOL_BRP_STATUS};
+use crate::tools::{BRP_METHOD_LIST, DESC_BRP_STATUS, TOOL_BRP_STATUS};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: TOOL_BRP_STATUS.into(),
-        description: "Check if a process is running with BRP (Bevy Remote Protocol) enabled. This tool helps diagnose whether a process is running and properly configured with RemotePlugin.".into(),
+        name:         TOOL_BRP_STATUS.into(),
+        description:  DESC_BRP_STATUS.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_string_property(PARAM_APP_NAME, "Name of the process to check for", true)
-            .add_number_property(PARAM_PORT, &format!("Port to check for BRP (default: {DEFAULT_BRP_PORT})"), false)
+            .add_number_property(
+                PARAM_PORT,
+                &format!("Port to check for BRP (default: {DEFAULT_BRP_PORT})"),
+                false,
+            )
             .build(),
     }
 }

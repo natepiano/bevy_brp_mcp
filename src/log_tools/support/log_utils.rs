@@ -6,7 +6,7 @@ use rmcp::Error as McpError;
 use serde_json::json;
 
 use crate::error::BrpMcpError;
-use crate::tools::PARAM_FILE_PATH;
+use crate::log_tools::constants::PARAM_FILE_PATH;
 
 // Constants
 pub const LOG_PREFIX: &str = "bevy_brp_mcp_";

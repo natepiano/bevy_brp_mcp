@@ -432,6 +432,7 @@ dependencies = [
  "chrono",
  "futures",
  "once_cell",
+ "paste",
  "regex",
  "reqwest",
  "rmcp",

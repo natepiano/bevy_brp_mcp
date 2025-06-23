@@ -8,10 +8,10 @@ use serde_json::json;
 
 use super::support::{logging, process, scanning};
 use crate::BrpMcpService;
-use crate::constants::{DEFAULT_PROFILE, PARAM_PROFILE, PROFILE_RELEASE};
+use crate::constants::{DEFAULT_PROFILE, PARAM_APP_NAME, PARAM_PROFILE, PROFILE_RELEASE};
 use crate::error::BrpMcpError;
 use crate::support::{params, response, schema, service};
-use crate::tools::{DESC_LAUNCH_BEVY_APP, PARAM_APP_NAME, TOOL_LAUNCH_BEVY_APP};
+use crate::tools::{DESC_LAUNCH_BEVY_APP, TOOL_LAUNCH_BEVY_APP};
 
 pub fn register_tool() -> Tool {
     Tool {

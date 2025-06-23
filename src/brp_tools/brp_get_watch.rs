@@ -11,12 +11,12 @@ use super::constants::{
 use crate::BrpMcpService;
 use crate::brp_tools::support;
 use crate::support::{params, schema};
-use crate::tools::{DESC_BRP_GET_WATCH, TOOL_BRP_GET_WATCH};
+use crate::tools::{DESC_BEVY_GET_WATCH, TOOL_BEVY_GET_WATCH};
 
 pub fn register_tool() -> Tool {
     Tool {
-        name: TOOL_BRP_GET_WATCH.into(),
-        description: DESC_BRP_GET_WATCH.into(),
+        name: TOOL_BEVY_GET_WATCH.into(),
+        description: DESC_BEVY_GET_WATCH.into(),
         input_schema: schema::SchemaBuilder::new()
             .add_number_property(JSON_FIELD_ENTITY, "The entity ID to watch for component changes", true)
             .add_any_property(

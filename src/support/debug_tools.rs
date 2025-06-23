@@ -52,13 +52,17 @@ pub fn handle_set_debug_mode(
 
 /// Register the `set_debug_mode` tool
 pub fn register_tool() -> Tool {
-    use crate::tools::TOOL_SET_DEBUG_MODE;
+    use crate::tools::{DESC_BRP_SET_DEBUG_MODE, TOOL_BRP_SET_DEBUG_MODE};
 
     Tool {
-        name: TOOL_SET_DEBUG_MODE.into(),
-        description: "Toggle debug mode for format discovery output. When enabled, detailed debug information about BRP format discovery attempts will be included in error responses.".into(),
+        name:         TOOL_BRP_SET_DEBUG_MODE.into(),
+        description:  DESC_BRP_SET_DEBUG_MODE.into(),
         input_schema: schema::SchemaBuilder::new()
-            .add_boolean_property("enabled", "Set to true to enable debug output, false to disable", true)
+            .add_boolean_property(
+                "enabled",
+                "Set to true to enable debug output, false to disable",
+                true,
+            )
             .build(),
     }
 }
