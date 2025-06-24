@@ -1,0 +1,226 @@
+[
+  {
+    "id": "1",
+    "content": "Set terminal title: echo -e \"\\e]2;Implementation: Add keyboard simulation to bevy_brp_extras & bevy_brp_mcp v0.2.1\\007\"",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "2",
+    "content": "META: Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "3",
+    "content": "bevy_brp_extras: Create src/keyboard.rs with request/response structures and handlers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "4",
+    "content": "bevy_brp_extras: Build and fix any compile errors and warnings (no dead code, no unused _)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "5",
+    "content": "bevy_brp_extras: Update plugin.rs to register send_keys and list_key_codes methods",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "6",
+    "content": "bevy_brp_extras: Build and fix any compile errors and warnings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "7",
+    "content": "bevy_brp_extras: Update lib.rs to add keyboard module and exports",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "8",
+    "content": "bevy_brp_extras: Build and fix any compile errors and warnings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "9",
+    "content": "bevy_brp_extras: Create CHANGELOG.md with Keep a Changelog format",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "10",
+    "content": "bevy_brp_extras: Update Cargo.toml version to 0.2.1",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "11",
+    "content": "bevy_brp_extras: Build final version and verify",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "12",
+    "content": "bevy_brp_mcp: Create help_text/brp_tools/brp_extras_send_keys.txt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "13",
+    "content": "bevy_brp_mcp: Create help_text/brp_tools/brp_extras_list_key_codes.txt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "14",
+    "content": "bevy_brp_mcp: Update tools.rs to add send_keys and list_key_codes method definitions",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "15",
+    "content": "bevy_brp_mcp: Build and fix any compile errors and warnings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "16",
+    "content": "bevy_brp_mcp: Update tool_definitions.rs to add tools to get_brp_extras_tools()",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "17",
+    "content": "bevy_brp_mcp: Build and fix any compile errors and warnings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "18",
+    "content": "bevy_brp_mcp: Create app_tools/brp_extras_send_keys.rs handler wrapper",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "19",
+    "content": "bevy_brp_mcp: Create app_tools/brp_extras_list_key_codes.rs handler wrapper",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "20",
+    "content": "bevy_brp_mcp: Build and fix any compile errors and warnings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "21",
+    "content": "bevy_brp_mcp: Update app_tools/mod.rs to export new modules",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "22",
+    "content": "bevy_brp_mcp: Build and fix any compile errors and warnings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "23",
+    "content": "bevy_brp_mcp: Create CHANGELOG.md with Keep a Changelog format",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "24",
+    "content": "bevy_brp_mcp: Update Cargo.toml version to 0.2.1 and bevy_brp_extras dep",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "25",
+    "content": "bevy_brp_mcp: Build final version and verify",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "26",
+    "content": "Run cargo clippy --workspace --all-targets --all-features",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "27",
+    "content": "Fix any clippy issues (no dead code marks, no unused _)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "28",
+    "content": "Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "29",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "30",
+    "content": "If test issues, STOP and review with user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "31",
+    "content": "Task subagent for code review focusing on duplication and complexity (read-only)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "32",
+    "content": "Review subagent suggestions with user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
