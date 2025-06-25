@@ -25,9 +25,10 @@ pub async fn handle(
             // Get parameters
             let app_name = params::extract_required_string(&req, PARAM_APP_NAME)?;
             let profile = params::extract_optional_string(&req, PARAM_PROFILE, DEFAULT_PROFILE);
+            let workspace = params::extract_optional_workspace(&req);
 
             // Launch the app
-            launch_bevy_app(app_name, profile, &search_paths)
+            launch_bevy_app(app_name, profile, workspace.as_deref(), &search_paths)
         },
     )
     .await
@@ -36,10 +37,11 @@ pub async fn handle(
 pub fn launch_bevy_app(
     app_name: &str,
     profile: &str,
+    workspace: Option<&str>,
     search_paths: &[PathBuf],
 ) -> Result<CallToolResult, McpError> {
     // Find the app
-    let app = scanning::find_required_app(app_name, search_paths)?;
+    let app = scanning::find_required_app_with_workspace(app_name, workspace, search_paths)?;
 
     // Build the binary path
     let binary_path = app.get_binary_path(profile);
@@ -79,16 +81,20 @@ pub fn launch_bevy_app(
     let cmd = Command::new(&binary_path);
     let pid = process::launch_detached_process(cmd, manifest_dir, log_file_for_redirect, app_name)?;
 
+    let mut response_data = json!({
+        "app_name": app_name,
+        "pid": pid,
+        "working_directory": manifest_dir.display().to_string(),
+        "binary_path": binary_path.display().to_string(),
+        "profile": profile,
+        "log_file": log_file_path.display().to_string(),
+        "status": "running_in_background"
+    });
+
+    response::add_workspace_info_to_response(&mut response_data, Some(&app.workspace_root));
+
     Ok(response::success_json_response(
         format!("Successfully launched '{app_name}' (PID: {pid})"),
-        json!({
-            "app_name": app_name,
-            "pid": pid,
-            "working_directory": manifest_dir.display().to_string(),
-            "binary_path": binary_path.display().to_string(),
-            "profile": profile,
-            "log_file": log_file_path.display().to_string(),
-            "status": "running_in_background"
-        }),
+        response_data,
     ))
 }
