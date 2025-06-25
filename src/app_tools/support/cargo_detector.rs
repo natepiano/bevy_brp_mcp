@@ -53,99 +53,81 @@ impl CargoDetector {
         Ok(Self { metadata })
     }
 
+    /// Check if a package is a workspace member
+    fn is_workspace_member(&self, package: &Package) -> bool {
+        self.metadata.workspace_members.contains(&package.id)
+    }
+
+    /// Find packages that match the given filter criteria
+    fn find_packages_with_filter<'a, F>(&'a self, filter: F) -> impl Iterator<Item = &'a Package>
+    where
+        F: Fn(&Package) -> bool + 'a,
+    {
+        self.metadata
+            .packages
+            .iter()
+            .filter(|p| self.is_workspace_member(p))
+            .filter(move |p| filter(p))
+    }
+
+    /// Extract binary targets from a package
+    fn extract_binary_targets<'a>(
+        &'a self,
+        package: &'a Package,
+    ) -> impl Iterator<Item = BinaryInfo> + 'a {
+        package
+            .targets
+            .iter()
+            .filter(|t| t.is_bin())
+            .map(move |t| BinaryInfo {
+                name:           t.name.clone(),
+                workspace_root: self.metadata.workspace_root.clone().into(),
+                manifest_path:  package.manifest_path.clone().into(),
+            })
+    }
+
+    /// Extract example targets from a package
+    fn extract_example_targets(package: &Package) -> impl Iterator<Item = ExampleInfo> + '_ {
+        package
+            .targets
+            .iter()
+            .filter(|t| t.is_example())
+            .map(move |t| ExampleInfo {
+                name:          t.name.clone(),
+                package_name:  package.name.to_string(),
+                manifest_path: package.manifest_path.clone().into(),
+            })
+    }
+
+    /// Filter for packages that depend on Bevy
+    fn bevy_app_filter(package: &Package) -> bool {
+        Self::package_depends_on_bevy(package)
+    }
+
+    /// Filter for packages that have BRP support and are not `bevy_brp_mcp` itself
+    fn brp_app_filter(package: &Package) -> bool {
+        package.name.as_str() != "bevy_brp_mcp" && Self::package_has_brp_support(package)
+    }
+
     /// Find all Bevy applications (binaries) in the workspace/project
     pub fn find_bevy_apps(&self) -> Vec<BinaryInfo> {
-        let mut apps = Vec::new();
-
-        for package in &self.metadata.packages {
-            // Only process workspace members
-            if !self.metadata.workspace_members.contains(&package.id) {
-                continue;
-            }
-
-            // Check if this package depends on bevy
-            if !Self::package_depends_on_bevy(package) {
-                continue;
-            }
-
-            // Find all binary targets
-            for target in &package.targets {
-                if target.is_bin() {
-                    apps.push(BinaryInfo {
-                        name:           target.name.clone(),
-                        workspace_root: self.metadata.workspace_root.clone().into(),
-                        manifest_path:  package.manifest_path.clone().into(),
-                    });
-                }
-            }
-        }
-
-        apps
+        self.find_packages_with_filter(Self::bevy_app_filter)
+            .flat_map(|p| self.extract_binary_targets(p))
+            .collect()
     }
 
     /// Find all Bevy examples in the workspace/project
     pub fn find_bevy_examples(&self) -> Vec<ExampleInfo> {
-        let mut examples = Vec::new();
-
-        for package in &self.metadata.packages {
-            // Only process workspace members
-            if !self.metadata.workspace_members.contains(&package.id) {
-                continue;
-            }
-
-            // Check if this package depends on bevy
-            if !Self::package_depends_on_bevy(package) {
-                continue;
-            }
-
-            // Find all example targets
-            for target in &package.targets {
-                if target.is_example() {
-                    examples.push(ExampleInfo {
-                        name:          target.name.clone(),
-                        package_name:  package.name.to_string(),
-                        manifest_path: package.manifest_path.clone().into(),
-                    });
-                }
-            }
-        }
-
-        examples
+        self.find_packages_with_filter(Self::bevy_app_filter)
+            .flat_map(Self::extract_example_targets)
+            .collect()
     }
 
     /// Find all BRP-enabled Bevy applications (binaries) in the workspace/project
     pub fn find_brp_enabled_apps(&self) -> Vec<BinaryInfo> {
-        let mut apps = Vec::new();
-
-        for package in &self.metadata.packages {
-            // Only process workspace members
-            if !self.metadata.workspace_members.contains(&package.id) {
-                continue;
-            }
-
-            // Explicitly ignore bevy_brp_mcp itself (it's the BRP tool, not a BRP-enabled app)
-            if package.name.as_str() == "bevy_brp_mcp" {
-                continue;
-            }
-
-            // Check if this package has BRP support
-            if !Self::package_has_brp_support(package) {
-                continue;
-            }
-
-            // Find all binary targets
-            for target in &package.targets {
-                if target.is_bin() {
-                    apps.push(BinaryInfo {
-                        name:           target.name.clone(),
-                        workspace_root: self.metadata.workspace_root.clone().into(),
-                        manifest_path:  package.manifest_path.clone().into(),
-                    });
-                }
-            }
-        }
-
-        apps
+        self.find_packages_with_filter(Self::brp_app_filter)
+            .flat_map(|p| self.extract_binary_targets(p))
+            .collect()
     }
 
     fn package_depends_on_bevy(package: &Package) -> bool {
