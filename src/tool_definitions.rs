@@ -165,19 +165,20 @@ use crate::brp_tools::constants::{
     PARAM_WITHOUT_CRATES, PARAM_WITHOUT_TYPES,
 };
 use crate::tools::{
-    BRP_METHOD_DESTROY, BRP_METHOD_EXTRAS_DISCOVER_FORMAT, BRP_METHOD_EXTRAS_SCREENSHOT,
-    BRP_METHOD_GET, BRP_METHOD_GET_RESOURCE, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE,
-    BRP_METHOD_LIST, BRP_METHOD_LIST_RESOURCES, BRP_METHOD_MUTATE_COMPONENT,
-    BRP_METHOD_MUTATE_RESOURCE, BRP_METHOD_REMOVE, BRP_METHOD_REMOVE_RESOURCE,
-    BRP_METHOD_RPC_DISCOVER, DESC_BEVY_DESTROY, DESC_BEVY_GET, DESC_BEVY_GET_RESOURCE,
-    DESC_BEVY_INSERT, DESC_BEVY_INSERT_RESOURCE, DESC_BEVY_LIST, DESC_BEVY_LIST_RESOURCES,
-    DESC_BEVY_MUTATE_COMPONENT, DESC_BEVY_MUTATE_RESOURCE, DESC_BEVY_REMOVE,
-    DESC_BEVY_REMOVE_RESOURCE, DESC_BEVY_RPC_DISCOVER, DESC_BRP_EXTRAS_DISCOVER_FORMAT,
-    DESC_BRP_EXTRAS_SCREENSHOT, TOOL_BEVY_DESTROY, TOOL_BEVY_GET, TOOL_BEVY_GET_RESOURCE,
+    BRP_METHOD_DESTROY, BRP_METHOD_EXTRAS_DISCOVER_FORMAT, BRP_METHOD_EXTRAS_LIST_KEY_CODES,
+    BRP_METHOD_EXTRAS_SCREENSHOT, BRP_METHOD_EXTRAS_SEND_KEYS, BRP_METHOD_GET,
+    BRP_METHOD_GET_RESOURCE, BRP_METHOD_INSERT, BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_LIST,
+    BRP_METHOD_LIST_RESOURCES, BRP_METHOD_MUTATE_COMPONENT, BRP_METHOD_MUTATE_RESOURCE,
+    BRP_METHOD_REMOVE, BRP_METHOD_REMOVE_RESOURCE, BRP_METHOD_RPC_DISCOVER, DESC_BEVY_DESTROY,
+    DESC_BEVY_GET, DESC_BEVY_GET_RESOURCE, DESC_BEVY_INSERT, DESC_BEVY_INSERT_RESOURCE,
+    DESC_BEVY_LIST, DESC_BEVY_LIST_RESOURCES, DESC_BEVY_MUTATE_COMPONENT,
+    DESC_BEVY_MUTATE_RESOURCE, DESC_BEVY_REMOVE, DESC_BEVY_REMOVE_RESOURCE, DESC_BEVY_RPC_DISCOVER,
+    DESC_BRP_EXTRAS_DISCOVER_FORMAT, DESC_BRP_EXTRAS_LIST_KEY_CODES, DESC_BRP_EXTRAS_SCREENSHOT,
+    DESC_BRP_EXTRAS_SEND_KEYS, TOOL_BEVY_DESTROY, TOOL_BEVY_GET, TOOL_BEVY_GET_RESOURCE,
     TOOL_BEVY_INSERT, TOOL_BEVY_INSERT_RESOURCE, TOOL_BEVY_LIST, TOOL_BEVY_LIST_RESOURCES,
     TOOL_BEVY_MUTATE_COMPONENT, TOOL_BEVY_MUTATE_RESOURCE, TOOL_BEVY_REMOVE,
     TOOL_BEVY_REMOVE_RESOURCE, TOOL_BEVY_RPC_DISCOVER, TOOL_BRP_EXTRAS_DISCOVER_FORMAT,
-    TOOL_BRP_EXTRAS_SCREENSHOT,
+    TOOL_BRP_EXTRAS_LIST_KEY_CODES, TOOL_BRP_EXTRAS_SCREENSHOT, TOOL_BRP_EXTRAS_SEND_KEYS,
 };
 
 /// Represents a parameter definition for a BRP tool
@@ -826,6 +827,78 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                     ResponseField {
                         name:      JSON_FIELD_PORT,
                         extractor: ExtractorType::ParamFromContext(JSON_FIELD_PORT),
+                    },
+                ],
+            },
+        },
+        // brp_extras/send_keys
+        BrpToolDef {
+            name:            TOOL_BRP_EXTRAS_SEND_KEYS,
+            description:     DESC_BRP_EXTRAS_SEND_KEYS,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_EXTRAS_SEND_KEYS,
+            },
+            params:          vec![
+                ParamDef {
+                    name:        "keys",
+                    description: "Array of key code names to send",
+                    required:    true,
+                    param_type:  ParamType::StringArray,
+                },
+                ParamDef {
+                    name:        "duration_ms",
+                    description: "Duration in milliseconds to hold the keys before releasing (default: 100ms, max: 60000ms/1 minute)",
+                    required:    false,
+                    param_type:  ParamType::Number,
+                },
+                ParamDef {
+                    name:        JSON_FIELD_PORT,
+                    description: DESC_PORT,
+                    required:    false,
+                    param_type:  ParamType::Number,
+                },
+            ],
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef {
+                formatter_type:  FormatterType::Simple,
+                template:        "Successfully sent keyboard input",
+                response_fields: vec![
+                    ResponseField {
+                        name:      "keys_sent",
+                        extractor: ExtractorType::PassThroughData,
+                    },
+                    ResponseField {
+                        name:      "duration_ms",
+                        extractor: ExtractorType::PassThroughData,
+                    },
+                ],
+            },
+        },
+        // brp_extras/list_key_codes
+        BrpToolDef {
+            name:            TOOL_BRP_EXTRAS_LIST_KEY_CODES,
+            description:     DESC_BRP_EXTRAS_LIST_KEY_CODES,
+            handler:         HandlerType::Brp {
+                method: BRP_METHOD_EXTRAS_LIST_KEY_CODES,
+            },
+            params:          vec![ParamDef {
+                name:        JSON_FIELD_PORT,
+                description: DESC_PORT,
+                required:    false,
+                param_type:  ParamType::Number,
+            }],
+            param_extractor: ParamExtractorType::EmptyParams,
+            formatter:       FormatterDef {
+                formatter_type:  FormatterType::Simple,
+                template:        "Retrieved available key codes",
+                response_fields: vec![
+                    ResponseField {
+                        name:      "key_codes",
+                        extractor: ExtractorType::PassThroughData,
+                    },
+                    ResponseField {
+                        name:      "total",
+                        extractor: ExtractorType::PassThroughData,
                     },
                 ],
             },

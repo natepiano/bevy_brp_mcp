@@ -110,6 +110,8 @@ define_method!(brp, execute);
 define_method!(brp_extras, shutdown);
 define_method!(brp_extras, screenshot);
 define_method!(brp_extras, discover_format);
+define_method!(brp_extras, send_keys);
+define_method!(brp_extras, list_key_codes);
 
 // -----------------------------------------------------------------------------
 // Server-Only BRP Tools (not direct protocol methods)
