@@ -5,7 +5,12 @@ Parameters:
 - duration_ms (optional): Hold duration in ms (default: 100, max: 60000)
 - port (optional): BRP port (default: 15702)
 
-Key formats: Letters (KeyA-Z), Digits (Digit0-9), Function (F1-F24), Modifiers (ShiftLeft/Right, ControlLeft/Right, AltLeft/Right), Navigation (Arrows, Home/End, PageUp/Down), Editing (Enter, Tab, Space, Backspace, Delete, Escape).
+Key formats: Letters (KeyA-Z), Digits (Digit0-9), Function (F1-F24), Modifiers (ShiftLeft/Right, ControlLeft/Right, AltLeft/Right, SuperLeft/Right), Navigation (Arrows, Home/End, PageUp/Down), Editing (Enter, Tab, Space, Backspace, Delete, Escape).
+
+Platform-specific modifiers:
+- macOS: Use "SuperLeft" or "SuperRight" for Command key (⌘)
+- Windows: Use "SuperLeft" or "SuperRight" for Windows key (⊞)
+- Linux: Use "SuperLeft" or "SuperRight" for Super/Meta key
 
 Examples:
 ```json
