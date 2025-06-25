@@ -11,9 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `brp_extras_send_keys` tool for simulating keyboard input
+- Optional `workspace` parameter to `brp_launch_bevy_app` and `brp_launch_bevy_example` for disambiguation when multiple apps/examples have the same name
 
 ### Changed
-- Updated `bevy_brp_extras` dependency to version 0.2.1 to work with the Added tools
+- Improved error messages when duplicate app/example names are found across workspaces
 ## [0.1.4] - Previous Release
 
 ### Added
