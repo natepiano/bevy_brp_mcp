@@ -14,7 +14,6 @@ version     = "0.2.1"
 bevy = { version = "0.16.1", default-features = false, features = [
   "bevy_remote",
 ] }
-bevy_brp_extras = { version = "0.2.1", path = "../bevy_brp_extras" }
 
 anyhow             = "1.0"
 cargo_metadata     = "0.20"

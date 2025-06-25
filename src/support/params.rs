@@ -2,6 +2,7 @@ use rmcp::Error as McpError;
 use rmcp::model::CallToolRequestParam;
 use serde_json::Value;
 
+use crate::constants::PARAM_WORKSPACE;
 use crate::error::BrpMcpError;
 
 // Value-based extraction functions (lower-level)
@@ -166,5 +167,16 @@ pub fn extract_optional_string_array_from_request(
             }
         }
         None => Ok(None),
+    }
+}
+
+/// Extract an optional workspace parameter from the request
+/// Returns None if not provided or empty string
+pub fn extract_optional_workspace(request: &CallToolRequestParam) -> Option<String> {
+    let workspace = extract_optional_string(request, PARAM_WORKSPACE, "");
+    if workspace.is_empty() {
+        None
+    } else {
+        Some(workspace.to_string())
     }
 }

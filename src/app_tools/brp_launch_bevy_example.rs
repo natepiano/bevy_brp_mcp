@@ -20,21 +20,24 @@ pub async fn handle(
     // Get parameters
     let example_name = params::extract_required_string(&request, PARAM_EXAMPLE_NAME)?;
     let profile = params::extract_optional_string(&request, PARAM_PROFILE, DEFAULT_PROFILE);
+    let workspace = params::extract_optional_workspace(&request);
 
     // Fetch current roots
     let search_paths = service::fetch_roots_and_get_paths(service, context).await?;
 
     // Launch the example
-    launch_bevy_example(example_name, profile, &search_paths)
+    launch_bevy_example(example_name, profile, workspace.as_deref(), &search_paths)
 }
 
 pub fn launch_bevy_example(
     example_name: &str,
     profile: &str,
+    workspace: Option<&str>,
     search_paths: &[PathBuf],
 ) -> Result<CallToolResult, McpError> {
     // Find the example
-    let example = scanning::find_required_example(example_name, search_paths)?;
+    let example =
+        scanning::find_required_example_with_workspace(example_name, workspace, search_paths)?;
 
     // Get the manifest directory (parent of Cargo.toml)
     let manifest_dir = example.manifest_path.parent().ok_or_else(|| -> McpError {
@@ -89,17 +92,24 @@ pub fn launch_bevy_example(
     let pid =
         process::launch_detached_process(cmd, manifest_dir, log_file_for_redirect, example_name)?;
 
+    let mut response_data = json!({
+        "example_name": example_name,
+        "pid": pid,
+        "package_name": example.package_name,
+        "working_directory": manifest_dir.display().to_string(),
+        "profile": profile,
+        "log_file": log_file_path.display().to_string(),
+        "status": "running_in_background",
+        "note": "Cargo will build the example if needed before running"
+    });
+
+    // Add workspace info if available
+    let workspace_root =
+        super::support::scanning::get_workspace_root_from_manifest(&example.manifest_path);
+    response::add_workspace_info_to_response(&mut response_data, workspace_root.as_ref());
+
     Ok(response::success_json_response(
         format!("Successfully launched example '{example_name}' (PID: {pid})"),
-        json!({
-            "example_name": example_name,
-            "pid": pid,
-            "package_name": example.package_name,
-            "working_directory": manifest_dir.display().to_string(),
-            "profile": profile,
-            "log_file": log_file_path.display().to_string(),
-            "status": "running_in_background",
-            "note": "Cargo will build the example if needed before running"
-        }),
+        response_data,
     ))
 }

@@ -19,4 +19,4 @@ Returns:
 - keys_sent: Array of sent keys
 - duration_ms: Hold duration used
 
-Prerequisites: bevy_brp_extras dependency and BrpExtrasPlugin registered. Use brp_extras_list_key_codes for all available keys.
+Prerequisites: bevy_brp_extras dependency and BrpExtrasPlugin registered.

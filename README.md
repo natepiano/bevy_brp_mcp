@@ -125,7 +125,6 @@ If you have bevy_brp_extras installed, it can get the type information directly 
 6. **Debug**: Use `read_log` to examine application output
 7. **Capture**: Use `brp_extras_screenshot` to document current state
 8. **Interact**: Use `brp_extras_send_keys` to send keyboard input for testing
-9. **Key Codes**: Use `brp_extras_list_key_codes` to discover available key codes
 
 ## Logging
 

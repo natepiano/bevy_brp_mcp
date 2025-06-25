@@ -1,5 +1,9 @@
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use crate::app_tools::support::scanning::extract_workspace_name;
 
 /// Standard JSON response structure for all tools
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,4 +100,16 @@ pub fn success_json_response(
         .build();
 
     rmcp::model::CallToolResult::success(vec![rmcp::model::Content::text(response.to_json())])
+}
+
+/// Add workspace information to response data if available
+pub fn add_workspace_info_to_response(
+    response_data: &mut serde_json::Value,
+    workspace_root: Option<&PathBuf>,
+) {
+    if let Some(root) = workspace_root {
+        if let Some(workspace_name) = extract_workspace_name(root) {
+            response_data["workspace"] = serde_json::Value::String(workspace_name);
+        }
+    }
 }
