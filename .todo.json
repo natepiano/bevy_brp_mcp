@@ -1,0 +1,128 @@
+[
+  {
+    "id": "1",
+    "content": "Do not deviate from the plan - if issues arise, STOP and ask user for guidance",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "2",
+    "content": "Add PARAM_WORKSPACE constant to src/constants.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "3",
+    "content": "Build and fix any compile errors/warnings after constants change",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "4",
+    "content": "Add workspace name helper and duplicate detection functions to src/app_tools/support/scanning.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "5",
+    "content": "Build and fix any compile errors/warnings after scanning.rs changes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "6",
+    "content": "Update src/app_tools/brp_launch_bevy_app.rs to add workspace parameter handling",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "7",
+    "content": "Build and fix any compile errors/warnings after launch_bevy_app changes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "8",
+    "content": "Update src/app_tools/brp_launch_bevy_example.rs to add workspace parameter handling",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "9",
+    "content": "Build and fix any compile errors/warnings after launch_bevy_example changes",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "10",
+    "content": "Update help_text/app_tools/brp_launch_bevy_app.txt to document workspace parameter",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "11",
+    "content": "Update help_text/app_tools/brp_launch_bevy_example.txt to document workspace parameter",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "12",
+    "content": "Run cargo clippy --workspace --all-targets --all-features",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "13",
+    "content": "Fix any clippy issues following the rules (no dead_code, no underscore prefixes)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "14",
+    "content": "Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "15",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "16",
+    "content": "If test issues found, STOP and review with user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "17",
+    "content": "Task subagent for code review focusing on duplication and complexity",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "18",
+    "content": "Review subagent's code review suggestions with user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
