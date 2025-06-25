@@ -1,5 +1,7 @@
-Discovers and lists all Bevy game engine applications in your workspace. Searches through all configured directories and their subdirectories using cargo metadata. Returns detailed information including:
-- Application names and binary paths
-- Build profiles (debug/release) and their build status
-- Full paths to help identify duplicate names
-Use this to see what Bevy apps are available before launching. Apps must be built before they can be launched.
+Discovers all Bevy apps in workspace using cargo metadata. Returns app names, binary paths, build profiles with status, and full paths.
+
+No parameters.
+
+Returns: Apps with name, path, and build status (debug/release).
+
+Note: Apps must be built before launching.

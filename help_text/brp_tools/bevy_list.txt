@@ -1,6 +1,7 @@
-List components using the bevy/list BRP method. Lists all registered components in the Bevy app, or lists components present on a specific entity. This tool wraps the bevy/list method for easier use.
+Lists components via bevy/list BRP method. Lists all registered components or components on a specific entity.
 
-This is useful for:
-- Discovering what component types are available in the app
-- Inspecting what components a specific entity has
-- Getting fully-qualified type names for use with other BRP methods
+Parameters:
+- entity (optional): Entity ID to list components for
+- port (optional): BRP port (default: 15702)
+
+Useful for discovering available types, inspecting entities, and getting fully-qualified names.

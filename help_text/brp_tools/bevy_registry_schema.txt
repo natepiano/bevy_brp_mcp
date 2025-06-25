@@ -1,54 +1,21 @@
-Get JSON schema information for registered types using the bevy/registry/schema BRP method. Retrieves type schema definitions from the Bevy app's reflection registry.
+Gets type schemas via bevy/registry/schema BRP method. Useful for understanding structures, building tools, validating data, generating docs.
 
-This is useful for:
-- Understanding the structure of registered component and resource types
-- Building tools that need to understand Bevy type definitions
-- Validating data structures before sending to the app
-- Generating documentation for available types
-- Creating external editors or inspectors for Bevy components
-
-⚠️  IMPORTANT: Response Size Limitations
-The response can be VERY large (200k+ tokens) when no filters are applied. ALWAYS use filtering parameters to avoid token limits. Start with specific crates or types rather than requesting all schemas.
+⚠️ WARNING: Can exceed 200k+ tokens. ALWAYS use filters.
 
 Parameters (all optional):
-- with_crates: Array of crate names to include (e.g., ["bevy_transform", "my_game"])
-- without_crates: Array of crate names to exclude (e.g., ["bevy_render", "bevy_pbr"])
-- with_types: Array of reflect traits to include (e.g., ["Component", "Resource"])
-- without_types: Array of reflect traits to exclude (e.g., ["RenderResource"])
-- port: The BRP port (default: 15702)
+- with_crates: Include only these crates
+- without_crates: Exclude these crates
+- with_types: Include only these reflect traits
+- without_types: Exclude these reflect traits
+- port: BRP port (default: 15702)
 
-Filter Examples (RECOMMENDED - always use filtering):
-1. Get only Transform types: with_crates=["bevy_transform"]
-2. Get only Resources: with_types=["Resource"]  
-3. Get Components excluding render crates: with_types=["Component"], without_crates=["bevy_render", "bevy_pbr"]
-4. Get game-specific Components: with_crates=["my_game"], with_types=["Component"]
-5. Get specific crate Components: with_crates=["bevy_ui"], with_types=["Component"]
+REQUIRED Filter Examples:
+- Transform only: with_crates=["bevy_transform"]
+- Resources only: with_types=["Resource"]
+- Game components: with_crates=["my_game"], with_types=["Component"]
 
-❌ AVOID: Get all schemas (no parameters) - This will likely exceed token limits!
+Common crates: bevy_transform, bevy_render, bevy_pbr, bevy_sprite, bevy_ui
+Common types: Component, Resource, Default, Serialize
 
-Common Crate Names:
-- bevy_transform: Transform, GlobalTransform
-- bevy_render: Camera, Mesh, Material types
-- bevy_pbr: PbrBundle, StandardMaterial
-- bevy_sprite: Sprite, SpriteBundle
-- bevy_ui: UI node types
-- bevy_audio: Audio components
-
-Common Reflect Types:
-- Component: ECS components that can be attached to entities
-- Resource: Global resources stored in the World
-- Default: Types with default values
-- Serialize/Deserialize: Types that can be serialized
-
-Response Structure:
-Each schema object contains:
-- shortPath: Short type name (e.g., "Transform")
-- typePath: Fully-qualified type path (e.g., "bevy_transform::components::transform::Transform")
-- modulePath: Module containing the type
-- crateName: Crate containing the type  
-- reflectTypes: Array of reflect traits (e.g., ["Component", "Default", "Serialize"])
-- kind: Type kind ("Struct", "Enum", "TupleStruct", etc.)
-- type: JSON schema type information with properties/fields
-- properties: For structs, contains field definitions with types
-
-IMPORTANT: Only types that are properly registered with Bevy's reflection system will have schema information available.
+Returns: Schema objects with shortPath, typePath, reflectTypes, properties
+Note: Only registered types with reflection available.

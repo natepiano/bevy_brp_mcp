@@ -1,6 +1,9 @@
-Launches a Bevy game engine application in detached mode with full asset loading support. Sets up the correct working directory and environment variables so assets load properly. Features:
-- Detached execution (won't block other operations)
-- Automatic log file creation in temp directory
-- Proper CARGO_MANIFEST_DIR setup for asset loading
-- Choice of debug (default) or release profile
-The app must be built before launching. Use list_bevy_apps first to check build status. Logs are saved to help debug any issues. Use list_logs to view available logs, read_log to examine log contents, and cleanup_logs to manage disk space.
+Launches Bevy apps in detached mode with asset loading support, automatic logging, and proper CARGO_MANIFEST_DIR setup.
+
+Parameters:
+- app_name (required): Name of Bevy app to launch
+- profile (optional): Build profile - "debug" (default) or "release"
+
+Features: Non-blocking execution, temp directory logs, debug/release profiles.
+
+Note: App must be built first. Check with list_bevy_apps. View logs with list_logs/read_log.

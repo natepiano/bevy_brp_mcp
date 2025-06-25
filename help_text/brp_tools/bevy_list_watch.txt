@@ -1,23 +1,14 @@
-Start watching an entity for component list changes (additions/removals) with file-based logging.
-
-This is useful for:
-- Monitoring when components are added/removed from entities
-- Debugging component lifecycle
-- Tracking entity state transitions
+Watches entity component list changes (additions/removals) with file logging. Useful for monitoring lifecycle, debugging transitions.
 
 Parameters:
-- entity (required): The entity ID to watch for component list changes
-- port (optional): BRP port to connect to (default: 15702)
+- entity (required): Entity ID to watch
+- port (optional): BRP port (default: 15702)
 
 Returns:
-- status: "success" if watch started successfully
-- watch_id: Unique identifier (use with bevy_stop_watch)
-- log_path: Path to log file where updates are written
+- status: "success" if started
+- watch_id: Use with bevy_stop_watch
+- log_path: Log file location
 
-Watch behavior:
-- Creates log file at: /tmp/bevy_brp_mcp_watch_*
-- Logs LIST_UPDATE entries showing added/removed/current components
-- Runs in background until stopped with bevy_stop_watch
-- Use read_log to view updates, cleanup_logs to remove old logs
+Behavior: Creates log at /tmp/bevy_brp_mcp_watch_*, logs LIST_UPDATE entries, runs until stopped.
 
-Note: Unlike brp_get_watch, this tracks structural changes (component additions/removals), not value changes.
+Note: Tracks structural changes, not value changes.

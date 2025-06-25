@@ -1,30 +1,24 @@
-Capture a screenshot from a running Bevy application. This tool uses bevy_brp_extras to save the current frame buffer to a file.
-
-This is useful for:
-- Capturing app state for debugging or documentation
-- Creating automated screenshots for testing
-- Generating visual records of app behavior
-- Building screenshot-based testing workflows
+Capture screenshots from running Bevy applications using bevy_brp_extras for debugging, documentation, automated testing, or building screenshot-based testing workflows.
 
 Parameters:
-- path (required): File path where the screenshot should be saved
-- port (optional): BRP port to connect to (default: 15702)
+- path (required): File path where screenshot should be saved
+- port (optional): BRP port
 
-Screenshot behavior:
-- Calls bevy_brp_extras/screenshot to capture the current frame
-- Saves the image to the specified path
+Behavior:
+- Captures current frame via bevy_brp_extras/screenshot
+- Saves to specified path
 - Supports common image formats (PNG, JPEG, etc.)
-- Path must be writable by the Bevy application
+- Path must be writable by Bevy application
 
-Return values:
-- status: "success" if screenshot was captured, "error" if failed
-- path: The file path where the screenshot was saved
-- port: The port that was used
-- message: Description of what happened or error details
+Returns:
+- status: "success" or "error"
+- path: File path where saved
+- port: Port used
+- message: Result description
 
 Prerequisites:
-- Your Bevy app must include bevy_brp_extras as a dependency
-- The BrpExtrasPlugin must be registered in your app
-- The app must have a camera and rendering pipeline active
+- bevy_brp_extras dependency required
+- BrpExtrasPlugin must be registered
+- Camera and rendering pipeline must be active
 
-IMPORTANT: This tool requires bevy_brp_extras - it will not work with standard BRP alone. If bevy_brp_extras is not available, the tool will return an error with instructions on how to add it.
+IMPORTANT: Requires bevy_brp_extras - standard BRP alone won't work.

@@ -1,6 +1,0 @@
-For components and resources to be accessible through BRP, they must meet ALL requirements:
-1. Derive required traits: #[derive(Component, Reflect, Serialize, Deserialize)]
-2. Add reflect attribute: #[reflect(Component, Serialize, Deserialize)]
-3. Register with app: app.register_type::<YourComponent>()
-
-For Resources, use Resource instead of Component in the above steps.

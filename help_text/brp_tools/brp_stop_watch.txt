@@ -1,21 +1,12 @@
-Stop an active watch subscription by its watch ID.
-
-This is useful for:
-- Freeing resources when done monitoring
-- Managing multiple active watches
-- Stopping watches before starting new ones
+Stops active watch subscriptions to free resources.
 
 Parameters:
-- watch_id (required): The numeric watch ID returned from brp_get_watch or brp_list_watch
+- watch_id (required): Watch ID from brp_get_watch or brp_list_watch
 
 Returns:
-- status: "success" if stopped successfully, "error" if failed
-- message: Confirmation or error message
+- status: "success" or "error"
+- message: Result description
 
-Behavior:
-- Stops the background streaming task immediately
-- Log file remains on disk for later analysis
-- Use read_log to examine captured data after stopping
-- Use cleanup_logs to remove old watch logs
+Behavior: Stops streaming immediately, log file remains for analysis.
 
-IMPORTANT: Always stop watches when done to free resources. Watches also stop automatically when the Bevy app shuts down.
+Note: Always stop watches to free resources. Auto-stops when Bevy app shuts down.

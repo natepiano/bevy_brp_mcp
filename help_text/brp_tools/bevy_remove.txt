@@ -1,17 +1,11 @@
-Remove components from an entity using the bevy/remove BRP method. Removes specified component types from an entity while keeping the entity itself and other components intact.
-
-This is useful for:
-- Removing behaviors or capabilities from entities
-- Implementing component-based state machines
-- Optimizing entities by removing unused components
-- Dynamic entity modification in tools
+Removes components from entities via bevy/remove BRP method. Useful for removing behaviors, implementing state machines, and optimizing entities.
 
 Parameters:
-- entity_id (required): The entity ID to remove components from
-- components (required): Array of component type names to remove
-- port (optional): The BRP port (default: 15702)
+- entity_id (required): Target entity ID
+- components (required array): Component type names to remove
+- port (optional): BRP port (default: 15702)
 
-Example usage:
+Example:
 ```json
 {
   "entity": 123,
@@ -22,9 +16,7 @@ Example usage:
 }
 ```
 
-Note:
-- Removing components that don't exist on the entity is not an error
-- The entity continues to exist even if all components are removed
-- To completely remove an entity, use bevy_destroy instead
-
-IMPORTANT: Component type names must be fully-qualified.
+Notes:
+- Removing non-existent components isn't an error
+- Entity persists even if all components removed
+- Use bevy_destroy to remove entity entirely

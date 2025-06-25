@@ -1,27 +1,21 @@
-Gracefully shutdown a running Bevy application. This tool attempts a clean shutdown first via bevy_brp_extras, then falls back to process termination if needed.
-
-This is useful for:
-- Cleanly shutting down Bevy apps to allow proper resource cleanup
-- Stopping apps that may be using resources or blocking ports
-- Testing app shutdown behavior and cleanup routines
-- Managing app lifecycle in development workflows
+Gracefully shutdown running Bevy applications for proper resource cleanup, stopping resource-blocking apps, testing shutdown behavior, or managing app lifecycle.
 
 Parameters:
-- app_name (required): Name of the Bevy app to shutdown
-- port (optional): BRP port to connect to (default: 15702)
+- app_name (required): Name of Bevy app to shutdown
+- port (optional): BRP port
 
 Shutdown behavior:
-1. First attempts to call bevy_brp_extras/shutdown for clean shutdown
-2. If bevy_brp_extras is not available, falls back to process termination (kill)
-3. Reports which method was used in the response
+1. Attempts bevy_brp_extras/shutdown for clean shutdown
+2. Falls back to process termination if unavailable
+3. Reports method used in response
 
-Return values:
-- status: "success" if shutdown was initiated, "error" if failed
-- method: Either "clean_shutdown" (via bevy_brp_extras) or "process_kill" (fallback)
-- app_name: The app that was targeted for shutdown
-- port: The port that was used
-- message: Description of what happened
+Returns:
+- status: "success" or "error"
+- method: "clean_shutdown" or "process_kill"
+- app_name: Target app name
+- port: Port used
+- message: Result description
 
-For clean shutdown support, add bevy_brp_extras to your Bevy app dependencies and register the BrpExtrasPlugin.
+For clean shutdown support, add bevy_brp_extras dependency and register BrpExtrasPlugin.
 
-IMPORTANT: Process termination (kill fallback) does not allow the app to perform cleanup, which may leave resources in an inconsistent state.
+IMPORTANT: Process termination prevents cleanup and may leave resources inconsistent.

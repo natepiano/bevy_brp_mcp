@@ -1,5 +1,7 @@
-Discovers and lists all Bevy example projects in your workspace. Searches through all configured directories using cargo metadata to find example binaries. Returns:
-- Example names organized by package
-- Package paths to help locate the source code
-- Useful for exploring Bevy learning resources and demos
-Examples are typically found in Bevy repositories and tutorial projects. Unlike the response from list_bevy_apps, examples are listed without build status.
+Discovers all Bevy examples in workspace using cargo metadata. Returns example names organized by package with paths to source code.
+
+No parameters.
+
+Returns: Examples grouped by package, useful for exploring learning resources and demos.
+
+Note: Found in Bevy repositories and tutorials. Listed without build status.

@@ -1,24 +1,13 @@
-Insert components into an existing entity using the bevy/insert BRP method. Adds new components or replaces existing ones on a specific entity.
-
-This is useful for:
-- Adding new behaviors to existing entities
-- Modifying entity capabilities at runtime
-- Implementing component-based state changes
-- Building entity modification tools
+Inserts/replaces components on entities via bevy/insert BRP method. Useful for adding behaviors, modifying capabilities, and implementing state changes.
 
 Parameters:
-- entity_id (required): The entity ID to insert components into
-- components (required): Object containing component data to insert
-  - Keys are component type names (fully-qualified)
-  - Values are the component data
-- port (optional): The BRP port (default: 15702)
+- entity_id (required): Target entity ID
+- components (required object): Component data - keys are fully-qualified type names, values are data
+- port (optional): BRP port (default: 15702)
 
-Behavior:
-- If a component type already exists on the entity, it will be replaced
-- If a component type doesn't exist, it will be added
-- Other existing components remain unchanged
+Behavior: Replaces existing components, adds new ones, preserves others.
 
-Example usage:
+Example:
 ```json
 {
   "entity": 123,
@@ -30,4 +19,4 @@ Example usage:
 }
 ```
 
-IMPORTANT: Components must be properly registered with BRP to be insertable.
+Note: Requires BRP registration

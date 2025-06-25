@@ -1,17 +1,11 @@
-Insert or update a resource using the bevy/insert_resource BRP method. Sets the value of a resource in the Bevy app, creating it if it doesn't exist or updating it if it does.
-
-This is useful for:
-- Modifying global app configuration
-- Injecting external data into the app
-- Testing different resource states
-- Building configuration tools
+Inserts/updates resources via bevy/insert_resource BRP method. Useful for modifying config, injecting data, testing states, and building tools.
 
 Parameters:
-- resource (required): The fully-qualified type name of the resource to insert
-- value (required): The resource value to insert
-- port (optional): The BRP port (default: 15702)
+- resource (required): Fully-qualified type name
+- value (required): Resource value to insert
+- port (optional): BRP port (default: 15702)
 
-Example usage:
+Example:
 ```json
 {
   "resource": "my_game::config::GameConfig",
@@ -23,12 +17,5 @@ Example usage:
 }
 ```
 
-Behavior:
-- If the resource already exists, it will be completely replaced
-- If the resource doesn't exist, it will be created
-- The resource type must be registered with BRP
-
-IMPORTANT: 
-- Resources must implement the necessary reflection traits
-- Be careful when updating resources as it affects the entire app
-- Some resources may have specific initialization requirements
+Behavior: Replaces existing resources, creates if missing.
+Note: Requires BRP registration and reflection traits.

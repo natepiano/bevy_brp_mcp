@@ -1,40 +1,19 @@
-Change the parent of an entity using the bevy/reparent BRP method. Modifies the hierarchical relationship between entities by setting or removing parent-child relationships.
-
-This is useful for:
-- Reorganizing entity hierarchies
-- Implementing drag-and-drop in editors
-- Managing scene graphs
-- Dynamic object attachment/detachment
+Changes entity parents via bevy/reparent BRP method. Useful for reorganizing hierarchies, drag-and-drop, scene graphs, and dynamic attachment.
 
 Parameters:
-- entities (required): Array of entity IDs to reparent
-- parent (optional): The new parent entity ID (omit to remove parent)
-- port (optional): The BRP port (default: 15702)
+- entities (required array): Entity IDs to reparent
+- parent (optional): New parent ID (omit for root-level)
+- port (optional): BRP port (default: 15702)
 
-Behavior:
-- All specified entities will become children of the parent entity
-- If parent is omitted, entities become root entities (no parent)
-- Existing parent relationships are replaced
-- Transform hierarchies are automatically updated
-
-Example usage:
+Examples:
 ```json
-{
-  "entities": [123, 124, 125],
-  "parent": 100
-}
+{"entities": [123, 124, 125], "parent": 100}
+```
+Remove parent:
+```json
+{"entities": [123, 124, 125]}
 ```
 
-To remove parent (make entities root-level):
-```json
-{
-  "entities": [123, 124, 125]
-}
-```
-
-Notes:
-- Parent entity must exist
-- Cannot create circular hierarchies (entity cannot be its own ancestor)
-- Transform propagation respects the new hierarchy
-
-IMPORTANT: Both parent and child entities must have Transform components for spatial hierarchies to work correctly.
+Behavior: Replaces parent relationships, updates transform hierarchies.
+Notes: Parent must exist, no circular hierarchies allowed.
+Important: Entities need Transform components for spatial hierarchies.

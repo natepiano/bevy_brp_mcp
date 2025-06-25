@@ -1,0 +1,24 @@
+Lists keyboard key codes via bevy_brp_extras. Returns comprehensive list of Bevy KeyCode values for use with send_keys tool.
+
+Parameters:
+- port (optional): BRP port (default: 15702)
+
+Returns:
+- status: "success" or "error"
+- key_codes: Array with name and category for each key
+- total: Number of available key codes
+
+Categories: Letters (KeyA-KeyZ), Digits (Digit0-9), Function (F1-F24), Modifiers (Shift/Ctrl/Alt), Navigation (Arrows/Home/End), Editing (Enter/Tab/Space), Numpad, Special, Punctuation.
+
+Example:
+```json
+{
+  "key_codes": [
+    {"name": "KeyA", "category": "Letters"},
+    {"name": "Space", "category": "Editing"}
+  ],
+  "total": 120
+}
+```
+
+Prerequisites: bevy_brp_extras dependency and BrpExtrasPlugin registered.

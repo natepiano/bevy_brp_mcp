@@ -1,1 +1,4 @@
-Toggle debug mode for format discovery output. When enabled, detailed debug information about BRP format discovery attempts will be included in error responses.
+Toggle debug mode for format discovery output to include detailed debug information about BRP format discovery attempts in error responses.
+
+Parameters:
+- enabled (required): true to enable debug output, false to disable

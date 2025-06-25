@@ -1,18 +1,10 @@
-Spawn a new entity with components using the bevy/spawn BRP method. Creates a new entity in the Bevy world with the specified components.
-
-This is useful for:
-- Creating new game objects dynamically
-- Spawning entities from external tools
-- Testing entity configurations
-- Building level editors or content creation tools
+Spawns entities with components via bevy/spawn BRP method. Useful for creating game objects, testing configurations, and building editors.
 
 Parameters:
-- components (optional): Object containing component data to spawn with
-  - Keys are component type names (fully-qualified)
-  - Values are the component data
-- port (optional): The BRP port (default: 15702)
+- components (optional object): Component data - keys are fully-qualified type names, values are data
+- port (optional): BRP port (default: 15702)
 
-Example usage:
+Example:
 ```json
 {
   "components": {
@@ -25,6 +17,5 @@ Example usage:
 }
 ```
 
-Returns the ID of the newly spawned entity.
-
-IMPORTANT: Components must be properly registered with BRP to be spawnable.
+Returns: New entity ID
+Note: Requires BRP registration

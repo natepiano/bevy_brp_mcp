@@ -1,18 +1,12 @@
-Discover all available BRP methods with their schemas using the rpc.discover method. Returns an OpenRPC document describing all available BRP methods and their parameters.
-
-This is useful for:
-- Discovering what BRP methods are available in a running Bevy app
-- Understanding method signatures and parameter requirements
-- Building dynamic tools that adapt to available functionality
-- Debugging BRP connectivity and method availability
+Discover available BRP methods using rpc.discover to understand method signatures, build dynamic tools, or debug BRP connectivity.
 
 Parameters:
-- port (optional): The BRP port (default: 15702)
+- port (optional): BRP port
 
-Returns an OpenRPC specification document containing:
-- List of all available BRP methods
+Returns OpenRPC specification containing:
+- All available BRP methods
 - Parameter schemas for each method
 - Return type information
 - Method descriptions and examples
 
-This method provides comprehensive introspection capabilities for BRP-enabled Bevy applications.
+Provides comprehensive introspection for BRP-enabled Bevy applications.

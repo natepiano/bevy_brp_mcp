@@ -1,25 +1,15 @@
-Remove a resource from the app using the bevy/remove_resource BRP method. Completely removes a resource from the Bevy world.
-
-This is useful for:
-- Cleaning up temporary resources
-- Resetting app state
-- Testing resource dependencies
-- Managing resource lifecycle
+Removes resources via bevy/remove_resource BRP method. Useful for cleanup, resetting state, testing dependencies, and managing lifecycle.
 
 Parameters:
-- resource (required): The fully-qualified type name of the resource to remove
-- port (optional): The BRP port (default: 15702)
+- resource (required): Fully-qualified type name
+- port (optional): BRP port (default: 15702)
 
-Example usage:
+Example:
 ```json
 {
   "resource": "my_game::config::TemporaryCache"
 }
 ```
 
-WARNING: 
-- Removing a resource that other systems depend on may cause errors
-- This operation is immediate and cannot be undone
-- Some core Bevy resources should not be removed
-
-Note: Attempting to remove a resource that doesn't exist is not an error.
+WARNING: May break dependent systems. Immediate and irreversible.
+Note: Removing non-existent resources isn't an error.
