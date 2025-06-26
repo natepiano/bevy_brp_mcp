@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Improved error messages when duplicate app/example names are found across workspaces
+
 ## [0.1.4] - Initial Release
 
 ### Added
