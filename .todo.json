@@ -1,63 +1,49 @@
 [
   {
     "id": "terminal_title",
-    "content": "Set terminal title to indicate resource management implementation work",
+    "content": "Set terminal title to indicate code review fixes implementation work",
     "status": "completed",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "sse_memory_limits",
-    "content": "Implement SSE memory limits in src/watch/task.rs - add MAX_CHUNK_SIZE (1MB) and MAX_BUFFER_SIZE (10MB) constants, bounded stream processing with size checks, proper line buffering for incomplete lines",
+    "id": "fix_app_example_naming",
+    "content": "Fix App vs Example naming issue - modify create_log_file() signature to include launch_type parameter, update log header to show 'App:' or 'Example:' accordingly, update brp_launch_bevy_app.rs and brp_launch_bevy_example.rs to pass correct type",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "build_sse",
-    "content": "Build and fix any compile errors and warnings after SSE memory limits implementation",
+    "id": "build_naming_fix",
+    "content": "Build and fix any compile errors and warnings after app/example naming fix",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "file_handle_cleanup",
-    "content": "Implement file handle cleanup in src/watch/logger.rs - add Drop trait to BufferedWatchLogger, add shutdown signal using oneshot::Sender<()>, ensure graceful shutdown in write task",
+    "id": "replace_unsafe_code",
+    "content": "Replace unsafe code with tokio::process - eliminate unsafe libc::fork(), libc::setsid(), libc::waitpid() calls in src/app_tools/support/process.rs, use tokio::process::Command for cross-platform detached process creation",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "build_logger",
-    "content": "Build and fix any compile errors and warnings after file handle cleanup implementation",
+    "id": "build_process_fix",
+    "content": "Build and fix any compile errors and warnings after replacing unsafe code",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "unix_zombie_prevention",
-    "content": "Implement Unix zombie prevention in src/process/process.rs - add platform-specific launching with #[cfg(unix)], double-fork pattern for daemonization, temporary PID files for communication, keep Windows implementation unchanged",
+    "id": "refactor_stream_processing",
+    "content": "Refactor complex process_watch_stream() function in src/brp_tools/watch/support/task.rs - break 142-line function into smaller functions: process_chunk(), parse_sse_line(), log_update()",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "build_process",
-    "content": "Build and fix any compile errors and warnings after Unix zombie prevention implementation",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "enhanced_process_detection",
-    "content": "Implement enhanced process detection in src/status/brp_status.rs - add normalize_process_name() function, handle case sensitivity and path variations, check process name and command line arguments",
-    "status": "pending",
-    "priority": "medium",
-    "notes": ""
-  },
-  {
-    "id": "build_status",
-    "content": "Build and fix any compile errors and warnings after enhanced process detection implementation",
+    "id": "build_stream_refactor",
+    "content": "Build and fix any compile errors and warnings after stream processing refactor",
     "status": "pending",
     "priority": "medium",
     "notes": ""
@@ -70,7 +56,7 @@
     "notes": ""
   },
   {
-    "id": "fix_clippy",
+    "id": "fix_clippy_issues",
     "content": "Fix any clippy issues - remove dead code (don't mark as dead), remove unused variables/arguments (don't prefix with _)",
     "status": "pending",
     "priority": "medium",
