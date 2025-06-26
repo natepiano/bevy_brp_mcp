@@ -82,6 +82,7 @@ use rmcp::{Error as McpError, RoleServer};
 use crate::BrpMcpService;
 use crate::brp_tools::constants::{
     JSON_FIELD_COMPONENTS, JSON_FIELD_ENTITIES, JSON_FIELD_ENTITY, JSON_FIELD_PARENT,
+    JSON_FIELD_PATH, JSON_FIELD_PORT,
 };
 use crate::brp_tools::request_handler::{
     BrpExecuteExtractor, BrpHandlerConfig, EntityParamExtractor, FormatterContext, ParamExtractor,
@@ -242,6 +243,10 @@ fn convert_extractor_type(
         |data, context| extract_field_from_context(JSON_FIELD_ENTITIES, data, context);
     static PARENT_EXTRACTOR: fn(&serde_json::Value, &FormatterContext) -> serde_json::Value =
         |data, context| extract_field_from_context(JSON_FIELD_PARENT, data, context);
+    static PATH_EXTRACTOR: fn(&serde_json::Value, &FormatterContext) -> serde_json::Value =
+        |data, context| extract_field_from_context(JSON_FIELD_PATH, data, context);
+    static PORT_EXTRACTOR: fn(&serde_json::Value, &FormatterContext) -> serde_json::Value =
+        |data, context| extract_field_from_context(JSON_FIELD_PORT, data, context);
 
     match extractor_type {
         ExtractorType::EntityFromParams => extractors::entity_from_params,
@@ -258,6 +263,8 @@ fn convert_extractor_type(
             "components" => COMPONENTS_EXTRACTOR,
             "entities" => ENTITIES_EXTRACTOR,
             "parent" => PARENT_EXTRACTOR,
+            "path" => PATH_EXTRACTOR,
+            "port" => PORT_EXTRACTOR,
             _ => NULL_EXTRACTOR,
         },
     }
@@ -387,6 +394,30 @@ mod tests {
 
         let result = extractor(&test_data, &context);
         assert_eq!(result, serde_json::Value::Null);
+    }
+
+    #[test]
+    fn test_convert_extractor_type_path_param() {
+        let extractor = convert_extractor_type(&ExtractorType::ParamFromContext("path"));
+        let test_data = json!({});
+        let context = FormatterContext {
+            params: Some(json!({"path": "/tmp/screenshot.png", "port": 15702})),
+        };
+
+        let result = extractor(&test_data, &context);
+        assert_eq!(result, json!("/tmp/screenshot.png"));
+    }
+
+    #[test]
+    fn test_convert_extractor_type_port_param() {
+        let extractor = convert_extractor_type(&ExtractorType::ParamFromContext("port"));
+        let test_data = json!({});
+        let context = FormatterContext {
+            params: Some(json!({"path": "/tmp/screenshot.png", "port": 15702})),
+        };
+
+        let result = extractor(&test_data, &context);
+        assert_eq!(result, json!(15702));
     }
 
     #[test]

@@ -15,7 +15,7 @@ use crate::BrpMcpService;
 use crate::brp_tools::brp_set_debug_mode;
 use crate::brp_tools::constants::{
     JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO, JSON_FIELD_FORMAT_CORRECTIONS,
-    JSON_FIELD_ORIGINAL_ERROR, MAX_RESPONSE_TOKENS,
+    JSON_FIELD_ORIGINAL_ERROR, JSON_FIELD_PORT, MAX_RESPONSE_TOKENS,
 };
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult};
 use crate::brp_tools::support::response_formatter::{BrpMetadata, ResponseFormatter};
@@ -369,8 +369,17 @@ pub async fn handle_brp_request(
     .await?;
 
     // Create formatter and metadata
+    // Ensure port is included in params for extractors that need it
+    let mut context_params = extracted.params.clone().unwrap_or_else(|| json!({}));
+    if let Value::Object(ref mut map) = context_params {
+        // Only add port if it's not already present (to avoid overwriting explicit port params)
+        if !map.contains_key(JSON_FIELD_PORT) {
+            map.insert(JSON_FIELD_PORT.to_string(), json!(extracted.port));
+        }
+    }
+
     let formatter_context = FormatterContext {
-        params: extracted.params.clone(),
+        params: Some(context_params),
     };
     let formatter = config.formatter_factory.create(formatter_context);
 

@@ -12,6 +12,8 @@ pub struct JsonResponse {
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data:    Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub debug_info: Option<Vec<String>>,
 }
 
 /// Response status types
@@ -36,6 +38,7 @@ pub struct ResponseBuilder {
     status:  ResponseStatus,
     message: String,
     data:    Option<Value>,
+    debug_info: Option<Vec<String>>,
 }
 
 impl ResponseBuilder {
@@ -44,6 +47,7 @@ impl ResponseBuilder {
             status:  ResponseStatus::Success,
             message: String::new(),
             data:    None,
+            debug_info: None,
         }
     }
 
@@ -52,6 +56,7 @@ impl ResponseBuilder {
             status:  ResponseStatus::Error,
             message: String::new(),
             data:    None,
+            debug_info: None,
         }
     }
 
@@ -80,11 +85,17 @@ impl ResponseBuilder {
         self
     }
 
+    pub fn debug_info(mut self, debug_info: Vec<String>) -> Self {
+        self.debug_info = Some(debug_info);
+        self
+    }
+
     pub fn build(self) -> JsonResponse {
         JsonResponse {
             status:  self.status,
             message: self.message,
             data:    self.data,
+            debug_info: self.debug_info,
         }
     }
 }
