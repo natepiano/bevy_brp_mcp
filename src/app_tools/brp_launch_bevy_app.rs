@@ -6,11 +6,11 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
-use super::support::{logging, process, scanning};
+use super::support::{launch_common, logging, process, scanning};
 use crate::BrpMcpService;
 use crate::constants::{DEFAULT_PROFILE, PARAM_APP_NAME, PARAM_PROFILE, PROFILE_RELEASE};
 use crate::error::BrpMcpError;
-use crate::support::{params, response, service};
+use crate::support::{params, service};
 
 pub async fn handle(
     service: &BrpMcpService,
@@ -61,40 +61,48 @@ pub fn launch_bevy_app(
     }
 
     // Get the manifest directory (parent of Cargo.toml)
-    let manifest_dir = app.manifest_path.parent().ok_or_else(|| -> McpError {
-        BrpMcpError::invalid("manifest path", "no parent directory").into()
-    })?;
+    let manifest_dir = launch_common::validate_manifest_directory(&app.manifest_path)?;
 
-    eprintln!("Launching {} from {}", app_name, manifest_dir.display());
-    eprintln!("Binary path: {}", binary_path.display());
-    eprintln!("Working directory: {}", manifest_dir.display());
-    eprintln!("CARGO_MANIFEST_DIR: {}", manifest_dir.display());
+    launch_common::print_launch_debug_info(
+        app_name,
+        "app",
+        manifest_dir,
+        &binary_path.display().to_string(),
+        profile,
+    );
 
     // Create log file
     let (log_file_path, _) =
-        logging::create_log_file(app_name, profile, &binary_path, manifest_dir)?;
+        logging::create_log_file(app_name, "App", profile, &binary_path, manifest_dir)?;
 
     // Open log file for stdout/stderr redirection
     let log_file_for_redirect = logging::open_log_file_for_redirect(&log_file_path)?;
 
     // Launch the binary
     let cmd = Command::new(&binary_path);
-    let pid = process::launch_detached_process(cmd, manifest_dir, log_file_for_redirect, app_name)?;
+    let pid = process::launch_detached_process(
+        &cmd,
+        manifest_dir,
+        log_file_for_redirect,
+        app_name,
+        "launch",
+    )?;
 
-    let mut response_data = json!({
-        "app_name": app_name,
-        "pid": pid,
-        "working_directory": manifest_dir.display().to_string(),
-        "binary_path": binary_path.display().to_string(),
-        "profile": profile,
-        "log_file": log_file_path.display().to_string(),
-        "status": "running_in_background"
+    // Create additional app-specific data
+    let additional_data = json!({
+        "binary_path": binary_path.display().to_string()
     });
 
-    response::add_workspace_info_to_response(&mut response_data, Some(&app.workspace_root));
-
-    Ok(response::success_json_response(
-        format!("Successfully launched '{app_name}' (PID: {pid})"),
-        response_data,
+    Ok(launch_common::build_launch_success_response(
+        launch_common::LaunchResponseParams {
+            name: app_name,
+            name_field: "app_name",
+            pid,
+            manifest_dir,
+            profile,
+            log_file_path: &log_file_path,
+            additional_data: Some(additional_data),
+            workspace_root: Some(&app.workspace_root),
+        },
     ))
 }

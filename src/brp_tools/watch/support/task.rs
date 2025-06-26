@@ -6,12 +6,101 @@ use futures::StreamExt;
 use serde_json::Value;
 use tracing::{debug, error, info, warn};
 
+/// Maximum size for a single chunk in the SSE stream (1MB)
+const MAX_CHUNK_SIZE: usize = 1024 * 1024;
+
+/// Maximum size for the total buffer when processing incomplete lines (10MB)
+const MAX_BUFFER_SIZE: usize = 10 * 1024 * 1024;
+
 use super::logger::{self as watch_logger, BufferedWatchLogger};
 use super::manager::{WATCH_MANAGER, WatchInfo};
 use crate::brp_tools::constants::{BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH};
 use crate::brp_tools::support::BrpJsonRpcBuilder;
 use crate::error::BrpMcpError;
 use crate::tools::{BRP_METHOD_GET_WATCH, BRP_METHOD_LIST_WATCH};
+
+/// Process a single SSE line and log the update if valid
+async fn parse_sse_line(
+    line: &str,
+    entity_id: u64,
+    logger: &BufferedWatchLogger,
+) -> Result<(), BrpMcpError> {
+    // Handle SSE format: "data: {json}"
+    if let Some(json_str) = line.strip_prefix("data: ") {
+        if let Ok(data) = serde_json::from_str::<Value>(json_str) {
+            debug!("Received watch update for entity {}: {:?}", entity_id, data);
+
+            // Extract the result from JSON-RPC response
+            if let Some(result) = data.get("result") {
+                log_update(logger, result.clone()).await?;
+            } else {
+                debug!("No result in JSON-RPC response: {:?}", data);
+            }
+        } else {
+            debug!("Failed to parse SSE data as JSON: {}", json_str);
+        }
+    } else {
+        debug!("Received non-SSE line: {}", line);
+    }
+    Ok(())
+}
+
+/// Log a watch update with error handling
+async fn log_update(logger: &BufferedWatchLogger, result: Value) -> Result<(), BrpMcpError> {
+    if let Err(e) = logger.write_update("COMPONENT_UPDATE", result).await {
+        error!("Failed to write watch update to log: {}", e);
+        return Err(BrpMcpError::failed_to("write watch update to log", e));
+    }
+    Ok(())
+}
+
+/// Process a single chunk from the stream
+async fn process_chunk(
+    bytes: &[u8],
+    line_buffer: &mut String,
+    total_buffer_size: &mut usize,
+    entity_id: u64,
+    logger: &BufferedWatchLogger,
+) -> Result<(), BrpMcpError> {
+    // Check chunk size limit
+    if bytes.len() > MAX_CHUNK_SIZE {
+        return Err(BrpMcpError::stream_failed("chunk size", MAX_CHUNK_SIZE));
+    }
+
+    // Convert bytes to string
+    let text = match std::str::from_utf8(bytes) {
+        Ok(text) => text,
+        Err(e) => {
+            debug!("Invalid UTF-8 in stream chunk: {}", e);
+            return Ok(());
+        }
+    };
+
+    // Add to line buffer and check total buffer size
+    line_buffer.push_str(text);
+    *total_buffer_size += text.len();
+
+    if *total_buffer_size > MAX_BUFFER_SIZE {
+        return Err(BrpMcpError::stream_failed("buffer size", MAX_BUFFER_SIZE));
+    }
+
+    // Process complete lines from the buffer
+    while let Some(newline_pos) = line_buffer.find('\n') {
+        let line = line_buffer.drain(..=newline_pos).collect::<String>();
+        let line = line.trim_end_matches('\n').trim_end_matches('\r');
+
+        // Update buffer size tracking
+        *total_buffer_size = line_buffer.len();
+
+        if line.trim().is_empty() {
+            continue;
+        }
+
+        parse_sse_line(line, entity_id, logger).await?;
+    }
+
+    Ok(())
+}
 
 /// Process the watch stream from the BRP server
 async fn process_watch_stream(
@@ -32,54 +121,37 @@ async fn process_watch_stream(
         return Err(error_msg);
     }
 
-    // Read the streaming response
+    // Read the streaming response with bounded memory usage
     let mut stream = response.bytes_stream();
+    let mut line_buffer = String::new();
+    let mut total_buffer_size = 0;
 
     while let Some(chunk) = stream.next().await {
         match chunk {
             Ok(bytes) => {
-                // Convert bytes to string and try to parse as SSE
-                if let Ok(text) = std::str::from_utf8(&bytes) {
-                    // Split by newlines to process SSE events
-                    for line in text.lines() {
-                        if line.trim().is_empty() {
-                            continue;
-                        }
-
-                        // Handle SSE format: "data: {json}"
-                        if let Some(json_str) = line.strip_prefix("data: ") {
-                            if let Ok(data) = serde_json::from_str::<Value>(json_str) {
-                                debug!(
-                                    "Received watch update for entity {}: {:?}",
-                                    entity_id, data
-                                );
-
-                                // Extract the result from JSON-RPC response
-                                if let Some(result) = data.get("result") {
-                                    // Write to log file
-                                    if let Err(e) = logger
-                                        .write_update("COMPONENT_UPDATE", result.clone())
-                                        .await
-                                    {
-                                        error!("Failed to write watch update to log: {}", e);
-                                    }
-                                } else {
-                                    debug!("No result in JSON-RPC response: {:?}", data);
-                                }
-                            } else {
-                                debug!("Failed to parse SSE data as JSON: {}", json_str);
-                            }
-                        } else {
-                            debug!("Received non-SSE line: {}", line);
-                        }
-                    }
-                }
+                process_chunk(
+                    &bytes,
+                    &mut line_buffer,
+                    &mut total_buffer_size,
+                    entity_id,
+                    logger,
+                )
+                .await?;
             }
             Err(e) => {
                 error!("Error reading stream chunk: {}", e);
                 break;
             }
         }
+    }
+
+    // Process any remaining incomplete line in the buffer
+    if !line_buffer.trim().is_empty() {
+        debug!(
+            "Processing remaining incomplete line: {}",
+            line_buffer.trim()
+        );
+        parse_sse_line(line_buffer.trim(), entity_id, logger).await?;
     }
 
     info!("Watch stream ended for entity {}", entity_id);

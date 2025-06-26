@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, error};
 
 /// Log entry to be written
@@ -18,22 +18,27 @@ pub struct LogEntry {
 
 /// Buffered logger for watch updates
 pub struct BufferedWatchLogger {
-    tx: mpsc::Sender<LogEntry>,
+    tx:          mpsc::Sender<LogEntry>,
+    shutdown_tx: Option<oneshot::Sender<()>>,
 }
 
 impl BufferedWatchLogger {
     /// Create a new buffered logger and spawn the writer task
     pub fn new(log_path: PathBuf) -> Self {
         let (tx, rx) = mpsc::channel(1000); // Buffer up to 1000 messages
+        let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
         // Spawn the writer task
         tokio::spawn(async move {
-            if let Err(e) = write_task(log_path, rx).await {
+            if let Err(e) = write_task(log_path, rx, shutdown_rx).await {
                 error!("Watch logger write task failed: {}", e);
             }
         });
 
-        Self { tx }
+        Self {
+            tx,
+            shutdown_tx: Some(shutdown_tx),
+        }
     }
 
     /// Queue a log entry for writing (non-blocking)
@@ -55,6 +60,16 @@ impl BufferedWatchLogger {
     }
 }
 
+impl Drop for BufferedWatchLogger {
+    fn drop(&mut self) {
+        // Signal shutdown to the write task
+        if let Some(shutdown_tx) = self.shutdown_tx.take() {
+            let _ = shutdown_tx.send(());
+            debug!("Sent shutdown signal to watch logger");
+        }
+    }
+}
+
 /// Helper function to flush the buffer to the file
 async fn flush_buffer(
     file: &mut tokio::fs::File,
@@ -72,7 +87,11 @@ async fn flush_buffer(
 }
 
 /// Background task that batches and writes log entries
-async fn write_task(log_path: PathBuf, mut rx: mpsc::Receiver<LogEntry>) -> std::io::Result<()> {
+async fn write_task(
+    log_path: PathBuf,
+    mut rx: mpsc::Receiver<LogEntry>,
+    mut shutdown_rx: oneshot::Receiver<()>,
+) -> std::io::Result<()> {
     // Open file once and keep it open
     let mut file = OpenOptions::new()
         .create(true)
@@ -86,37 +105,50 @@ async fn write_task(log_path: PathBuf, mut rx: mpsc::Receiver<LogEntry>) -> std:
     let flush_interval = std::time::Duration::from_millis(100); // Flush every 100ms
 
     loop {
-        // Try to receive with timeout
-        let timeout = tokio::time::timeout(flush_interval, rx.recv()).await;
-
-        match timeout {
-            Ok(Some(entry)) => {
-                // Format entry into buffer
-                let timestamp = entry.timestamp.format("%Y-%m-%d %H:%M:%S%.3f");
-                if let Ok(json) = serde_json::to_string(&entry.data) {
-                    let _ = writeln!(
-                        &mut buffer,
-                        "[{}] {}: {}",
-                        timestamp, entry.update_type, json
-                    );
-                }
-
-                // Check if we should flush (buffer size or time)
-                if buffer.len() > 4096 || last_flush.elapsed() > flush_interval {
-                    flush_buffer(&mut file, &mut buffer, &mut last_flush).await?;
-                }
-            }
-            Ok(None) => {
-                // Channel closed, flush remaining buffer and exit
-                flush_buffer(&mut file, &mut buffer, &mut last_flush).await?;
+        // Try to receive with timeout, but also check for shutdown signal
+        tokio::select! {
+            // Check for shutdown signal
+            _ = &mut shutdown_rx => {
+                debug!("Watch logger received shutdown signal");
                 break;
             }
-            Err(_) => {
-                // Timeout - flush if buffer has content
-                flush_buffer(&mut file, &mut buffer, &mut last_flush).await?;
+
+            // Try to receive log entry with timeout
+            timeout_result = tokio::time::timeout(flush_interval, rx.recv()) => {
+                match timeout_result {
+                    Ok(Some(entry)) => {
+                        // Format entry into buffer
+                        let timestamp = entry.timestamp.format("%Y-%m-%d %H:%M:%S%.3f");
+                        if let Ok(json) = serde_json::to_string(&entry.data) {
+                            let _ = writeln!(
+                                &mut buffer,
+                                "[{}] {}: {}",
+                                timestamp, entry.update_type, json
+                            );
+                        }
+
+                        // Check if we should flush (buffer size or time)
+                        if buffer.len() > 4096 || last_flush.elapsed() > flush_interval {
+                            flush_buffer(&mut file, &mut buffer, &mut last_flush).await?;
+                        }
+                    }
+                    Ok(None) => {
+                        // Channel closed, flush remaining buffer and exit
+                        debug!("Watch logger message channel closed");
+                        break;
+                    }
+                    Err(_) => {
+                        // Timeout - flush if buffer has content
+                        flush_buffer(&mut file, &mut buffer, &mut last_flush).await?;
+                    }
+                }
             }
         }
     }
+
+    // Final flush before shutdown
+    flush_buffer(&mut file, &mut buffer, &mut last_flush).await?;
+    debug!("Watch logger write task shutting down cleanly");
 
     Ok(())
 }

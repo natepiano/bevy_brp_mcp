@@ -123,6 +123,13 @@ impl BrpMcpError {
         Self::ParameterExtraction(format!("Validation failed for {what}: {reason}"))
     }
 
+    /// Create error for stream operations
+    pub fn stream_failed(operation: &str, limit: impl std::fmt::Display) -> Self {
+        Self::WatchOperation(format!(
+            "{MSG_FAILED_TO_PREFIX} {operation}: limit {limit} exceeded"
+        ))
+    }
+
     /// Categorize error based on content
     fn categorize_error(message: &str) -> Self {
         // Simple heuristic categorization

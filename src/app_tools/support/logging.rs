@@ -18,7 +18,8 @@ fn log_sync_error<E: std::fmt::Display>(err: E) -> BrpMcpError {
 
 /// Create a log file for a Bevy app launch
 pub fn create_log_file(
-    app_name: &str,
+    name: &str,
+    launch_type: &str,
     profile: &str,
     binary_path: &Path,
     working_dir: &Path,
@@ -28,8 +29,7 @@ pub fn create_log_file(
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| BrpMcpError::failed_to("get timestamp", e))?
         .as_millis();
-    let log_file_path =
-        std::env::temp_dir().join(format!("bevy_brp_mcp_{app_name}_{timestamp}.log"));
+    let log_file_path = std::env::temp_dir().join(format!("bevy_brp_mcp_{name}_{timestamp}.log"));
 
     // Create log file
     let mut log_file = File::create(&log_file_path)
@@ -40,7 +40,7 @@ pub fn create_log_file(
         .map_err(|e| McpError::from(log_write_error(e)))?;
     writeln!(log_file, "Started at: {:?}", std::time::SystemTime::now())
         .map_err(|e| McpError::from(log_write_error(e)))?;
-    writeln!(log_file, "App: {app_name}").map_err(|e| McpError::from(log_write_error(e)))?;
+    writeln!(log_file, "{launch_type}: {name}").map_err(|e| McpError::from(log_write_error(e)))?;
     writeln!(log_file, "Profile: {profile}").map_err(|e| McpError::from(log_write_error(e)))?;
     writeln!(log_file, "Binary: {}", binary_path.display())
         .map_err(|e| McpError::from(log_write_error(e)))?;

@@ -49,18 +49,69 @@ pub async fn handle(
     .await
 }
 
+/// Normalize process name for robust matching
+fn normalize_process_name(name: &str) -> String {
+    // Convert to lowercase and remove common path separators and extensions
+    let name = name.to_lowercase();
+
+    // Remove path components - get just the base name
+    let base_name = name.split(['/', '\\']).next_back().unwrap_or(&name);
+
+    // Remove common executable extensions
+    base_name
+        .strip_suffix(".exe")
+        .or_else(|| base_name.strip_suffix(".app"))
+        .or_else(|| base_name.strip_suffix(".bin"))
+        .unwrap_or(base_name)
+        .to_string()
+}
+
+/// Check if process matches the target app name
+fn process_matches_app(process: &sysinfo::Process, target_app: &str) -> bool {
+    let normalized_target = normalize_process_name(target_app);
+
+    // Check process name
+    let process_name = process.name().to_string_lossy();
+    let normalized_process_name = normalize_process_name(&process_name);
+
+    if normalized_process_name == normalized_target {
+        return true;
+    }
+
+    // Check command line arguments for additional matching
+    // This helps catch cases where the process name is different from the binary name
+    if let Some(cmd) = process.cmd().first() {
+        let cmd_normalized = normalize_process_name(&cmd.to_string_lossy());
+        if cmd_normalized.contains(&normalized_target)
+            || normalized_target.contains(&cmd_normalized)
+        {
+            return true;
+        }
+    }
+
+    // Check all command line arguments for potential matches
+    for arg in process.cmd() {
+        let arg_str = arg.to_string_lossy();
+        let arg_normalized = normalize_process_name(&arg_str);
+
+        // Check if this argument contains our target name
+        if arg_normalized.contains(&normalized_target) {
+            return true;
+        }
+    }
+
+    false
+}
+
 async fn check_brp_for_app(app_name: &str, port: u16) -> Result<CallToolResult, McpError> {
     // Check if a process with this name is running using sysinfo
     let mut system = System::new_all();
     system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
 
-    let running_process = system.processes().values().find(|process| {
-        let process_name = process.name().to_string_lossy();
-        // Match exact name or with common variations (.exe suffix, etc.)
-        process_name == app_name
-            || process_name == format!("{app_name}.exe")
-            || process_name.strip_suffix(".exe").unwrap_or(&process_name) == app_name
-    });
+    let running_process = system
+        .processes()
+        .values()
+        .find(|process| process_matches_app(process, app_name));
 
     // Check BRP connectivity
     let brp_responsive = check_brp_on_port(port).await?;

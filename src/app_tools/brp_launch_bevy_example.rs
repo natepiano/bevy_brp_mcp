@@ -6,11 +6,10 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 
-use super::support::{logging, process, scanning};
+use super::support::{launch_common, logging, process, scanning};
 use crate::BrpMcpService;
 use crate::constants::{DEFAULT_PROFILE, PARAM_EXAMPLE_NAME, PARAM_PROFILE, PROFILE_RELEASE};
-use crate::error::BrpMcpError;
-use crate::support::{params, response, service};
+use crate::support::{params, service};
 
 pub async fn handle(
     service: &BrpMcpService,
@@ -40,18 +39,9 @@ pub fn launch_bevy_example(
         scanning::find_required_example_with_workspace(example_name, workspace, search_paths)?;
 
     // Get the manifest directory (parent of Cargo.toml)
-    let manifest_dir = example.manifest_path.parent().ok_or_else(|| -> McpError {
-        BrpMcpError::invalid("manifest path", "no parent directory").into()
-    })?;
+    let manifest_dir = launch_common::validate_manifest_directory(&example.manifest_path)?;
 
-    eprintln!(
-        "Launching example {} from package {}",
-        example_name, example.package_name
-    );
-    eprintln!("Working directory: {}", manifest_dir.display());
-    eprintln!("Profile: {profile}");
-
-    // Create log file for example output (examples use cargo run, so we pass the command string)
+    // Build cargo command string for debug output
     let cargo_command = format!(
         "cargo run --example {example_name} {}",
         if profile == PROFILE_RELEASE {
@@ -63,8 +53,20 @@ pub fn launch_bevy_example(
     .trim()
     .to_string();
 
+    launch_common::print_launch_debug_info(
+        example_name,
+        "example",
+        manifest_dir,
+        &cargo_command,
+        profile,
+    );
+    eprintln!("Package: {}", example.package_name);
+
+    // Create log file for example output (examples use cargo run, so we pass the command string)
+
     let (log_file_path, _) = logging::create_log_file(
         example_name,
+        "Example",
         profile,
         &PathBuf::from(&cargo_command),
         manifest_dir,
@@ -89,27 +91,34 @@ pub fn launch_bevy_example(
     }
 
     // Launch the process
-    let pid =
-        process::launch_detached_process(cmd, manifest_dir, log_file_for_redirect, example_name)?;
+    let pid = process::launch_detached_process(
+        &cmd,
+        manifest_dir,
+        log_file_for_redirect,
+        example_name,
+        "spawn",
+    )?;
 
-    let mut response_data = json!({
-        "example_name": example_name,
-        "pid": pid,
+    // Create additional example-specific data
+    let additional_data = json!({
         "package_name": example.package_name,
-        "working_directory": manifest_dir.display().to_string(),
-        "profile": profile,
-        "log_file": log_file_path.display().to_string(),
-        "status": "running_in_background",
         "note": "Cargo will build the example if needed before running"
     });
 
-    // Add workspace info if available
+    // Get workspace info
     let workspace_root =
         super::support::scanning::get_workspace_root_from_manifest(&example.manifest_path);
-    response::add_workspace_info_to_response(&mut response_data, workspace_root.as_ref());
 
-    Ok(response::success_json_response(
-        format!("Successfully launched example '{example_name}' (PID: {pid})"),
-        response_data,
+    Ok(launch_common::build_launch_success_response(
+        launch_common::LaunchResponseParams {
+            name: example_name,
+            name_field: "example_name",
+            pid,
+            manifest_dir,
+            profile,
+            log_file_path: &log_file_path,
+            additional_data: Some(additional_data),
+            workspace_root: workspace_root.as_ref(),
+        },
     ))
 }
