@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use rmcp::Error as McpError;
 
 use super::cargo_detector::{BinaryInfo, CargoDetector, ExampleInfo};
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 
 /// Iterator over all valid Cargo project paths found in the given search paths
 /// Yields paths to directories containing Cargo.toml files
@@ -201,18 +201,25 @@ fn validate_single_result_or_error<T>(
     get_workspace_root: impl Fn(&T) -> Option<PathBuf>,
 ) -> Result<T, McpError> {
     match items.len() {
-        0 => Err(
-            BrpMcpError::missing(&format!("Bevy {item_type} '{item_name}' in search paths")).into(),
-        ),
+        0 => Err(report_to_mcp_error(
+            &error_stack::Report::new(Error::Configuration(format!(
+                "Bevy {item_type} '{item_name}' not found in search paths"
+            )))
+            .attach_printable(format!("Item type: {item_type}"))
+            .attach_printable(format!("Item name: {item_name}")),
+        )),
         1 => {
             // We know exactly one item exists
             let mut iter = items.into_iter();
             iter.next().map_or_else(
                 || {
-                    Err(BrpMcpError::missing(&format!(
-                        "Bevy {item_type} '{item_name}' in search paths"
+                    Err(report_to_mcp_error(
+                        &error_stack::Report::new(Error::Configuration(format!(
+                            "Bevy {item_type} '{item_name}' not found in search paths"
+                        )))
+                        .attach_printable(format!("Item type: {item_type}"))
+                        .attach_printable(format!("Item name: {item_name}")),
                     ))
-                    .into())
                 },
                 |item| Ok(item),
             )
@@ -227,7 +234,12 @@ fn validate_single_result_or_error<T>(
 
             let error_msg =
                 build_workspace_selection_error(item_type, item_name, param_name, &workspaces);
-            Err(BrpMcpError::invalid("parameters", &error_msg).into())
+            Err(report_to_mcp_error(
+                &error_stack::Report::new(Error::ParameterExtraction(
+                    "Multiple items found with the same name".to_string(),
+                ))
+                .attach_printable(error_msg),
+            ))
         }
     }
 }

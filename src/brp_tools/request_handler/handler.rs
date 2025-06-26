@@ -19,7 +19,7 @@ use crate::brp_tools::constants::{
 };
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult};
 use crate::brp_tools::support::response_formatter::{BrpMetadata, ResponseFormatter};
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 
 const CHARS_PER_TOKEN: usize = 4;
 
@@ -123,7 +123,14 @@ fn resolve_brp_method(
         .as_deref()
         .or(config.method)
         .map(String::from)
-        .ok_or_else(|| -> McpError { BrpMcpError::missing("BRP method specification").into() })?;
+        .ok_or_else(|| -> McpError {
+            report_to_mcp_error(
+                &error_stack::Report::new(Error::ParameterExtraction(
+                    "Missing BRP method specification".to_string(),
+                ))
+                .attach_printable("Either method from request or config must be specified"),
+            )
+        })?;
 
     debug_info.push(format!("Method resolution: {resolved_method}"));
 
@@ -135,8 +142,12 @@ fn handle_large_response(
     response_data: &Value,
     method_name: &str,
 ) -> Result<Option<Value>, McpError> {
-    let response_json = serde_json::to_string(response_data)
-        .map_err(|e| -> McpError { BrpMcpError::failed_to("serialize response", e).into() })?;
+    let response_json = serde_json::to_string(response_data).map_err(|e| -> McpError {
+        report_to_mcp_error(
+            &error_stack::Report::new(Error::General("Failed to serialize response".to_string()))
+                .attach_printable(format!("Serialization error: {e}")),
+        )
+    })?;
 
     let estimated_tokens = response_json.len() / CHARS_PER_TOKEN;
 
@@ -144,7 +155,14 @@ fn handle_large_response(
         // Generate timestamp for unique filename
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map_err(|e| -> McpError { BrpMcpError::failed_to("get timestamp", e).into() })?
+            .map_err(|e| -> McpError {
+                report_to_mcp_error(
+                    &error_stack::Report::new(Error::General(
+                        "Failed to get timestamp".to_string(),
+                    ))
+                    .attach_printable(format!("System time error: {e}")),
+                )
+            })?
             .as_secs();
 
         let sanitized_method = method_name.replace('/', "_");
@@ -153,7 +171,13 @@ fn handle_large_response(
 
         // Save response to file
         fs::write(&filepath, &response_json).map_err(|e| -> McpError {
-            BrpMcpError::io_failed("write response", &filepath, e).into()
+            report_to_mcp_error(
+                &error_stack::Report::new(Error::FileOperation(format!(
+                    "Failed to write response to {}",
+                    filepath.display()
+                )))
+                .attach_printable(format!("IO error: {e}")),
+            )
         })?;
 
         // Return fallback response with file information
@@ -354,7 +378,8 @@ pub async fn handle_brp_request(
         Some(extracted.port),
         debug_info,
     )
-    .await?;
+    .await
+    .map_err(|err| crate::error::report_to_mcp_error(&err))?;
 
     // Create formatter and metadata
     // Ensure port is included in params for extractors that need it

@@ -3,7 +3,7 @@ use rmcp::model::CallToolRequestParam;
 use serde_json::Value;
 
 use crate::constants::PARAM_WORKSPACE;
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 
 // Value-based extraction functions (lower-level)
 
@@ -12,16 +12,29 @@ pub fn extract_required_u32(
     arguments: &Value,
     field_name: &str,
     field_description: &str,
-) -> Result<u32, McpError> {
-    arguments[field_name]
+) -> std::result::Result<u32, McpError> {
+    let value = arguments[field_name]
         .as_u64()
-        .ok_or_else(|| BrpMcpError::missing(&format!("{field_description} parameter")).into())
-        .and_then(|v| {
-            u32::try_from(v).map_err(|_| {
-                BrpMcpError::invalid(&format!("{field_description} value"), "too large for u32")
-                    .into()
-            })
+        .ok_or_else(|| {
+            error_stack::Report::new(Error::ParameterExtraction(format!(
+                "Missing {field_description} parameter"
+            )))
+            .attach_printable(format!("Field name: {field_name}"))
+            .attach_printable("Expected: u32 number")
         })
+        .map_err(|report| report_to_mcp_error(&report))?
+        .try_into()
+        .map_err(|_| {
+            report_to_mcp_error(
+                &error_stack::Report::new(Error::ParameterExtraction(format!(
+                    "Invalid {field_description} value"
+                )))
+                .attach_printable(format!("Field name: {field_name}"))
+                .attach_printable("Value too large for u32"),
+            )
+        })?;
+
+    Ok(value)
 }
 
 /// Extract a required u64 from a JSON value
@@ -29,10 +42,16 @@ pub fn extract_required_u64(
     arguments: &Value,
     field_name: &str,
     field_description: &str,
-) -> Result<u64, McpError> {
-    arguments[field_name]
-        .as_u64()
-        .ok_or_else(|| BrpMcpError::missing(&format!("{field_description} parameter")).into())
+) -> std::result::Result<u64, McpError> {
+    arguments[field_name].as_u64().ok_or_else(|| {
+        report_to_mcp_error(
+            &error_stack::Report::new(Error::ParameterExtraction(format!(
+                "Missing {field_description} parameter"
+            )))
+            .attach_printable(format!("Field name: {field_name}"))
+            .attach_printable("Expected: u64 number"),
+        )
+    })
 }
 
 /// Extract an optional u16 with a default value
@@ -58,13 +77,21 @@ pub fn extract_optional_string_array(arguments: &Value, field_name: &str) -> Opt
 pub fn extract_required_string<'a>(
     request: &'a CallToolRequestParam,
     param_name: &str,
-) -> Result<&'a str, McpError> {
+) -> std::result::Result<&'a str, McpError> {
     request
         .arguments
         .as_ref()
         .and_then(|args| args.get(param_name))
         .and_then(|v| v.as_str())
-        .ok_or_else(|| BrpMcpError::missing(&format!("required parameter: {param_name}")).into())
+        .ok_or_else(|| {
+            report_to_mcp_error(
+                &error_stack::Report::new(Error::ParameterExtraction(format!(
+                    "Missing required parameter: {param_name}"
+                )))
+                .attach_printable(format!("Parameter name: {param_name}"))
+                .attach_printable("Expected: string value"),
+            )
+        })
 }
 
 /// Extract an optional string parameter from the request with a default value
@@ -86,15 +113,20 @@ pub fn extract_optional_number(
     request: &CallToolRequestParam,
     param_name: &str,
     default: u64,
-) -> Result<u64, McpError> {
+) -> std::result::Result<u64, McpError> {
     request
         .arguments
         .as_ref()
         .and_then(|args| args.get(param_name))
         .map_or(Ok(default), |v| {
             v.as_u64().ok_or_else(|| {
-                BrpMcpError::invalid(&format!("parameter '{param_name}'"), "must be a number")
-                    .into()
+                report_to_mcp_error(
+                    &error_stack::Report::new(Error::ParameterExtraction(format!(
+                        "Invalid parameter '{param_name}'"
+                    )))
+                    .attach_printable(format!("Parameter name: {param_name}"))
+                    .attach_printable("Expected: number value"),
+                )
             })
         })
 }
@@ -104,10 +136,17 @@ pub fn extract_optional_u32(
     request: &CallToolRequestParam,
     param_name: &str,
     default: u32,
-) -> Result<u32, McpError> {
+) -> std::result::Result<u32, McpError> {
     let value = extract_optional_number(request, param_name, u64::from(default))?;
-    u32::try_from(value)
-        .map_err(|_| BrpMcpError::invalid(param_name, "value too large for u32").into())
+    u32::try_from(value).map_err(|_| {
+        report_to_mcp_error(
+            &error_stack::Report::new(Error::ParameterExtraction(format!(
+                "Invalid parameter '{param_name}'"
+            )))
+            .attach_printable(format!("Parameter name: {param_name}"))
+            .attach_printable("Value too large for u32"),
+        )
+    })
 }
 
 /// Extract an optional u16 parameter from the request
@@ -147,13 +186,21 @@ pub fn extract_optional_u16_from_request(
 pub fn extract_required_number(
     request: &CallToolRequestParam,
     param_name: &str,
-) -> Result<u64, McpError> {
+) -> std::result::Result<u64, McpError> {
     request
         .arguments
         .as_ref()
         .and_then(|args| args.get(param_name))
         .and_then(serde_json::Value::as_u64)
-        .ok_or_else(|| BrpMcpError::missing(&format!("{param_name} (must be a number)")).into())
+        .ok_or_else(|| {
+            report_to_mcp_error(
+                &error_stack::Report::new(Error::ParameterExtraction(format!(
+                    "Missing required parameter: {param_name}"
+                )))
+                .attach_printable(format!("Parameter name: {param_name}"))
+                .attach_printable("Expected: number value"),
+            )
+        })
 }
 
 /// Extract any value parameter from the request (for generic JSON values)
@@ -171,7 +218,7 @@ pub fn extract_any_value<'a>(
 pub fn extract_optional_string_array_from_request(
     request: &CallToolRequestParam,
     param_name: &str,
-) -> Result<Option<Vec<String>>, McpError> {
+) -> std::result::Result<Option<Vec<String>>, McpError> {
     match request
         .arguments
         .as_ref()
@@ -180,23 +227,29 @@ pub fn extract_optional_string_array_from_request(
         Some(v) => {
             if let Some(arr) = v.as_array() {
                 let mut result = Vec::new();
-                for item in arr {
+                for (index, item) in arr.iter().enumerate() {
                     if let Some(s) = item.as_str() {
                         result.push(s.to_string());
                     } else {
-                        return Err(BrpMcpError::invalid(
-                            &format!("items in '{param_name}' array"),
-                            "must be strings",
-                        )
-                        .into());
+                        return Err(report_to_mcp_error(
+                            &error_stack::Report::new(Error::ParameterExtraction(format!(
+                                "Invalid item in '{param_name}' array"
+                            )))
+                            .attach_printable(format!("Parameter name: {param_name}"))
+                            .attach_printable(format!("Array index: {index}"))
+                            .attach_printable("Expected: string value"),
+                        ));
                     }
                 }
                 Ok(Some(result))
             } else {
-                Err(
-                    BrpMcpError::invalid(&format!("parameter '{param_name}'"), "must be an array")
-                        .into(),
-                )
+                Err(report_to_mcp_error(
+                    &error_stack::Report::new(Error::ParameterExtraction(format!(
+                        "Invalid parameter '{param_name}'"
+                    )))
+                    .attach_printable(format!("Parameter name: {param_name}"))
+                    .attach_printable("Expected: array value"),
+                ))
             }
         }
         None => Ok(None),

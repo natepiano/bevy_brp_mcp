@@ -9,13 +9,16 @@ const MSG_MISSING_PREFIX: &str = "Missing";
 const MSG_UNEXPECTED_PREFIX: &str = "Unexpected";
 
 // Internal error types for detailed error categorization
-#[derive(Error, Debug)]
-pub enum BrpMcpError {
+#[derive(Error, Debug, Clone)]
+pub enum Error {
     #[error("Mutex poisoned: {0}")]
     MutexPoisoned(String),
 
     #[error("BRP communication failed: {0}")]
     BrpCommunication(String),
+
+    #[error("JSON-RPC error: {0}")]
+    JsonRpc(String),
 
     #[error("Format discovery error: {0}")]
     FormatDiscovery(String),
@@ -45,7 +48,10 @@ pub enum BrpMcpError {
     General(String),
 }
 
-impl BrpMcpError {
+/// Result type for the `bevy_brp_mcp` library
+pub type Result<T> = error_stack::Result<T, Error>;
+
+impl Error {
     // Builder methods for common patterns
 
     /// Create a "Failed to X" error with appropriate variant
@@ -158,20 +164,26 @@ impl BrpMcpError {
 }
 
 // Conversion to McpError for API boundaries
-impl From<BrpMcpError> for McpError {
-    fn from(err: BrpMcpError) -> Self {
+impl From<Error> for McpError {
+    fn from(err: Error) -> Self {
         match err {
-            BrpMcpError::BrpCommunication(msg)
-            | BrpMcpError::FormatDiscovery(msg)
-            | BrpMcpError::Configuration(msg)
-            | BrpMcpError::ParameterExtraction(msg) => Self::invalid_params(msg, None),
-            BrpMcpError::MutexPoisoned(msg)
-            | BrpMcpError::FileOperation(msg)
-            | BrpMcpError::InvalidState(msg)
-            | BrpMcpError::WatchOperation(msg)
-            | BrpMcpError::ProcessManagement(msg)
-            | BrpMcpError::LogOperation(msg)
-            | BrpMcpError::General(msg) => Self::internal_error(msg, None),
+            Error::BrpCommunication(msg)
+            | Error::JsonRpc(msg)
+            | Error::FormatDiscovery(msg)
+            | Error::Configuration(msg)
+            | Error::ParameterExtraction(msg) => Self::invalid_params(msg, None),
+            Error::MutexPoisoned(msg)
+            | Error::FileOperation(msg)
+            | Error::InvalidState(msg)
+            | Error::WatchOperation(msg)
+            | Error::ProcessManagement(msg)
+            | Error::LogOperation(msg)
+            | Error::General(msg) => Self::internal_error(msg, None),
         }
     }
+}
+
+// Helper function to convert error-stack Report to McpError
+pub fn report_to_mcp_error(report: &error_stack::Report<Error>) -> McpError {
+    (*report.current_context()).clone().into()
 }

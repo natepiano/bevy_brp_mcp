@@ -5,7 +5,7 @@ use rmcp::Error as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::{Value, json};
 
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 use crate::support::response;
 
 /// Parameters for building a launch success response
@@ -23,7 +23,11 @@ pub struct LaunchResponseParams<'a> {
 /// Validates and extracts the manifest directory from a manifest path
 pub fn validate_manifest_directory(manifest_path: &Path) -> Result<&Path, McpError> {
     manifest_path.parent().ok_or_else(|| -> McpError {
-        BrpMcpError::invalid("manifest path", "no parent directory").into()
+        report_to_mcp_error(
+            &error_stack::Report::new(Error::Configuration("Invalid manifest path".to_string()))
+                .attach_printable("No parent directory found")
+                .attach_printable(format!("Path: {}", manifest_path.display())),
+        )
     })
 }
 

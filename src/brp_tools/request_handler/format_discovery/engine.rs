@@ -1,6 +1,5 @@
 //! Orchestration and retry logic for format discovery
 
-use rmcp::Error as McpError;
 use serde_json::{Map, Value};
 
 use super::constants::{
@@ -10,7 +9,7 @@ use super::constants::{
 use super::detection::{TierInfo, TierManager, analyze_error_pattern, check_type_serialization};
 use super::transformations::apply_smart_format_discovery;
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
-use crate::error::BrpMcpError;
+use crate::error::{Error, Result};
 use crate::tools::{
     BRP_METHOD_DESTROY, BRP_METHOD_EXTRAS_DISCOVER_FORMAT, BRP_METHOD_INSERT,
     BRP_METHOD_INSERT_RESOURCE, BRP_METHOD_MUTATE_COMPONENT, BRP_METHOD_MUTATE_RESOURCE,
@@ -133,7 +132,7 @@ pub async fn execute_brp_method_with_format_discovery(
     params: Option<Value>,
     port: Option<u16>,
     initial_debug_info: Vec<String>,
-) -> Result<EnhancedBrpResult, McpError> {
+) -> Result<EnhancedBrpResult> {
     let mut debug_info = initial_debug_info;
     debug_info.push(format!(
         "Format Discovery: FUNCTION CALLED! Executing method '{method}' with params: {params:?}"
@@ -259,7 +258,7 @@ async fn process_type_items_for_corrections(
     port: Option<u16>,
     original_error: &BrpError,
     debug_info: &mut Vec<String>,
-) -> Result<(Vec<FormatCorrection>, Vec<(String, Value)>, Vec<TierInfo>), McpError> {
+) -> Result<(Vec<FormatCorrection>, Vec<(String, Value)>, Vec<TierInfo>)> {
     let mut format_corrections = Vec::new();
     let mut corrected_items = Vec::new();
     let mut all_tier_info = Vec::new();
@@ -314,7 +313,7 @@ async fn build_discovery_result(
     original_error: &BrpError,
     port: Option<u16>,
     debug_info: &mut Vec<String>,
-) -> Result<EnhancedBrpResult, McpError> {
+) -> Result<EnhancedBrpResult> {
     let DiscoveryResultData {
         format_corrections,
         corrected_items,
@@ -354,7 +353,7 @@ async fn attempt_format_discovery(
     params: &Value,
     port: Option<u16>,
     original_error: &BrpError,
-) -> Result<EnhancedBrpResult, McpError> {
+) -> Result<EnhancedBrpResult> {
     let mut debug_info = Vec::new();
 
     // Phase 1: Extraction
@@ -404,7 +403,7 @@ async fn process_single_type_item(
     port: Option<u16>,
     original_error: &BrpError,
     debug_info: &mut Vec<String>,
-) -> Result<(Option<(Value, String)>, Vec<TierInfo>), McpError> {
+) -> Result<(Option<(Value, String)>, Vec<TierInfo>)> {
     debug_info.push(format!(
         "Format Discovery: Checking type '{type_name}' with value: {type_value:?}"
     ));
@@ -562,8 +561,10 @@ async fn tiered_type_format_discovery(
             Err(e) => {
                 tier_manager.complete_tier(
                     false,
-                    BrpMcpError::failed_to("query serialization info", format!("{type_name}: {e}"))
-                        .to_string(),
+                    Error::FormatDiscovery(format!(
+                        "failed to query serialization info for {type_name}: {e}"
+                    ))
+                    .to_string(),
                 );
             }
         }
@@ -618,7 +619,7 @@ async fn test_component_format_with_spawn(
     type_name: &str,
     component_value: &Value,
     port: Option<u16>,
-) -> Result<Value, McpError> {
+) -> Result<Value> {
     let mut test_components = Map::new();
     test_components.insert(type_name.to_string(), component_value.clone());
 
@@ -640,7 +641,9 @@ async fn test_component_format_with_spawn(
             }
             Ok(component_value.clone())
         }
-        _ => Err(BrpMcpError::failed_to("test component format", "validation failed").into()),
+        _ => Err(error_stack::Report::new(Error::FormatDiscovery(
+            "test component format validation failed".to_string(),
+        ))),
     }
 }
 

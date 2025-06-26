@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::app_tools::support::scanning::extract_workspace_name;
+use crate::error::{Error, Result};
 
 /// Standard JSON response structure for all tools
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,9 +24,18 @@ pub enum ResponseStatus {
 }
 
 impl JsonResponse {
-    /// Convert to JSON string
-    pub fn to_json(&self) -> String {
-        serde_json::to_string_pretty(self).unwrap_or_else(|_| {
+    /// Convert to JSON string with error-stack context
+    pub fn to_json(&self) -> Result<String> {
+        use error_stack::ResultExt;
+
+        serde_json::to_string_pretty(self).change_context(Error::General(
+            "Failed to serialize JSON response".to_string(),
+        ))
+    }
+
+    /// Convert to JSON string with fallback on error
+    pub fn to_json_fallback(&self) -> String {
+        self.to_json().unwrap_or_else(|_| {
             r#"{"status":"error","message":"Failed to serialize response"}"#.to_string()
         })
     }
@@ -60,14 +70,21 @@ impl ResponseBuilder {
         self
     }
 
-    pub fn data(mut self, data: impl Serialize) -> Self {
-        self.data = Some(serde_json::to_value(data).unwrap_or(Value::Null));
-        self
+    pub fn data(mut self, data: impl Serialize) -> Result<Self> {
+        use error_stack::ResultExt;
+
+        self.data = Some(serde_json::to_value(data).change_context(Error::General(
+            "Failed to serialize response data".to_string(),
+        ))?);
+        Ok(self)
     }
 
     /// Add a field to the data object. Creates a new object if data is None.
-    pub fn add_field(mut self, key: &str, value: impl Serialize) -> Self {
-        let value_json = serde_json::to_value(value).unwrap_or(Value::Null);
+    pub fn add_field(mut self, key: &str, value: impl Serialize) -> Result<Self> {
+        use error_stack::ResultExt;
+
+        let value_json = serde_json::to_value(value)
+            .change_context(Error::General(format!("Failed to serialize field '{key}'")))?;
 
         if let Some(Value::Object(map)) = &mut self.data {
             map.insert(key.to_string(), value_json);
@@ -77,6 +94,33 @@ impl ResponseBuilder {
             self.data = Some(Value::Object(map));
         }
 
+        Ok(self)
+    }
+
+    /// Add data with fallback to error indicator on serialization failure
+    /// This method preserves error context in the fallback value and never fails
+    pub fn data_with_fallback(mut self, data: impl Serialize) -> Self {
+        match serde_json::to_value(&data) {
+            Ok(value) => self.data = Some(value),
+            Err(e) => {
+                use std::any::type_name_of_val;
+
+                // Create an error-stack Report for better error context
+                let error_report = error_stack::Report::new(e)
+                    .change_context(Error::General(
+                        "Serialization failed in data_with_fallback".to_string(),
+                    ))
+                    .attach_printable(format!("Data type: {}", type_name_of_val(&data)));
+
+                // Preserve rich error information in response
+                self.data = Some(serde_json::json!({
+                    "error": "serialization_failed",
+                    "message": error_report.to_string(),
+                    "data_type": type_name_of_val(&data),
+                    "context": "data_with_fallback method encountered serialization error"
+                }));
+            }
+        }
         self
     }
 
@@ -97,9 +141,22 @@ pub fn success_json_response(
     let response = ResponseBuilder::success()
         .message(message)
         .data(data)
-        .build();
+        .map_or_else(
+            |_| {
+                ResponseBuilder::error()
+                    .message("Failed to serialize response data")
+                    .data_with_fallback(serde_json::json!({
+                        "error": "serialization_failed",
+                        "context": "success_json_response"
+                    }))
+                    .build()
+            },
+            ResponseBuilder::build,
+        );
 
-    rmcp::model::CallToolResult::success(vec![rmcp::model::Content::text(response.to_json())])
+    rmcp::model::CallToolResult::success(vec![rmcp::model::Content::text(
+        response.to_json_fallback(),
+    )])
 }
 
 /// Add workspace information to response data if available

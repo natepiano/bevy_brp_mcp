@@ -16,15 +16,11 @@ use super::logger::{self as watch_logger, BufferedWatchLogger};
 use super::manager::{WATCH_MANAGER, WatchInfo};
 use crate::brp_tools::constants::{BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH};
 use crate::brp_tools::support::BrpJsonRpcBuilder;
-use crate::error::BrpMcpError;
+use crate::error::{Error, Result};
 use crate::tools::{BRP_METHOD_GET_WATCH, BRP_METHOD_LIST_WATCH};
 
 /// Process a single SSE line and log the update if valid
-async fn parse_sse_line(
-    line: &str,
-    entity_id: u64,
-    logger: &BufferedWatchLogger,
-) -> Result<(), BrpMcpError> {
+async fn parse_sse_line(line: &str, entity_id: u64, logger: &BufferedWatchLogger) -> Result<()> {
     // Handle SSE format: "data: {json}"
     if let Some(json_str) = line.strip_prefix("data: ") {
         if let Ok(data) = serde_json::from_str::<Value>(json_str) {
@@ -46,10 +42,13 @@ async fn parse_sse_line(
 }
 
 /// Log a watch update with error handling
-async fn log_update(logger: &BufferedWatchLogger, result: Value) -> Result<(), BrpMcpError> {
+async fn log_update(logger: &BufferedWatchLogger, result: Value) -> Result<()> {
     if let Err(e) = logger.write_update("COMPONENT_UPDATE", result).await {
         error!("Failed to write watch update to log: {}", e);
-        return Err(BrpMcpError::failed_to("write watch update to log", e));
+        return Err(error_stack::Report::new(Error::failed_to(
+            "write watch update to log",
+            &e,
+        )));
     }
     Ok(())
 }
@@ -61,10 +60,14 @@ async fn process_chunk(
     total_buffer_size: &mut usize,
     entity_id: u64,
     logger: &BufferedWatchLogger,
-) -> Result<(), BrpMcpError> {
+) -> Result<()> {
     // Check chunk size limit
     if bytes.len() > MAX_CHUNK_SIZE {
-        return Err(BrpMcpError::stream_failed("chunk size", MAX_CHUNK_SIZE));
+        return Err(error_stack::Report::new(Error::InvalidState(format!(
+            "Stream chunk size {} exceeds maximum {}",
+            bytes.len(),
+            MAX_CHUNK_SIZE
+        ))));
     }
 
     // Convert bytes to string
@@ -81,7 +84,10 @@ async fn process_chunk(
     *total_buffer_size += text.len();
 
     if *total_buffer_size > MAX_BUFFER_SIZE {
-        return Err(BrpMcpError::stream_failed("buffer size", MAX_BUFFER_SIZE));
+        return Err(error_stack::Report::new(Error::InvalidState(format!(
+            "Stream buffer size {} exceeds maximum {}",
+            *total_buffer_size, MAX_BUFFER_SIZE
+        ))));
     }
 
     // Process complete lines from the buffer
@@ -107,18 +113,17 @@ async fn process_watch_stream(
     response: reqwest::Response,
     entity_id: u64,
     logger: &BufferedWatchLogger,
-) -> Result<(), BrpMcpError> {
+) -> Result<()> {
     if !response.status().is_success() {
-        let error_msg = BrpMcpError::brp_request_failed(
-            "process watch stream",
-            format!(
-                "server returned {}: {}",
-                response.status(),
-                response.status().canonical_reason().unwrap_or("Unknown")
-            ),
+        let error_msg = format!(
+            "server returned {}: {}",
+            response.status(),
+            response.status().canonical_reason().unwrap_or("Unknown")
         );
-        error!("{}", error_msg);
-        return Err(error_msg);
+        error!("Failed to process watch stream: {}", error_msg);
+        return Err(error_stack::Report::new(Error::BrpCommunication(format!(
+            "Failed to process watch stream: {error_msg}"
+        ))));
     }
 
     // Read the streaming response with bounded memory usage
@@ -245,7 +250,7 @@ async fn start_watch_task(
     brp_method: &str,
     params: Value,
     port: u16,
-) -> Result<(u32, PathBuf), BrpMcpError> {
+) -> Result<(u32, PathBuf)> {
     // Prepare all data that doesn't require the watch_id
     let watch_type_owned = watch_type.to_string();
     let brp_method_owned = brp_method.to_string();
@@ -281,11 +286,9 @@ async fn start_watch_task(
     let log_result = logger.write_update("WATCH_STARTED", log_data).await;
 
     if let Err(e) = log_result {
-        return Err(BrpMcpError::watch_failed(
-            "log initial entry",
-            u32::try_from(entity_id).ok(),
-            e,
-        ));
+        return Err(error_stack::Report::new(Error::WatchOperation(format!(
+            "Failed to log initial entry for entity {entity_id}: {e}"
+        ))));
     }
 
     // Spawn task
@@ -325,17 +328,17 @@ pub async fn start_entity_watch_task(
     entity_id: u64,
     components: Option<Vec<String>>,
     port: u16,
-) -> Result<(u32, PathBuf), BrpMcpError> {
+) -> Result<(u32, PathBuf)> {
     // Validate components parameter
     let components = components.ok_or_else(|| {
-        BrpMcpError::missing("components parameter is required for entity watch. Specify which components to monitor")
+        error_stack::Report::new(Error::missing("components parameter is required for entity watch. Specify which components to monitor"))
     })?;
 
     if components.is_empty() {
-        return Err(BrpMcpError::invalid(
+        return Err(error_stack::Report::new(Error::invalid(
             "components array",
             "cannot be empty. Specify at least one component to watch",
-        ));
+        )));
     }
 
     // Build the watch parameters
@@ -348,10 +351,7 @@ pub async fn start_entity_watch_task(
 }
 
 /// Start a background task for entity list watching
-pub async fn start_list_watch_task(
-    entity_id: u64,
-    port: u16,
-) -> Result<(u32, PathBuf), BrpMcpError> {
+pub async fn start_list_watch_task(entity_id: u64, port: u16) -> Result<(u32, PathBuf)> {
     let params = serde_json::json!({
         "entity": entity_id
     });

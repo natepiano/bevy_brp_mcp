@@ -1,6 +1,5 @@
 //! Error detection and pattern matching logic for format discovery
 
-use rmcp::Error as McpError;
 use serde_json::Value;
 
 use super::constants::{
@@ -9,7 +8,7 @@ use super::constants::{
     UNKNOWN_COMPONENT_REGEX, UNKNOWN_COMPONENT_TYPE_REGEX, VARIANT_TYPE_MISMATCH_REGEX,
 };
 use crate::brp_tools::support::brp_client::{BrpError, BrpResult, execute_brp_method};
-use crate::error::BrpMcpError;
+use crate::error::{Error, Result};
 use crate::tools::BRP_METHOD_REGISTRY_SCHEMA;
 
 /// Known error patterns that can be deterministically handled
@@ -219,7 +218,7 @@ pub fn analyze_error_pattern(error: &BrpError) -> ErrorAnalysis {
 pub async fn check_type_serialization(
     type_name: &str,
     port: Option<u16>,
-) -> Result<SerializationCheck, McpError> {
+) -> Result<SerializationCheck> {
     // Query the registry schema for this specific type
     let schema_params = serde_json::json!({
         "with_types": ["Component", "Resource"],
@@ -251,10 +250,7 @@ fn extract_crate_name(type_name: &str) -> &str {
 }
 
 /// Analyze schema data to determine serialization support for a type
-fn analyze_schema_for_type(
-    type_name: &str,
-    schema_data: &Value,
-) -> Result<SerializationCheck, McpError> {
+fn analyze_schema_for_type(type_name: &str, schema_data: &Value) -> Result<SerializationCheck> {
     // Schema response can be either an array (old format) or an object (new format)
     // Try object format first (new format where keys are type names)
     if let Some(schema_obj) = schema_data.as_object() {
@@ -272,11 +268,9 @@ fn analyze_schema_for_type(
             }
         }
     } else {
-        return Err(BrpMcpError::unexpected(
-            "schema response format",
-            "neither an array nor an object",
-        )
-        .into());
+        return Err(error_stack::Report::new(Error::FormatDiscovery(
+            "Unexpected schema response format: neither an array nor an object".to_string(),
+        )));
     }
 
     // Type not found in schema

@@ -13,7 +13,7 @@ use crate::brp_tools::constants::{
 };
 use crate::brp_tools::support::BrpJsonRpcBuilder;
 use crate::constants::{PARAM_APP_NAME, PARAM_PORT};
-use crate::error::BrpMcpError;
+use crate::error::{Error, Result, report_to_mcp_error};
 use crate::support::{params, response, schema};
 use crate::tools::{
     BRP_METHOD_EXTRAS_SHUTDOWN, DESC_BRP_EXTRAS_SHUTDOWN, TOOL_BRP_EXTRAS_SHUTDOWN,
@@ -103,7 +103,7 @@ async fn shutdown_app(app_name: &str, port: u16) -> ShutdownResult {
                 Ok(Some(pid)) => ShutdownResult::ProcessKilled { pid },
                 Ok(None) => ShutdownResult::NotRunning,
                 Err(e) => ShutdownResult::Error {
-                    message: e.to_string(),
+                    message: format!("{e:?}"),
                 },
             }
         }
@@ -129,13 +129,19 @@ pub async fn handle(
     _service: &BrpMcpService,
     request: rmcp::model::CallToolRequestParam,
     _context: RequestContext<RoleServer>,
-) -> Result<CallToolResult, McpError> {
+) -> std::result::Result<CallToolResult, McpError> {
     // Get parameters
     let app_name = params::extract_required_string(&request, PARAM_APP_NAME)?;
     let port = params::extract_optional_number(&request, PARAM_PORT, u64::from(DEFAULT_BRP_PORT))?;
 
     let port = u16::try_from(port).map_err(|_| -> McpError {
-        BrpMcpError::validation_failed("port", "must be a valid u16").into()
+        report_to_mcp_error(
+            &error_stack::Report::new(Error::ParameterExtraction(
+                "Invalid port parameter".to_string(),
+            ))
+            .attach_printable("Port must be a valid u16")
+            .attach_printable(format!("Provided value: {port}")),
+        )
     })?;
 
     // Shutdown the app
@@ -146,7 +152,7 @@ pub async fn handle(
 }
 
 /// Try to gracefully shutdown via `bevy_brp_extras`
-async fn try_graceful_shutdown(port: u16) -> Result<bool, McpError> {
+async fn try_graceful_shutdown(port: u16) -> Result<bool> {
     let client = reqwest::Client::new();
     let url = format!("http://localhost:{port}");
 
@@ -185,12 +191,16 @@ async fn try_graceful_shutdown(port: u16) -> Result<bool, McpError> {
                 Err(_) => Ok(false),
             }
         }
-        _ => Err(BrpMcpError::brp_request_failed("check", "BRP not responsive").into()),
+        _ => Err(error_stack::Report::new(Error::BrpCommunication(
+            "BRP check request failed".to_string(),
+        ))
+        .attach_printable("BRP not responsive")
+        .attach_printable(format!("Port: {port}"))),
     }
 }
 
 /// Kill the process using the system signal
-fn kill_process(app_name: &str) -> Result<Option<u32>, BrpMcpError> {
+fn kill_process(app_name: &str) -> Result<Option<u32>> {
     let mut system = System::new_all();
     system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
 
@@ -209,11 +219,12 @@ fn kill_process(app_name: &str) -> Result<Option<u32>, BrpMcpError> {
         if process.kill_with(Signal::Term).unwrap_or(false) {
             Ok(Some(pid))
         } else {
-            Err(BrpMcpError::process_failed(
-                "terminate",
-                &pid.to_string(),
-                "Failed to send SIGTERM",
+            Err(error_stack::Report::new(Error::ProcessManagement(
+                "Failed to terminate process".to_string(),
             ))
+            .attach_printable(format!("Process name: {app_name}"))
+            .attach_printable(format!("PID: {pid}"))
+            .attach_printable("Failed to send SIGTERM signal"))
         }
     })
 }
