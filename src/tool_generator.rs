@@ -248,8 +248,9 @@ fn convert_extractor_type(
         ExtractorType::ResourceFromParams => extractors::resource_from_params,
         ExtractorType::PassThroughData => extractors::pass_through_data,
         ExtractorType::PassThroughResult => PASS_THROUGH_RESULT,
-        ExtractorType::EntityCountFromData => extractors::array_count,
-        ExtractorType::ComponentCountFromData => extractors::array_count,
+        ExtractorType::EntityCountFromData | ExtractorType::ComponentCountFromData => {
+            extractors::array_count
+        }
         ExtractorType::EntityFromResponse => extract_entity_from_response,
         ExtractorType::QueryComponentCount => extract_query_component_count,
         ExtractorType::QueryParamsFromContext => extract_query_params_from_context,

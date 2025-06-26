@@ -4,12 +4,15 @@ use rmcp::model::{CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde::Deserialize;
+use serde_json;
 
 use crate::BrpMcpService;
+use crate::brp_tools::support::brp_client::execute_brp_method;
 use crate::error::BrpMcpError;
 use crate::support::response::ResponseBuilder;
 use crate::support::schema;
 use crate::support::serialization::json_response_to_result;
+use crate::tools::BRP_METHOD_EXTRAS_SET_DEBUG_MODE;
 
 static DEBUG_ENABLED: AtomicBool = AtomicBool::new(false);
 
@@ -24,7 +27,7 @@ pub struct SetDebugModeParams {
 }
 
 /// Handle the `set_debug_mode` tool request
-pub fn handle_set_debug_mode(
+pub async fn handle_set_debug_mode(
     _service: &BrpMcpService,
     request: rmcp::model::CallToolRequestParam,
     _context: RequestContext<RoleServer>,
@@ -33,8 +36,23 @@ pub fn handle_set_debug_mode(
     let params: SetDebugModeParams = serde_json::from_value(serde_json::Value::Object(args))
         .map_err(|e| -> McpError { BrpMcpError::validation_failed("parameters", e).into() })?;
 
-    // Update the debug state
+    // Update the debug state locally
     DEBUG_ENABLED.store(params.enabled, Ordering::Relaxed);
+
+    // Try to update debug mode in bevy_brp_extras if available
+    let extras_params = serde_json::json!({
+        "enabled": params.enabled
+    });
+
+    let extras_result =
+        match execute_brp_method(BRP_METHOD_EXTRAS_SET_DEBUG_MODE, Some(extras_params), None).await
+        {
+            Ok(_) => Some(("success", "bevy_brp_extras debug mode updated")),
+            Err(_) => {
+                // It's okay if bevy_brp_extras isn't available or doesn't support debug mode
+                Some(("unavailable", "bevy_brp_extras debug mode not available"))
+            }
+        };
 
     let message = if params.enabled {
         "Debug mode enabled - comprehensive BRP diagnostic information will be included in responses"
@@ -42,10 +60,17 @@ pub fn handle_set_debug_mode(
         "Debug mode disabled - comprehensive BRP diagnostic information will be excluded from responses"
     };
 
-    let response = ResponseBuilder::success()
+    let mut response_builder = ResponseBuilder::success()
         .message(message)
-        .add_field("debug_enabled", params.enabled)
-        .build();
+        .add_field("debug_enabled", params.enabled);
+
+    if let Some((status, msg)) = extras_result {
+        response_builder = response_builder
+            .add_field("bevy_brp_extras_status", status)
+            .add_field("bevy_brp_extras_message", msg);
+    }
+
+    let response = response_builder.build();
 
     Ok(json_response_to_result(&response))
 }

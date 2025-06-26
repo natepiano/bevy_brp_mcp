@@ -352,13 +352,12 @@ pub mod extractors {
     /// Count elements in an array from the response data
     pub fn array_count(data: &Value, _context: &FormatterContext) -> Value {
         // Check if data is wrapped in a structure with a "data" field
-        if let Some(inner_data) = data.as_object().and_then(|obj| obj.get("data")) {
-            // If wrapped, count the inner array
-            inner_data.as_array().map_or(0, std::vec::Vec::len).into()
-        } else {
-            // Otherwise, count the direct array
-            data.as_array().map_or(0, std::vec::Vec::len).into()
-        }
+        data.as_object()
+            .and_then(|obj| obj.get("data"))
+            .map_or_else(
+                || data.as_array().map_or(0, std::vec::Vec::len).into(),
+                |inner_data| inner_data.as_array().map_or(0, std::vec::Vec::len).into(),
+            )
     }
 
     /// Create a field extractor that gets components from params

@@ -79,7 +79,7 @@ pub async fn handle_tool_call(
 
         // Debug tools
         name if name == crate::tools::TOOL_BRP_SET_DEBUG_MODE => {
-            brp_set_debug_mode::handle_set_debug_mode(service, request, context)
+            brp_set_debug_mode::handle_set_debug_mode(service, request, context).await
         }
 
         _ => {

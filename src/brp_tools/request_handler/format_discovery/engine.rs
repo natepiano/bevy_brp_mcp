@@ -460,6 +460,25 @@ async fn try_direct_discovery(
     if let Ok(BrpResult::Success(Some(data))) =
         execute_brp_method(BRP_METHOD_EXTRAS_DISCOVER_FORMAT, Some(params), port).await
     {
+        // First check if there's an error for this type
+        if let Some(errors) = data.get("errors").and_then(|e| e.as_object()) {
+            if let Some(error_info) = errors.get(type_name) {
+                // Type is unconstructable - return this as the discovery result
+                if let Some(reason) = error_info.get("reason").and_then(|r| r.as_str()) {
+                    let details = error_info
+                        .get("details")
+                        .and_then(|d| d.as_str())
+                        .unwrap_or("");
+                    tier_manager.complete_tier(
+                        false,
+                        format!("Type {type_name} is unconstructable: {reason} - {details}"),
+                    );
+                    return None;
+                }
+            }
+        }
+
+        // Check for successful format discovery
         if let Some(formats) = data.get("formats").and_then(|f| f.as_object()) {
             if let Some(format_info) = formats.get(type_name) {
                 // Extract spawn_format and convert to corrected value
@@ -476,6 +495,9 @@ async fn try_direct_discovery(
                 }
             }
         }
+
+        // Debug info from bevy_brp_extras will be included in the response data
+        // but we don't need to process it here
     }
     tier_manager.complete_tier(false, "Direct discovery unavailable or failed".to_string());
     None
