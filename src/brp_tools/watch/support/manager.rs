@@ -9,7 +9,7 @@ use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use tracing::info;
 
-use crate::error::BrpMcpError;
+use crate::error::{Error, Result};
 
 /// Global watch manager instance
 pub static WATCH_MANAGER: std::sync::LazyLock<Arc<Mutex<WatchManager>>> =
@@ -48,17 +48,15 @@ impl WatchManager {
     }
 
     /// Stop a watch by ID
-    pub fn stop_watch(&mut self, watch_id: u32) -> Result<(), BrpMcpError> {
+    pub fn stop_watch(&mut self, watch_id: u32) -> Result<()> {
         if let Some((info, handle)) = self.active_watches.remove(&watch_id) {
             info!("Stopping watch {} for entity {}", watch_id, info.entity_id);
             handle.abort();
             Ok(())
         } else {
-            Err(BrpMcpError::watch_failed(
-                "stop",
-                Some(watch_id),
-                "watch not found",
-            ))
+            Err(error_stack::Report::new(Error::WatchOperation(format!(
+                "Failed to stop watch {watch_id}: watch not found"
+            ))))
         }
     }
 

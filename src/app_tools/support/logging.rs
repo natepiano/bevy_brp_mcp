@@ -2,19 +2,10 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use error_stack::Report;
 use rmcp::Error as McpError;
 
-use crate::error::BrpMcpError;
-
-/// Helper function to create a `BrpMcpError` for log file write failures
-fn log_write_error<E: std::fmt::Display>(err: E) -> BrpMcpError {
-    BrpMcpError::io_failed("write to log file", std::path::Path::new("<log>"), err)
-}
-
-/// Helper function to create a `BrpMcpError` for log file sync failures
-fn log_sync_error<E: std::fmt::Display>(err: E) -> BrpMcpError {
-    BrpMcpError::io_failed("sync log file", std::path::Path::new("<log>"), err)
-}
+use crate::error::{Error, report_to_mcp_error};
 
 /// Create a log file for a Bevy app launch
 pub fn create_log_file(
@@ -27,30 +18,87 @@ pub fn create_log_file(
     // Generate unique log file name in temp directory
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| BrpMcpError::failed_to("get timestamp", e))?
+        .map_err(|e| {
+            report_to_mcp_error(
+                &Report::new(Error::LogOperation("Failed to get timestamp".to_string()))
+                    .attach_printable(format!("System time error: {e}")),
+            )
+        })?
         .as_millis();
     let log_file_path = std::env::temp_dir().join(format!("bevy_brp_mcp_{name}_{timestamp}.log"));
 
     // Create log file
-    let mut log_file = File::create(&log_file_path)
-        .map_err(|e| BrpMcpError::io_failed("create", &log_file_path, e))?;
+    let mut log_file = File::create(&log_file_path).map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation("Failed to create log file".to_string()))
+                .attach_printable(format!("Path: {}", log_file_path.display()))
+                .attach_printable(format!("Error: {e}")),
+        )
+    })?;
 
     // Write header
-    writeln!(log_file, "=== Bevy BRP MCP Launch Log ===")
-        .map_err(|e| McpError::from(log_write_error(e)))?;
-    writeln!(log_file, "Started at: {:?}", std::time::SystemTime::now())
-        .map_err(|e| McpError::from(log_write_error(e)))?;
-    writeln!(log_file, "{launch_type}: {name}").map_err(|e| McpError::from(log_write_error(e)))?;
-    writeln!(log_file, "Profile: {profile}").map_err(|e| McpError::from(log_write_error(e)))?;
-    writeln!(log_file, "Binary: {}", binary_path.display())
-        .map_err(|e| McpError::from(log_write_error(e)))?;
-    writeln!(log_file, "Working directory: {}", working_dir.display())
-        .map_err(|e| McpError::from(log_write_error(e)))?;
-    writeln!(log_file, "============================================\n")
-        .map_err(|e| McpError::from(log_write_error(e)))?;
-    log_file
-        .sync_all()
-        .map_err(|e| McpError::from(log_sync_error(e)))?;
+    writeln!(log_file, "=== Bevy BRP MCP Launch Log ===").map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation(
+                "Failed to write to log file".to_string(),
+            ))
+            .attach_printable(format!("Error: {e}")),
+        )
+    })?;
+    writeln!(log_file, "Started at: {:?}", std::time::SystemTime::now()).map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation(
+                "Failed to write to log file".to_string(),
+            ))
+            .attach_printable(format!("Error: {e}")),
+        )
+    })?;
+    writeln!(log_file, "{launch_type}: {name}").map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation(
+                "Failed to write to log file".to_string(),
+            ))
+            .attach_printable(format!("Error: {e}")),
+        )
+    })?;
+    writeln!(log_file, "Profile: {profile}").map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation(
+                "Failed to write to log file".to_string(),
+            ))
+            .attach_printable(format!("Error: {e}")),
+        )
+    })?;
+    writeln!(log_file, "Binary: {}", binary_path.display()).map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation(
+                "Failed to write to log file".to_string(),
+            ))
+            .attach_printable(format!("Error: {e}")),
+        )
+    })?;
+    writeln!(log_file, "Working directory: {}", working_dir.display()).map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation(
+                "Failed to write to log file".to_string(),
+            ))
+            .attach_printable(format!("Error: {e}")),
+        )
+    })?;
+    writeln!(log_file, "============================================\n").map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation(
+                "Failed to write to log file".to_string(),
+            ))
+            .attach_printable(format!("Error: {e}")),
+        )
+    })?;
+    log_file.sync_all().map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation("Failed to sync log file".to_string()))
+                .attach_printable(format!("Error: {e}")),
+        )
+    })?;
 
     Ok((log_file_path, log_file))
 }
@@ -61,11 +109,13 @@ pub fn open_log_file_for_redirect(log_file_path: &Path) -> Result<File, McpError
         .append(true)
         .open(log_file_path)
         .map_err(|e| {
-            McpError::from(BrpMcpError::io_failed(
-                "open log file for redirect",
-                log_file_path,
-                e,
-            ))
+            report_to_mcp_error(
+                &Report::new(Error::LogOperation(
+                    "Failed to open log file for redirect".to_string(),
+                ))
+                .attach_printable(format!("Path: {}", log_file_path.display()))
+                .attach_printable(format!("Error: {e}")),
+            )
         })
 }
 
@@ -75,17 +125,30 @@ pub fn append_to_log_file(log_file_path: &Path, content: &str) -> Result<(), Mcp
         .append(true)
         .open(log_file_path)
         .map_err(|e| {
-            McpError::from(BrpMcpError::io_failed(
-                "open log file for appending",
-                log_file_path,
-                e,
-            ))
+            report_to_mcp_error(
+                &Report::new(Error::LogOperation(
+                    "Failed to open log file for appending".to_string(),
+                ))
+                .attach_printable(format!("Path: {}", log_file_path.display()))
+                .attach_printable(format!("Error: {e}")),
+            )
         })?;
 
-    write!(file, "{content}").map_err(|e| McpError::from(log_write_error(e)))?;
+    write!(file, "{content}").map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation(
+                "Failed to write to log file".to_string(),
+            ))
+            .attach_printable(format!("Error: {e}")),
+        )
+    })?;
 
-    file.sync_all()
-        .map_err(|e| McpError::from(log_sync_error(e)))?;
+    file.sync_all().map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::LogOperation("Failed to sync log file".to_string()))
+                .attach_printable(format!("Error: {e}")),
+        )
+    })?;
 
     Ok(())
 }

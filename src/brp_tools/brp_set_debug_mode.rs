@@ -8,8 +8,8 @@ use serde_json;
 
 use crate::BrpMcpService;
 use crate::brp_tools::support::brp_client::execute_brp_method;
-use crate::error::BrpMcpError;
-use crate::support::response::ResponseBuilder;
+use crate::error::{Error, Result, report_to_mcp_error};
+use crate::support::response::{JsonResponse, ResponseBuilder};
 use crate::support::schema;
 use crate::support::serialization::json_response_to_result;
 use crate::tools::BRP_METHOD_EXTRAS_SET_DEBUG_MODE;
@@ -31,10 +31,18 @@ pub async fn handle_set_debug_mode(
     _service: &BrpMcpService,
     request: rmcp::model::CallToolRequestParam,
     _context: RequestContext<RoleServer>,
-) -> Result<CallToolResult, McpError> {
+) -> std::result::Result<CallToolResult, McpError> {
     let args = request.arguments.unwrap_or_default();
     let params: SetDebugModeParams = serde_json::from_value(serde_json::Value::Object(args))
-        .map_err(|e| -> McpError { BrpMcpError::validation_failed("parameters", e).into() })?;
+        .map_err(|e| -> McpError {
+            report_to_mcp_error(
+                &error_stack::Report::new(Error::ParameterExtraction(
+                    "Invalid parameters for brp_set_debug_mode".to_string(),
+                ))
+                .attach_printable(format!("Deserialization error: {e}"))
+                .attach_printable("Expected SetDebugModeParams structure"),
+            )
+        })?;
 
     // Update the debug state locally
     DEBUG_ENABLED.store(params.enabled, Ordering::Relaxed);
@@ -60,19 +68,31 @@ pub async fn handle_set_debug_mode(
         "Debug mode disabled - comprehensive BRP diagnostic information will be excluded from responses"
     };
 
+    let response = match build_response(message, params.enabled, extras_result) {
+        Ok(resp) => resp,
+        Err(err) => return Err(crate::error::report_to_mcp_error(&err)),
+    };
+
+    Ok(json_response_to_result(&response))
+}
+
+fn build_response(
+    message: &str,
+    debug_enabled: bool,
+    extras_result: Option<(&str, &str)>,
+) -> Result<JsonResponse> {
     let mut response_builder = ResponseBuilder::success()
         .message(message)
-        .add_field("debug_enabled", params.enabled);
+        .add_field("debug_enabled", debug_enabled)?;
 
     if let Some((status, msg)) = extras_result {
         response_builder = response_builder
-            .add_field("bevy_brp_extras_status", status)
-            .add_field("bevy_brp_extras_message", msg);
+            .add_field("bevy_brp_extras_status", status)?
+            .add_field("bevy_brp_extras_message", msg)?;
     }
 
     let response = response_builder.build();
-
-    Ok(json_response_to_result(&response))
+    Ok(response)
 }
 
 /// Register the `set_debug_mode` tool

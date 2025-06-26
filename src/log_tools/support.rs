@@ -2,10 +2,11 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::SystemTime;
 
+use error_stack::Report;
 use rmcp::Error as McpError;
 use serde_json::json;
 
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 use crate::log_tools::constants::PARAM_FILE_PATH;
 
 // Constants
@@ -126,13 +127,27 @@ where
     let mut log_entries = Vec::new();
 
     // Read the temp directory
-    let entries =
-        fs::read_dir(&temp_dir).map_err(|e| BrpMcpError::io_failed("read", &temp_dir, e))?;
+    let entries = fs::read_dir(&temp_dir).map_err(|e| {
+        report_to_mcp_error(
+            &Report::new(Error::FileOperation(
+                "Failed to read temp directory".to_string(),
+            ))
+            .attach_printable(format!("Path: {}", temp_dir.display()))
+            .attach_printable(format!("Error: {e}")),
+        )
+    })?;
 
     // Process each entry
     for entry in entries {
-        let entry =
-            entry.map_err(|e| BrpMcpError::io_failed("read directory entry", &temp_dir, e))?;
+        let entry = entry.map_err(|e| {
+            report_to_mcp_error(
+                &Report::new(Error::FileOperation(
+                    "Failed to read directory entry".to_string(),
+                ))
+                .attach_printable(format!("Directory: {}", temp_dir.display()))
+                .attach_printable(format!("Error: {e}")),
+            )
+        })?;
 
         let path = entry.path();
         let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -140,9 +155,15 @@ where
         // Parse the filename
         if let Some((app_name, timestamp)) = parse_log_filename(filename) {
             // Get file metadata
-            let metadata = entry
-                .metadata()
-                .map_err(|e| BrpMcpError::io_failed("get file metadata", &path, e))?;
+            let metadata = entry.metadata().map_err(|e| {
+                report_to_mcp_error(
+                    &Report::new(Error::FileOperation(
+                        "Failed to get file metadata".to_string(),
+                    ))
+                    .attach_printable(format!("Path: {}", path.display()))
+                    .attach_printable(format!("Error: {e}")),
+                )
+            })?;
 
             let log_entry = LogFileEntry {
                 filename: filename.to_string(),

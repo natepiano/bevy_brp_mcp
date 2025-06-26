@@ -5,7 +5,7 @@ use rmcp::{Error as McpError, RoleServer};
 use crate::app_tools::brp_extras_shutdown;
 use crate::brp_tools::{brp_set_debug_mode, brp_status, watch};
 // Imports removed - using fully qualified paths in match statement to avoid naming conflicts
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 use crate::{BrpMcpService, tool_definitions, tool_generator};
 
 pub fn register_tools() -> ListToolsResult {
@@ -84,7 +84,12 @@ pub async fn handle_tool_call(
 
         _ => {
             let tool_name = &request.name;
-            Err(BrpMcpError::invalid("tool", format!("unknown: {tool_name}")).into())
+            Err(report_to_mcp_error(
+                &error_stack::Report::new(Error::ParameterExtraction(format!(
+                    "unknown tool: {tool_name}"
+                )))
+                .attach_printable("Tool not found in registry"),
+            ))
         }
     }
 }

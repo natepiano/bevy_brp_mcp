@@ -5,7 +5,7 @@ use std::process::Stdio;
 use rmcp::Error as McpError;
 use tokio::process::Command;
 
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 
 /// Launch a detached process with proper setup
 pub fn launch_detached_process(
@@ -16,9 +16,14 @@ pub fn launch_detached_process(
     operation: &str,
 ) -> Result<u32, McpError> {
     // Clone the log file handle for stderr
-    let log_file_for_stderr = log_file
-        .try_clone()
-        .map_err(|e| BrpMcpError::failed_to("clone log file handle", e))?;
+    let log_file_for_stderr = log_file.try_clone().map_err(|e| {
+        let error_report = error_stack::Report::new(e)
+            .change_context(Error::ProcessManagement(
+                "Failed to clone log file handle".to_string(),
+            ))
+            .attach_printable(format!("Process: {process_name}, Operation: {operation}"));
+        report_to_mcp_error(&error_report)
+    })?;
 
     // Use tokio to spawn the process in a detached manner
     // We run this in a blocking context since the caller is sync
@@ -55,14 +60,28 @@ pub fn launch_detached_process(
             match tokio_cmd.spawn() {
                 Ok(child) => {
                     let pid = child.id().ok_or_else(|| {
-                        BrpMcpError::process_failed("get PID", process_name, "no PID available")
+                        let error_report = error_stack::Report::new(Error::ProcessManagement(
+                            "No PID available for spawned process".to_string(),
+                        ))
+                        .attach_printable(format!("Process: {process_name}"))
+                        .attach_printable(format!("Operation: {operation}"));
+                        report_to_mcp_error(&error_report)
                     })?;
 
                     // Don't wait for the child - let it run detached
                     // The child will continue running independently
                     Ok(pid)
                 }
-                Err(e) => Err(BrpMcpError::process_failed(operation, process_name, e).into()),
+                Err(e) => {
+                    let error_report = error_stack::Report::new(e)
+                        .change_context(Error::ProcessManagement(
+                            "Failed to spawn process".to_string(),
+                        ))
+                        .attach_printable(format!("Process: {process_name}"))
+                        .attach_printable(format!("Operation: {operation}"))
+                        .attach_printable(format!("Working directory: {}", working_dir.display()));
+                    Err(report_to_mcp_error(&error_report))
+                }
             }
         })
     })

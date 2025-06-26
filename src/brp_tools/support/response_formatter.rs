@@ -8,7 +8,8 @@ use crate::brp_tools::constants::{
     JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PORT,
 };
 use crate::brp_tools::request_handler::FormatterContext;
-use crate::support::response::ResponseBuilder;
+use crate::error::Result;
+use crate::support::response::{JsonResponse, ResponseBuilder};
 use crate::support::serialization::json_response_to_result;
 
 /// Metadata about a BRP request for response formatting
@@ -38,20 +39,35 @@ pub fn format_error_default(mut error: BrpError, metadata: &BrpMetadata) -> Call
         );
     }
 
+    build_default_error_response(&error, metadata).map_or_else(
+        |_| {
+            let fallback = ResponseBuilder::error()
+                .message("Failed to build error response")
+                .build();
+            json_response_to_result(&fallback)
+        },
+        |response| json_response_to_result(&response),
+    )
+}
+
+fn build_default_error_response(
+    error: &BrpError,
+    metadata: &BrpMetadata,
+) -> Result<crate::support::response::JsonResponse> {
     let response = ResponseBuilder::error()
         .message(&error.message)
-        .add_field(JSON_FIELD_ERROR_CODE, error.code)
-        .add_field(JSON_FIELD_DATA, error.data)
+        .add_field(JSON_FIELD_ERROR_CODE, error.code)?
+        .add_field(JSON_FIELD_DATA, &error.data)?
         .add_field(
             JSON_FIELD_METADATA,
             json!({
                 JSON_FIELD_METHOD: metadata.method,
                 JSON_FIELD_PORT: metadata.port
             }),
-        )
+        )?
         .build();
 
-    json_response_to_result(&response)
+    Ok(response)
 }
 
 /// A configurable formatter that can handle various BRP response formatting needs
@@ -82,6 +98,21 @@ impl ResponseFormatter {
     }
 
     pub fn format_success(&self, data: &Value, _metadata: BrpMetadata) -> CallToolResult {
+        self.build_success_response(data).map_or_else(
+            |_| {
+                let fallback = ResponseBuilder::error()
+                    .message("Failed to build success response")
+                    .build();
+                json_response_to_result(&fallback)
+            },
+            |response| json_response_to_result(&response),
+        )
+    }
+
+    fn build_success_response(
+        &self,
+        data: &Value,
+    ) -> Result<crate::support::response::JsonResponse> {
         let mut builder = ResponseBuilder::success();
 
         // Collect extracted field values for template substitution
@@ -99,14 +130,14 @@ impl ResponseFormatter {
             // Extract brp_extras_debug_info from data (if exists)
             if let Some(debug_info) = data_map.get(JSON_FIELD_DEBUG_INFO) {
                 if !debug_info.is_null() && (debug_info.is_array() || debug_info.is_string()) {
-                    builder = builder.add_field(JSON_FIELD_BRP_EXTRAS_DEBUG_INFO, debug_info);
+                    builder = builder.add_field(JSON_FIELD_BRP_EXTRAS_DEBUG_INFO, debug_info)?;
                 }
             }
 
             // Always preserve format_corrections from the input data
             if let Some(format_corrections) = data_map.get("format_corrections") {
                 if !format_corrections.is_null() && format_corrections.is_array() {
-                    builder = builder.add_field("format_corrections", format_corrections);
+                    builder = builder.add_field("format_corrections", format_corrections)?;
                 }
             }
 
@@ -118,14 +149,14 @@ impl ResponseFormatter {
 
         // Add brp_mcp_debug_info from FormatterContext
         if let Some(brp_mcp_debug_info) = &self.context.brp_mcp_debug_info {
-            builder = builder.add_field(JSON_FIELD_BRP_MCP_DEBUG_INFO, brp_mcp_debug_info);
+            builder = builder.add_field(JSON_FIELD_BRP_MCP_DEBUG_INFO, brp_mcp_debug_info)?;
         }
 
         // Add configured fields and collect their values for template substitution (using clean
         // data)
         for (field_name, extractor) in &self.config.success_fields {
             let value = extractor(&clean_data, &self.context);
-            builder = builder.add_field(field_name, &value);
+            builder = builder.add_field(field_name, &value)?;
 
             // Add extracted value to template substitution map
             template_values.insert(field_name.clone(), value);
@@ -138,7 +169,7 @@ impl ResponseFormatter {
             builder = builder.message(message);
         }
 
-        json_response_to_result(&builder.build())
+        Ok(builder.build())
     }
 
     pub fn format_error(&self, mut error: BrpError, metadata: &BrpMetadata) -> CallToolResult {
@@ -167,61 +198,77 @@ impl ResponseFormatter {
                 }
             }
 
-            let mut builder = ResponseBuilder::error().message(&error.message);
+            // Build the error response, handling Results from ResponseBuilder methods
+            let response = self
+                .build_error_response(&error, metadata_obj, metadata)
+                .unwrap_or_else(|_| {
+                    ResponseBuilder::error()
+                        .message("Failed to format error response")
+                        .build()
+                });
 
-            // Extract debug info from error data if present
-            let mut clean_error_data = error.data.clone();
-            if let Some(ref data) = error.data {
-                if let Some(data_obj) = data.as_object() {
-                    // Extract brp_extras_debug_info from error data (if exists)
-                    if let Some(debug_info) = data_obj.get(JSON_FIELD_DEBUG_INFO) {
-                        if !debug_info.is_null()
-                            && (debug_info.is_array() || debug_info.is_string())
-                        {
-                            builder =
-                                builder.add_field(JSON_FIELD_BRP_EXTRAS_DEBUG_INFO, debug_info);
-                        }
-                    }
-
-                    // Clean debug_info from error data to prevent duplication
-                    if let Some(Value::Object(clean_map)) = &mut clean_error_data {
-                        clean_map.remove(JSON_FIELD_DEBUG_INFO);
-                    }
-                }
-            }
-
-            // Add brp_mcp_debug_info from FormatterContext
-            if let Some(brp_mcp_debug_info) = &self.context.brp_mcp_debug_info {
-                builder = builder.add_field(JSON_FIELD_BRP_MCP_DEBUG_INFO, brp_mcp_debug_info);
-            }
-
-            // Handle special BRP execution error format
-            if metadata.method == "brp_execute" {
-                builder = builder
-                    .add_field(JSON_FIELD_CODE, error.code)
-                    .add_field(JSON_FIELD_DATA, clean_error_data.unwrap_or(Value::Null));
-            } else {
-                builder = builder
-                    .add_field(JSON_FIELD_ERROR_CODE, error.code)
-                    .add_field(JSON_FIELD_METADATA, metadata_obj);
-
-                // Include clean error.data if present (contains original_error, etc. but not
-                // debug_info)
-                if let Some(data) = clean_error_data {
-                    // Merge the error data into the response
-                    if let Some(data_obj) = data.as_object() {
-                        for (key, value) in data_obj {
-                            if key != "metadata" {
-                                // Don't duplicate metadata
-                                builder = builder.add_field(key, value.clone());
-                            }
-                        }
-                    }
-                }
-            }
-
-            json_response_to_result(&builder.build())
+            json_response_to_result(&response)
         }
+    }
+
+    fn build_error_response(
+        &self,
+        error: &BrpError,
+        metadata_obj: Value,
+        metadata: &BrpMetadata,
+    ) -> Result<JsonResponse> {
+        let mut builder = ResponseBuilder::error().message(&error.message);
+
+        // Extract debug info from error data if present
+        let mut clean_error_data = error.data.clone();
+        if let Some(ref data) = error.data {
+            if let Some(data_obj) = data.as_object() {
+                // Extract brp_extras_debug_info from error data (if exists)
+                if let Some(debug_info) = data_obj.get(JSON_FIELD_DEBUG_INFO) {
+                    if !debug_info.is_null() && (debug_info.is_array() || debug_info.is_string()) {
+                        builder =
+                            builder.add_field(JSON_FIELD_BRP_EXTRAS_DEBUG_INFO, debug_info)?;
+                    }
+                }
+
+                // Clean debug_info from error data to prevent duplication
+                if let Some(Value::Object(clean_map)) = &mut clean_error_data {
+                    clean_map.remove(JSON_FIELD_DEBUG_INFO);
+                }
+            }
+        }
+
+        // Add brp_mcp_debug_info from FormatterContext
+        if let Some(brp_mcp_debug_info) = &self.context.brp_mcp_debug_info {
+            builder = builder.add_field(JSON_FIELD_BRP_MCP_DEBUG_INFO, brp_mcp_debug_info)?;
+        }
+
+        // Handle special BRP execution error format
+        if metadata.method == "brp_execute" {
+            builder = builder
+                .add_field(JSON_FIELD_CODE, error.code)?
+                .add_field(JSON_FIELD_DATA, clean_error_data.unwrap_or(Value::Null))?;
+        } else {
+            builder = builder
+                .add_field(JSON_FIELD_ERROR_CODE, error.code)?
+                .add_field(JSON_FIELD_METADATA, metadata_obj)?;
+
+            // Include clean error.data if present (contains original_error, etc. but not
+            // debug_info)
+            if let Some(data) = clean_error_data {
+                // Merge the error data into the response
+                if let Some(data_obj) = data.as_object() {
+                    for (key, value) in data_obj {
+                        if key != "metadata" {
+                            // Don't duplicate metadata
+                            builder = builder.add_field(key, value.clone())?;
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(builder.build())
     }
 }
 

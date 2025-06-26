@@ -38,7 +38,9 @@ pub async fn handle(
     // Stop the watch and release lock immediately
     let result = {
         let mut manager = WATCH_MANAGER.lock().await;
-        manager.stop_watch(watch_id)
+        manager.stop_watch(watch_id).map_err(|e| {
+            crate::error::Error::WatchOperation(format!("Failed to stop watch {watch_id}: {e}"))
+        })
     };
     Ok(super::support::format_watch_stop_response(result, watch_id))
 }

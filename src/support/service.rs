@@ -6,7 +6,7 @@ use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
 use crate::BrpMcpService;
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 
 /// Fetch roots from the client and return the search paths
 pub async fn fetch_roots_and_get_paths(
@@ -22,7 +22,12 @@ pub async fn fetch_roots_and_get_paths(
     Ok(service
         .roots
         .lock()
-        .map_err(|e| BrpMcpError::failed_to("acquire roots lock", e))?
+        .map_err(|e| {
+            report_to_mcp_error(
+                &error_stack::Report::new(Error::MutexPoisoned("roots lock".to_string()))
+                    .attach_printable(format!("Lock error: {e}")),
+            )
+        })?
         .clone())
 }
 

@@ -7,7 +7,7 @@ use crate::brp_tools::constants::{
     DEFAULT_BRP_PORT, JSON_FIELD_ENTITY, JSON_FIELD_PORT, JSON_FIELD_RESOURCE, PARAM_WITH_CRATES,
     PARAM_WITH_TYPES, PARAM_WITHOUT_CRATES, PARAM_WITHOUT_TYPES,
 };
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 use crate::support::params::{
     extract_any_value, extract_optional_number, extract_optional_string_array_from_request,
     extract_required_number, extract_required_string,
@@ -34,7 +34,15 @@ fn extract_port(request: &rmcp::model::CallToolRequestParam) -> Result<u16, McpE
         JSON_FIELD_PORT,
         u64::from(DEFAULT_BRP_PORT),
     )?)
-    .map_err(|_| McpError::from(BrpMcpError::invalid("port number", "must be a valid u16")))
+    .map_err(|_| {
+        report_to_mcp_error(
+            &error_stack::Report::new(Error::ParameterExtraction(
+                "Invalid port number".to_string(),
+            ))
+            .attach_printable("Port must be a valid u16")
+            .attach_printable(format!("Field: {JSON_FIELD_PORT}")),
+        )
+    })
 }
 
 /// Simple parameter extractor that just extracts port
@@ -114,7 +122,15 @@ impl ParamExtractor for BrpExecuteExtractor {
         let params: BrpExecuteParams = serde_json::from_value(serde_json::Value::Object(
             request.arguments.clone().unwrap_or_default(),
         ))
-        .map_err(|e| McpError::from(BrpMcpError::invalid("parameters", e)))?;
+        .map_err(|e| {
+            report_to_mcp_error(
+                &error_stack::Report::new(Error::ParameterExtraction(
+                    "Invalid parameters for brp_execute".to_string(),
+                ))
+                .attach_printable(format!("Deserialization error: {e}"))
+                .attach_printable("Expected valid BrpExecuteParams structure"),
+            )
+        })?;
 
         Ok(ExtractedParams {
             method: Some(params.method),

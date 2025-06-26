@@ -11,7 +11,7 @@ use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_STATUS, JSO
 use super::support::BrpJsonRpcBuilder;
 use crate::BrpMcpService;
 use crate::constants::{PARAM_APP_NAME, PARAM_PORT};
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 use crate::support::{params, response, schema};
 use crate::tools::{BRP_METHOD_LIST, DESC_BRP_STATUS, TOOL_BRP_STATUS};
 
@@ -43,7 +43,13 @@ pub async fn handle(
     check_brp_for_app(
         app_name,
         u16::try_from(port).map_err(|_| -> McpError {
-            BrpMcpError::validation_failed("port", "must be a valid u16").into()
+            report_to_mcp_error(
+                &error_stack::Report::new(Error::ParameterExtraction(
+                    "Invalid port value".to_string(),
+                ))
+                .attach_printable("Port must be a valid u16")
+                .attach_printable(format!("Provided value: {port}")),
+            )
         })?,
     )
     .await

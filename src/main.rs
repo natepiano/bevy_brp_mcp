@@ -18,8 +18,6 @@ use rmcp::service::RequestContext;
 use rmcp::transport::stdio;
 use rmcp::{Error as McpError, RoleServer, ServerHandler, ServiceExt};
 
-use crate::error::BrpMcpError;
-
 mod app_tools;
 mod brp_tools;
 mod constants;
@@ -123,7 +121,7 @@ impl BrpMcpService {
                 let mut roots = self
                     .roots
                     .lock()
-                    .map_err(|e| BrpMcpError::failed_to("lock roots mutex", e))?;
+                    .map_err(|e| format!("Failed to acquire roots lock: {e}"))?;
                 *roots = paths;
                 tracing::debug!("Processed roots: {:?}", *roots);
             }

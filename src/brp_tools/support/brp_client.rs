@@ -7,7 +7,6 @@
 
 use std::time::Duration;
 
-use rmcp::Error as McpError;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -15,7 +14,7 @@ use super::BrpJsonRpcBuilder;
 use crate::brp_tools::constants::{
     BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH, DEFAULT_BRP_PORT,
 };
-use crate::error::BrpMcpError;
+use crate::error::{Error, Result};
 use crate::tools::BRP_EXTRAS_PREFIX;
 
 /// Result of a BRP operation
@@ -60,7 +59,9 @@ pub async fn execute_brp_method(
     method: &str,
     params: Option<Value>,
     port: Option<u16>,
-) -> Result<BrpResult, McpError> {
+) -> Result<BrpResult> {
+    use error_stack::ResultExt;
+
     let port = port.unwrap_or(DEFAULT_BRP_PORT);
     let url = format!("{BRP_HTTP_PROTOCOL}://{BRP_DEFAULT_HOST}:{port}{BRP_JSONRPC_PATH}");
 
@@ -80,30 +81,32 @@ pub async fn execute_brp_method(
         .timeout(Duration::from_secs(30))
         .send()
         .await
-        .map_err(|e| -> McpError {
-            BrpMcpError::brp_request_failed("send", format!("to {url}: {e}")).into()
-        })?;
+        .change_context(Error::JsonRpc("HTTP request failed".to_string()))
+        .attach_printable(format!("Method: {method}, Port: {port}, URL: {url}"))?;
 
     // Check HTTP status
     if !response.status().is_success() {
-        return Err(BrpMcpError::brp_request_failed(
-            "execute",
-            format!(
-                "server returned HTTP error {}: {}",
-                response.status(),
-                response
-                    .status()
-                    .canonical_reason()
-                    .unwrap_or("Unknown error")
-            ),
-        )
-        .into());
+        return Err(
+            error_stack::Report::new(Error::JsonRpc("HTTP error".to_string()))
+                .attach_printable(format!(
+                    "BRP server returned HTTP error {}: {}",
+                    response.status(),
+                    response
+                        .status()
+                        .canonical_reason()
+                        .unwrap_or("Unknown error")
+                ))
+                .attach_printable(format!("Method: {method}, Port: {port}")),
+        );
     }
 
     // Parse JSON-RPC response
-    let brp_response: BrpResponse = response.json().await.map_err(|e| -> McpError {
-        BrpMcpError::brp_request_failed("parse", format!("response: {e}")).into()
-    })?;
+    let brp_response: BrpResponse = response
+        .json()
+        .await
+        .change_context(Error::JsonRpc("JSON parsing failed".to_string()))
+        .attach_printable("Failed to parse BRP response JSON")
+        .attach_printable(format!("Method: {method}, Port: {port}"))?;
 
     // Convert to structured result
     if let Some(error) = brp_response.error {

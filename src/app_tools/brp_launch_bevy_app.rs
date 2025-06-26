@@ -9,7 +9,7 @@ use serde_json::json;
 use super::support::{launch_common, logging, process, scanning};
 use crate::BrpMcpService;
 use crate::constants::{DEFAULT_PROFILE, PARAM_APP_NAME, PARAM_PROFILE, PROFILE_RELEASE};
-use crate::error::BrpMcpError;
+use crate::error::{Error, report_to_mcp_error};
 use crate::support::{params, service};
 
 pub async fn handle(
@@ -48,16 +48,18 @@ pub fn launch_bevy_app(
 
     // Check if the binary exists
     if !binary_path.exists() {
-        return Err(BrpMcpError::missing(&format!(
-            "binary at {}. Please build the app with 'cargo build{}' first",
-            binary_path.display(),
-            if profile == PROFILE_RELEASE {
-                " --release"
-            } else {
-                ""
-            }
-        ))
-        .into());
+        return Err(report_to_mcp_error(
+            &error_stack::Report::new(Error::Configuration("Missing binary file".to_string()))
+                .attach_printable(format!("Binary path: {}", binary_path.display()))
+                .attach_printable(format!(
+                    "Please build the app with 'cargo build{}' first",
+                    if profile == PROFILE_RELEASE {
+                        " --release"
+                    } else {
+                        ""
+                    }
+                )),
+        ));
     }
 
     // Get the manifest directory (parent of Cargo.toml)

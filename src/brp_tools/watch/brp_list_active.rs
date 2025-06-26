@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 use super::support::manager::WATCH_MANAGER;
 use crate::BrpMcpService;
 use crate::brp_tools::constants::{JSON_FIELD_COUNT, JSON_FIELD_WATCHES};
+use crate::error::Result;
 use crate::support::response::ResponseBuilder;
 use crate::support::schema;
 use crate::support::serialization::json_response_to_result;
@@ -25,7 +26,7 @@ pub async fn handle(
     _service: &BrpMcpService,
     _request: CallToolRequestParam,
     _context: RequestContext<RoleServer>,
-) -> Result<CallToolResult, McpError> {
+) -> std::result::Result<CallToolResult, McpError> {
     // Get active watches from manager and release lock immediately
     let active_watches = {
         let manager = WATCH_MANAGER.lock().await;
@@ -46,11 +47,20 @@ pub async fn handle(
         })
         .collect();
 
-    let response = ResponseBuilder::success()
-        .message(format!("Found {} active watches", watches_json.len()))
-        .add_field(JSON_FIELD_WATCHES, watches_json.clone())
-        .add_field(JSON_FIELD_COUNT, watches_json.len())
-        .build();
+    let response = match build_response(&watches_json) {
+        Ok(resp) => resp,
+        Err(err) => return Err(crate::error::report_to_mcp_error(&err)),
+    };
 
     Ok(json_response_to_result(&response))
+}
+
+fn build_response(watches_json: &[Value]) -> Result<crate::support::response::JsonResponse> {
+    let response = ResponseBuilder::success()
+        .message(format!("Found {} active watches", watches_json.len()))
+        .add_field(JSON_FIELD_WATCHES, watches_json)?
+        .add_field(JSON_FIELD_COUNT, watches_json.len())?
+        .build();
+
+    Ok(response)
 }
