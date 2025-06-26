@@ -162,18 +162,33 @@ pub fn extract_optional_u16_from_request(
     {
         Some(v) => {
             let value = v.as_u64().ok_or_else(|| {
-                BrpMcpError::invalid(&format!("parameter '{param_name}'"), "must be a number")
+                report_to_mcp_error(
+                    &error_stack::Report::new(Error::ParameterExtraction(format!(
+                        "Invalid parameter '{param_name}'"
+                    )))
+                    .attach_printable(format!("Parameter name: {param_name}"))
+                    .attach_printable("Expected: number value"),
+                )
             })?;
-            let port = u16::try_from(value)
-                .map_err(|_| BrpMcpError::invalid(param_name, "value too large for u16"))?;
+            let port = u16::try_from(value).map_err(|_| {
+                report_to_mcp_error(
+                    &error_stack::Report::new(Error::ParameterExtraction(format!(
+                        "Invalid parameter '{param_name}'"
+                    )))
+                    .attach_printable(format!("Parameter name: {param_name}"))
+                    .attach_printable("Value too large for u16"),
+                )
+            })?;
 
             // Validate port range (1024-65535 for non-privileged ports)
             if port < 1024 {
-                return Err(BrpMcpError::invalid(
-                    param_name,
-                    "port must be >= 1024 (non-privileged ports only)",
-                )
-                .into());
+                return Err(report_to_mcp_error(
+                    &error_stack::Report::new(Error::ParameterExtraction(format!(
+                        "Invalid parameter '{param_name}'"
+                    )))
+                    .attach_printable(format!("Parameter name: {param_name}"))
+                    .attach_printable("Port must be >= 1024 (non-privileged ports only)"),
+                ));
             }
 
             Ok(Some(port))
