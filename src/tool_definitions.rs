@@ -1,159 +1,26 @@
 //! Declarative tool definitions for BRP (Bevy Remote Protocol) tools.
 //!
-//! This module provides a declarative approach to defining BRP tools, eliminating
-//! code duplication and making it easy to add new tools. Instead of writing separate
-//! handler files for each tool, tools are defined as data structures that describe
-//! their parameters, extractors, and response formatting.
-//!
-//! # Architecture
-//!
-//! The declarative system consists of three main components:
-//! - **Tool Definitions**: Data structures describing each tool's behavior
-//! - **Parameter Extractors**: Logic for extracting and validating parameters
-//! - **Response Formatters**: Logic for formatting responses consistently
+//! Provides a declarative approach to defining BRP tools that eliminates code duplication.
+//! Tools are defined as data structures describing parameters, extractors, and response formatting.
 //!
 //! # Tool Categories
 //!
-//! Tools are categorized into three types:
+//! - **Standard Tools**: CRUD operations following predictable patterns (destroy, get, insert, etc.)
+//! - **Special Tools**: Tools requiring custom extractors or response handling (query, spawn, execute)
+//! - **Local Tools**: Execute within MCP server (log management, app lifecycle)
 //!
-//! ## Standard Tools
-//! Simple CRUD operations that follow predictable patterns:
-//! - Entity operations: `brp_destroy`, `brp_get`, `brp_insert`, `brp_remove`
-//! - Resource operations: `brp_get_resource`, `brp_insert_resource`, `brp_remove_resource`
-//! - Query operations: `brp_list`, `brp_list_resources`
-//! - Utility operations: `brp_rpc_discover`
+//! # Handler Types
 //!
-//! ## Special Tools
-//! Tools with minor variations requiring custom extractors or response handling:
-//! - `brp_query`: Custom component count extraction
-//! - `brp_spawn`: Dynamic entity extraction from response
-//! - `brp_execute`: Dynamic method selection from parameters
-//! - `brp_registry_schema`: Complex parameter transformation
-//! - `brp_reparent`: Array parameter handling
-//!
-//! ## Custom Tools (Not in this module)
-//! Complex tools that remain as individual implementations:
-//! - `brp_status`: System process detection
-//! - Watch operations: `brp_get_watch`, `brp_list_watch`, etc.
-//! - App management: `launch_bevy_app`, `list_bevy_apps`, etc.
-//!
-//! # Tool Types and Handler Support
-//!
-//! The system supports two handler types:
-//!
-//! ## BRP Handlers (`HandlerType::Brp`)
-//! Execute remote BRP method calls over network. Used for most core Bevy operations.
-//! Example: `bevy/destroy`, `bevy/get`, `bevy/insert`
-//!
-//! ## Local Handlers (`HandlerType::Local`)
-//! Execute local functions within the MCP server. Used for log management, app lifecycle, etc.
-//! Example: `list_logs`, `launch_bevy_app`, `cleanup_logs`
-//!
-//! # Response Formatting
-//!
-//! ## `FormatterDef::default()`
-//! For local tools that don't need special response formatting. Returns empty formatter
-//! with `FormatterType::Simple`, empty template, and no response fields.
-//!
-//! ## Custom Formatters
-//! For BRP tools that need structured responses with field extraction and templating.
-//!
-//! # Helper Functions
-//!
-//! Common parameter patterns are available as helper functions:
-//! - `add_port_param()`: Standard port parameter (optional, numeric)
-//! - `add_entity_param()`: Entity ID parameter (required, numeric)
-//! - `add_components_param()`: Component types array parameter (required, any)
+//! - `HandlerType::Brp`: Execute remote BRP method calls over network
+//! - `HandlerType::Local`: Execute local functions within MCP server
 //!
 //! # Adding New Tools
 //!
-//! ## Standard BRP Tools
-//! 1. **Define constants** in `constants.rs` for the tool name, description, and BRP method
-//! 2. **Add tool definition** to `get_standard_tools()` with:
-//!    - `HandlerType::Brp { method: "bevy/method_name" }`
-//!    - Appropriate parameter extractors
-//!    - Response formatters with field extraction
-//! 3. **Registration is automatic** via `get_all_tools()`
+//! For standard BRP tools, add to `get_standard_tools()` with `HandlerType::Brp`.
+//! For local tools, add to `get_log_tools()` or `get_app_tools()` with `HandlerType::Local`.
+//! For complex tools needing custom behavior, add to `get_special_tools()`.
 //!
-//! ## Local Tools
-//! 1. **Add tool definition** to `get_log_tools()` or `get_app_tools()` with:
-//!    - `HandlerType::Local { handler: "function_name" }`
-//!    - `FormatterDef::default()` for simple responses
-//! 2. **Implement handler** in `tool_generator.rs` `generate_local_handler()` match
-//! 3. **Create handler function** in appropriate module (e.g., `log_tools::function_name`)
-//!
-//! ## Special BRP Tools
-//! For tools with custom parameter extraction or response formatting:
-//! 1. **Add to `get_special_tools()`** instead of standard tools
-//! 2. **Use custom `ParamExtractorType`** (e.g., `BrpExecute`, `RegistrySchema`)
-//! 3. **Implement custom extractors** in `tool_generator.rs` if needed
-//!
-//! # Best Practices
-//!
-//! - **Use helper functions** for common parameters (`add_port_param()`, etc.)
-//! - **Use `FormatterDef::default()`** for local tools
-//! - **Group related tools** in appropriate getter functions
-//! - **Prefer declarative definitions** over custom handlers when possible
-//! - **Add unit tests** for new parameter extractors and formatters
-//!
-//! # Example: Adding a New BRP Tool
-//!
-//! ```rust
-//! // 1. Add to get_standard_tools()
-//! BrpToolDef {
-//!     name:            "bevy_new_operation",
-//!     description:     "Performs a new operation",
-//!     handler:         HandlerType::Brp {
-//!         method: "bevy/new_operation",
-//!     },
-//!     params:          vec![
-//!         add_entity_param(), // Use helper for common params
-//!         add_port_param(),
-//!     ],
-//!     param_extractor: ParamExtractorType::Entity { required: true },
-//!     formatter:       FormatterDef {
-//!         formatter_type:  FormatterType::EntityOperation("entity"),
-//!         template:        "Operation completed on entity {entity}",
-//!         response_fields: vec![ResponseField {
-//!             name:      "entity",
-//!             extractor: ExtractorType::EntityFromParams,
-//!         }],
-//!     },
-//! }
-//! ```
-//!
-//! # Example: Adding a New Local Tool
-//!
-//! ```rust
-//! // 1. Add to get_log_tools() or get_app_tools()
-//! BrpToolDef {
-//!     name: "my_local_tool",
-//!     description: "Does something locally",
-//!     handler: HandlerType::Local { handler: "my_function" },
-//!     params: vec![
-//!         ParamDef {
-//!             name: "input",
-//!             description: "Input parameter",
-//!             required: true,
-//!             param_type: ParamType::String,
-//!         }
-//!     ],
-//!     param_extractor: ParamExtractorType::Passthrough,
-//!     formatter: FormatterDef::default(), // Simple local tool
-//! }
-//!
-//! // 2. Add handler to tool_generator.rs generate_local_handler()
-//! "my_function" => my_module::my_function::handle(service, request, context),
-//!
-//! // 3. Implement in my_module::my_function
-//! pub fn handle(
-//!     service: &BrpMcpService,
-//!     request: &CallToolRequestParam,
-//!     context: RequestContext<RoleServer>
-//! ) -> Result<CallToolResult, McpError> {
-//!     // Implementation
-//! }
-//! ```
+//! Use `FormatterDef::default()` for simple responses, custom formatters for structured output.
 
 use crate::brp_tools::constants::{
     DESC_PORT, JSON_FIELD_COMPONENT, JSON_FIELD_COMPONENTS, JSON_FIELD_COUNT, JSON_FIELD_DATA,
@@ -164,6 +31,7 @@ use crate::brp_tools::constants::{
     PARAM_SPAWNED_ENTITY, PARAM_STRICT, PARAM_TYPES, PARAM_WITH_CRATES, PARAM_WITH_TYPES,
     PARAM_WITHOUT_CRATES, PARAM_WITHOUT_TYPES,
 };
+use crate::constants::PARAM_WORKSPACE;
 use crate::tools::{
     BRP_METHOD_DESTROY, BRP_METHOD_EXTRAS_DISCOVER_FORMAT, BRP_METHOD_EXTRAS_SCREENSHOT,
     BRP_METHOD_EXTRAS_SEND_KEYS, BRP_METHOD_EXTRAS_SET_DEBUG_MODE, BRP_METHOD_GET,
@@ -1273,6 +1141,18 @@ pub fn get_app_tools() -> Vec<BrpToolDef> {
                     required:    false,
                     param_type:  ParamType::String,
                 },
+                ParamDef {
+                    name:        PARAM_WORKSPACE,
+                    description: "Workspace name to use when multiple apps with the same name exist",
+                    required:    false,
+                    param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        JSON_FIELD_PORT,
+                    description: "BRP port to use (default: 15702)",
+                    required:    false,
+                    param_type:  ParamType::Number,
+                },
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef::default(),
@@ -1296,6 +1176,18 @@ pub fn get_app_tools() -> Vec<BrpToolDef> {
                     description: "Build profile to use (debug or release)",
                     required:    false,
                     param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        "workspace",
+                    description: "Workspace name to use when multiple examples with the same name exist",
+                    required:    false,
+                    param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        JSON_FIELD_PORT,
+                    description: "BRP port to use (default: 15702)",
+                    required:    false,
+                    param_type:  ParamType::Number,
                 },
             ],
             param_extractor: ParamExtractorType::Passthrough,
