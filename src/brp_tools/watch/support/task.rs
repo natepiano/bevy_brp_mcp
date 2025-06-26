@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use futures::StreamExt;
 use serde_json::Value;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use super::logger::{self as watch_logger, BufferedWatchLogger};
 use super::manager::{WATCH_MANAGER, WatchInfo};
@@ -149,12 +149,17 @@ async fn run_watch_connection(
         )
         .await;
 
-    // Remove this watch from the active watches
+    // Remove this watch from the active watches with defensive checks
     {
         let mut manager = WATCH_MANAGER.lock().await;
         if manager.active_watches.remove(&watch_id).is_some() {
             info!(
                 "Watch {} for entity {} automatically cleaned up after connection ended",
+                watch_id, entity_id
+            );
+        } else {
+            warn!(
+                "Watch {} for entity {} attempted to clean up but was not found in active watches - possible phantom watch removal",
                 watch_id, entity_id
             );
         }
@@ -169,16 +174,18 @@ async fn start_watch_task(
     params: Value,
     port: u16,
 ) -> Result<(u32, PathBuf), BrpMcpError> {
-    // Get watch_id first from manager and release lock immediately
-    let watch_id = {
-        let manager = WATCH_MANAGER.lock().await;
-        manager.next_id()
-    };
+    // Prepare all data that doesn't require the watch_id
+    let watch_type_owned = watch_type.to_string();
+    let brp_method_owned = brp_method.to_string();
 
-    // Now create log path with proper watch_id
+    // Perform all operations within a single lock to ensure atomicity
+    let mut manager = WATCH_MANAGER.lock().await;
+
+    // Generate ID while holding the lock
+    let watch_id = manager.next_id();
+
+    // Create log path and logger
     let log_path = watch_logger::get_watch_log_path(watch_id, entity_id, watch_type);
-
-    // Create buffered logger
     let logger = BufferedWatchLogger::new(log_path.clone());
 
     // Create initial log entry
@@ -198,16 +205,18 @@ async fn start_watch_task(
         }),
     };
 
-    logger
-        .write_update("WATCH_STARTED", log_data)
-        .await
-        .map_err(|e| {
-            BrpMcpError::watch_failed("log initial entry", u32::try_from(entity_id).ok(), e)
-        })?;
+    // If logging fails, we haven't registered anything yet
+    let log_result = logger.write_update("WATCH_STARTED", log_data).await;
 
-    let watch_type_owned = watch_type.to_string();
-    let brp_method_owned = brp_method.to_string();
+    if let Err(e) = log_result {
+        return Err(BrpMcpError::watch_failed(
+            "log initial entry",
+            u32::try_from(entity_id).ok(),
+            e,
+        ));
+    }
 
+    // Spawn task
     let handle = tokio::spawn(run_watch_connection(
         watch_id,
         entity_id,
@@ -218,23 +227,23 @@ async fn start_watch_task(
         logger,
     ));
 
-    // Register with watch manager (with actual registration this time)
-    {
-        let mut manager = WATCH_MANAGER.lock().await;
-        manager.active_watches.insert(
-            watch_id,
-            (
-                WatchInfo {
-                    watch_id,
-                    entity_id,
-                    watch_type: watch_type.to_string(),
-                    log_path: log_path.clone(),
-                    port,
-                },
-                handle,
-            ),
-        );
-    }
+    // Register immediately while still holding the lock
+    manager.active_watches.insert(
+        watch_id,
+        (
+            WatchInfo {
+                watch_id,
+                entity_id,
+                watch_type: watch_type.to_string(),
+                log_path: log_path.clone(),
+                port,
+            },
+            handle,
+        ),
+    );
+
+    // Release lock by dropping manager
+    drop(manager);
 
     Ok((watch_id, log_path))
 }
