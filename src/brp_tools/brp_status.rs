@@ -1,14 +1,11 @@
-use std::time::Duration;
-
 use rmcp::model::{CallToolResult, Tool};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 use serde_json::json;
 use sysinfo::System;
-use tokio::time::timeout;
 
-use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_STATUS, JSONRPC_FIELD};
-use super::support::BrpJsonRpcBuilder;
+use super::constants::{DEFAULT_BRP_PORT, JSON_FIELD_PORT, JSON_FIELD_STATUS};
+use super::support::brp_client::{BrpResult, execute_brp_method};
 use crate::BrpMcpService;
 use crate::constants::{PARAM_APP_NAME, PARAM_PORT};
 use crate::error::{Error, report_to_mcp_error};
@@ -180,27 +177,15 @@ async fn check_brp_for_app(app_name: &str, port: u16) -> Result<CallToolResult, 
 
 /// Check if BRP is responding on the given port
 async fn check_brp_on_port(port: u16) -> Result<bool, McpError> {
-    // Try a simple BRP request to check connectivity
-    let client = super::support::http_client::get_client();
-    let url = format!("http://localhost:{port}");
-
-    // Use bevy/list as a lightweight command using the builder
-    let request_body = BrpJsonRpcBuilder::new(BRP_METHOD_LIST).build();
-
-    // Set a reasonable timeout
-    let response = timeout(
-        Duration::from_secs(2),
-        client.post(&url).json(&request_body).send(),
-    )
-    .await;
-
-    match response {
-        Ok(Ok(resp)) => {
-            // Check if we got a valid JSON-RPC response
-            resp.json::<serde_json::Value>()
-                .await
-                .map_or(Ok(false), |json| Ok(json.get(JSONRPC_FIELD).is_some()))
+    // Try a simple BRP request to check connectivity using bevy/list
+    match execute_brp_method(BRP_METHOD_LIST, None, Some(port)).await {
+        Ok(BrpResult::Success(_)) => {
+            // BRP is responding and working
+            Ok(true)
         }
-        _ => Ok(false),
+        Ok(BrpResult::Error(_)) | Err(_) => {
+            // BRP not responding or returned an error
+            Ok(false)
+        }
     }
 }

@@ -2,7 +2,6 @@ use rmcp::model::{CallToolRequestParam, CallToolResult, ListToolsResult};
 use rmcp::service::RequestContext;
 use rmcp::{Error as McpError, RoleServer};
 
-use crate::app_tools::brp_extras_shutdown;
 use crate::brp_tools::{brp_set_debug_mode, brp_status, watch};
 // Imports removed - using fully qualified paths in match statement to avoid naming conflicts
 use crate::error::{Error, report_to_mcp_error};
@@ -20,8 +19,6 @@ pub fn register_tools() -> ListToolsResult {
     tools.extend(vec![
         // Core BRP tools (with custom logic)
         brp_status::register_tool(),
-        // bevy_brp_extras tools
-        brp_extras_shutdown::register_tool(),
         // Streaming/watch tools (custom logic)
         watch::bevy_get_watch::register_tool(),
         watch::bevy_list_watch::register_tool(),
@@ -56,11 +53,6 @@ pub async fn handle_tool_call(
         // Core BRP tools (with custom logic)
         name if name == crate::tools::TOOL_BRP_STATUS => {
             brp_status::handle(service, request, context).await
-        }
-
-        // bevy_brp_extras tools
-        name if name == crate::tools::TOOL_BRP_EXTRAS_SHUTDOWN => {
-            brp_extras_shutdown::handle(service, request, context).await
         }
 
         // Streaming/watch tools (custom logic)

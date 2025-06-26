@@ -9,8 +9,10 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tracing::{debug, warn};
 
 use super::BrpJsonRpcBuilder;
+use crate::brp_tools::brp_set_debug_mode::is_debug_enabled;
 use crate::brp_tools::constants::{
     BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH, DEFAULT_BRP_PORT,
 };
@@ -54,38 +56,120 @@ struct JsonRpcError {
     data:    Option<Value>,
 }
 
+/// Build a BRP URL for the given port
+///
+/// Constructs the full URL using standard BRP constants for consistent formatting
+pub fn build_brp_url(port: u16) -> String {
+    format!("{BRP_HTTP_PROTOCOL}://{BRP_DEFAULT_HOST}:{port}{BRP_JSONRPC_PATH}")
+}
+
 /// Execute a BRP method and return structured result
 pub async fn execute_brp_method(
     method: &str,
     params: Option<Value>,
     port: Option<u16>,
 ) -> Result<BrpResult> {
-    use error_stack::ResultExt;
-
     let port = port.unwrap_or(DEFAULT_BRP_PORT);
-    let url = format!("{BRP_HTTP_PROTOCOL}://{BRP_DEFAULT_HOST}:{port}{BRP_JSONRPC_PATH}");
+    let url = build_brp_url(port);
 
-    // Build JSON-RPC request
+    if is_debug_enabled() {
+        debug!(
+            "BRP execute_brp_method: Starting - method={}, port={}, url={}",
+            method, port, url
+        );
+    }
+
+    // Build JSON-RPC request body
+    let request_body = build_request_body(method, params);
+
+    // Send HTTP request
+    let response = send_http_request(&url, request_body, method, port).await?;
+
+    // Check HTTP status
+    check_http_status(&response, method, port)?;
+
+    // Parse JSON-RPC response
+    let brp_response = parse_json_response(response, method, port).await?;
+
+    // Convert to structured result
+    Ok(convert_to_brp_result(brp_response, method))
+}
+
+/// Build the JSON-RPC request body
+fn build_request_body(method: &str, params: Option<Value>) -> String {
     let mut builder = BrpJsonRpcBuilder::new(method);
     if let Some(params) = params {
+        if is_debug_enabled() {
+            debug!(
+                "BRP execute_brp_method: Added params - {}",
+                serde_json::to_string(&params)
+                    .unwrap_or_else(|_| "Failed to serialize params".to_string())
+            );
+        }
         builder = builder.params(params);
     }
     let request_body = builder.build().to_string();
 
-    // Send HTTP request using shared client
+    if is_debug_enabled() {
+        debug!("BRP execute_brp_method: Request body - {}", request_body);
+    }
+
+    request_body
+}
+
+/// Send the HTTP request to the BRP server
+async fn send_http_request(
+    url: &str,
+    request_body: String,
+    method: &str,
+    port: u16,
+) -> Result<reqwest::Response> {
     let client = super::http_client::get_client();
+
+    if is_debug_enabled() {
+        debug!("BRP execute_brp_method: Sending HTTP request...");
+    }
+
     let response = client
-        .post(&url)
+        .post(url)
         .header("Content-Type", "application/json")
         .body(request_body)
         .timeout(Duration::from_secs(30))
         .send()
-        .await
-        .change_context(Error::JsonRpc("HTTP request failed".to_string()))
-        .attach_printable(format!("Method: {method}, Port: {port}, URL: {url}"))?;
+        .await;
 
-    // Check HTTP status
+    match response {
+        Ok(resp) => {
+            if is_debug_enabled() {
+                debug!(
+                    "BRP execute_brp_method: HTTP request successful - status={}",
+                    resp.status()
+                );
+            }
+            Ok(resp)
+        }
+        Err(e) => {
+            if is_debug_enabled() {
+                warn!("BRP execute_brp_method: HTTP request failed - error={}", e);
+            }
+            Err(
+                error_stack::Report::new(Error::JsonRpc("HTTP request failed".to_string()))
+                    .attach_printable(format!("Method: {method}, Port: {port}, URL: {url}"))
+                    .attach_printable(format!("Error: {e}")),
+            )
+        }
+    }
+}
+
+/// Check if the HTTP response status is successful
+fn check_http_status(response: &reqwest::Response, method: &str, port: u16) -> Result<()> {
     if !response.status().is_success() {
+        if is_debug_enabled() {
+            warn!(
+                "BRP execute_brp_method: HTTP status error - status={}",
+                response.status()
+            );
+        }
         return Err(
             error_stack::Report::new(Error::JsonRpc("HTTP error".to_string()))
                 .attach_printable(format!(
@@ -100,16 +184,50 @@ pub async fn execute_brp_method(
         );
     }
 
-    // Parse JSON-RPC response
-    let brp_response: BrpResponse = response
-        .json()
-        .await
-        .change_context(Error::JsonRpc("JSON parsing failed".to_string()))
-        .attach_printable("Failed to parse BRP response JSON")
-        .attach_printable(format!("Method: {method}, Port: {port}"))?;
+    if is_debug_enabled() {
+        debug!("BRP execute_brp_method: HTTP status OK, parsing JSON response...");
+    }
 
-    // Convert to structured result
+    Ok(())
+}
+
+/// Parse the JSON response from the BRP server
+async fn parse_json_response(
+    response: reqwest::Response,
+    method: &str,
+    port: u16,
+) -> Result<BrpResponse> {
+    match response.json().await {
+        Ok(json_resp) => {
+            if is_debug_enabled() {
+                debug!("BRP execute_brp_method: JSON parsing successful");
+            }
+            Ok(json_resp)
+        }
+        Err(e) => {
+            if is_debug_enabled() {
+                warn!("BRP execute_brp_method: JSON parsing failed - error={}", e);
+            }
+            Err(
+                error_stack::Report::new(Error::JsonRpc("JSON parsing failed".to_string()))
+                    .attach_printable("Failed to parse BRP response JSON")
+                    .attach_printable(format!("Method: {method}, Port: {port}"))
+                    .attach_printable(format!("Error: {e}")),
+            )
+        }
+    }
+}
+
+/// Convert `BrpResponse` to `BrpResult`
+fn convert_to_brp_result(brp_response: BrpResponse, method: &str) -> BrpResult {
     if let Some(error) = brp_response.error {
+        if is_debug_enabled() {
+            warn!(
+                "BRP execute_brp_method: BRP returned error - code={}, message={}",
+                error.code, error.message
+            );
+        }
+
         // Check if this is a bevy_brp_extras method that's not found
         let enhanced_message = if error.code == -32601 && method.starts_with(BRP_EXTRAS_PREFIX) {
             format!(
@@ -120,13 +238,32 @@ pub async fn execute_brp_method(
             error.message
         };
 
-        Ok(BrpResult::Error(BrpError {
+        let result = BrpResult::Error(BrpError {
             code:    error.code,
             message: enhanced_message,
             data:    error.data,
-        }))
+        });
+
+        if is_debug_enabled() {
+            debug!("BRP execute_brp_method: Returning BrpResult::Error");
+        }
+
+        result
     } else {
-        Ok(BrpResult::Success(brp_response.result))
+        if is_debug_enabled() {
+            debug!(
+                "BRP execute_brp_method: BRP returned success - result={:?}",
+                brp_response.result
+            );
+        }
+
+        let result = BrpResult::Success(brp_response.result);
+
+        if is_debug_enabled() {
+            debug!("BRP execute_brp_method: Returning BrpResult::Success");
+        }
+
+        result
     }
 }
 

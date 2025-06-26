@@ -220,6 +220,9 @@ async fn generate_local_handler(
         "launch_bevy_example" => {
             crate::app_tools::brp_launch_bevy_example::handle(service, request, context).await
         }
+        "shutdown" => {
+            crate::app_tools::brp_extras_shutdown::handle(service, request, context).await
+        }
         _ => Err(crate::error::report_to_mcp_error(
             &error_stack::Report::new(crate::error::Error::ParameterExtraction(format!(
                 "unknown local handler: {handler}"

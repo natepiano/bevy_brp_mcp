@@ -14,7 +14,6 @@ const MAX_BUFFER_SIZE: usize = 10 * 1024 * 1024;
 
 use super::logger::{self as watch_logger, BufferedWatchLogger};
 use super::manager::{WATCH_MANAGER, WatchInfo};
-use crate::brp_tools::constants::{BRP_DEFAULT_HOST, BRP_HTTP_PROTOCOL, BRP_JSONRPC_PATH};
 use crate::brp_tools::support::BrpJsonRpcBuilder;
 use crate::error::{Error, Result};
 use crate::tools::{BRP_METHOD_GET_WATCH, BRP_METHOD_LIST_WATCH};
@@ -179,7 +178,7 @@ async fn run_watch_connection(
     );
 
     // Create HTTP client for streaming
-    let url = format!("{BRP_HTTP_PROTOCOL}://{BRP_DEFAULT_HOST}:{port}{BRP_JSONRPC_PATH}");
+    let url = crate::brp_tools::support::brp_client::build_brp_url(port);
     let client = crate::brp_tools::support::http_client::get_client();
 
     // Build JSON-RPC request for watching

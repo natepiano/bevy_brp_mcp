@@ -42,10 +42,10 @@ pub enum Error {
     ParameterExtraction(String),
 
     #[error("Workspace disambiguation required: {message}")]
-    WorkspaceDisambiguation { 
-        message: String,
-        item_type: String,
-        item_name: String,
+    WorkspaceDisambiguation {
+        message:              String,
+        item_type:            String,
+        item_name:            String,
         available_workspaces: Vec<String>,
     },
 
@@ -184,7 +184,7 @@ impl From<Error> for McpError {
                 // For workspace disambiguation, we want to preserve the detailed message
                 // as an invalid_params error since it's a parameter issue that can be resolved
                 Self::invalid_params(message, None)
-            },
+            }
             Error::MutexPoisoned(msg)
             | Error::FileOperation(msg)
             | Error::InvalidState(msg)

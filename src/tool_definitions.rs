@@ -5,8 +5,10 @@
 //!
 //! # Tool Categories
 //!
-//! - **Standard Tools**: CRUD operations following predictable patterns (destroy, get, insert, etc.)
-//! - **Special Tools**: Tools requiring custom extractors or response handling (query, spawn, execute)
+//! - **Standard Tools**: CRUD operations following predictable patterns (destroy, get, insert,
+//!   etc.)
+//! - **Special Tools**: Tools requiring custom extractors or response handling (query, spawn,
+//!   execute)
 //! - **Local Tools**: Execute within MCP server (log management, app lifecycle)
 //!
 //! # Handler Types
@@ -1139,7 +1141,34 @@ pub fn get_app_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Local {
                 handler: "launch_bevy_example",
             },
-            params:          create_launch_params("example_name", "Name of the Bevy example to launch"),
+            params:          create_launch_params(
+                "example_name",
+                "Name of the Bevy example to launch",
+            ),
+            param_extractor: ParamExtractorType::Passthrough,
+            formatter:       FormatterDef::default(),
+        },
+        // brp_extras_shutdown
+        BrpToolDef {
+            name:            crate::tools::TOOL_BRP_EXTRAS_SHUTDOWN,
+            description:     crate::tools::DESC_BRP_EXTRAS_SHUTDOWN,
+            handler:         HandlerType::Local {
+                handler: "shutdown",
+            },
+            params:          vec![
+                ParamDef {
+                    name:        "app_name",
+                    description: "Name of the Bevy app to shutdown",
+                    required:    true,
+                    param_type:  ParamType::String,
+                },
+                ParamDef {
+                    name:        JSON_FIELD_PORT,
+                    description: "BRP port to connect to (default: 15702)",
+                    required:    false,
+                    param_type:  ParamType::Number,
+                },
+            ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef::default(),
         },
@@ -1150,28 +1179,28 @@ pub fn get_app_tools() -> Vec<BrpToolDef> {
 fn create_launch_params(name_param: &'static str, name_desc: &'static str) -> Vec<ParamDef> {
     vec![
         ParamDef {
-            name: name_param,
+            name:        name_param,
             description: name_desc,
-            required: true,
-            param_type: ParamType::String,
+            required:    true,
+            param_type:  ParamType::String,
         },
         ParamDef {
-            name: "profile",
+            name:        "profile",
             description: "Build profile to use (debug or release)",
-            required: false,
-            param_type: ParamType::String,
+            required:    false,
+            param_type:  ParamType::String,
         },
         ParamDef {
-            name: PARAM_WORKSPACE,
+            name:        PARAM_WORKSPACE,
             description: "Workspace name to use when multiple apps/examples with the same name exist",
-            required: false,
-            param_type: ParamType::String,
+            required:    false,
+            param_type:  ParamType::String,
         },
         ParamDef {
-            name: JSON_FIELD_PORT,
+            name:        JSON_FIELD_PORT,
             description: "BRP port to use (default: 15702)",
-            required: false,
-            param_type: ParamType::Number,
+            required:    false,
+            param_type:  ParamType::Number,
         },
     ]
 }
