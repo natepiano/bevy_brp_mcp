@@ -1,265 +1,307 @@
 [
   {
     "id": "1",
-    "content": "Set terminal title: echo -e \"\\e]2;Implementation: Error Stack Migration for bevy_brp_mcp\\007\"",
+    "content": "Set terminal title: echo -e \"\\e]2;Implementation: Complete Error-Stack Migration\\007\"",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "2",
-    "content": "Add error-stack dependency to workspace Cargo.toml with version \"0.5.0\" and \"spantrace\" feature",
+    "content": "Update src/support/params.rs - Replace BrpMcpError with error-stack patterns in parameter extraction functions",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "3",
-    "content": "Build and fix any compile errors and warnings after adding error-stack",
+    "content": "Build and fix any compile errors and warnings after updating params.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "4",
-    "content": "Add thiserror dependency to workspace Cargo.toml if not already present",
+    "content": "Update src/brp_tools/request_handler/extractors.rs - Convert parameter extractors to use error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "5",
-    "content": "Build and fix any compile errors and warnings after adding thiserror",
+    "content": "Build and fix any compile errors and warnings after updating extractors.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "6",
-    "content": "Replace src/error.rs with new error-stack-based Error enum using thiserror::Error",
+    "content": "Update src/brp_tools/brp_status.rs - Replace BrpMcpError::validation_failed with error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "7",
-    "content": "Build and fix any compile errors and warnings after updating error.rs",
+    "content": "Build and fix any compile errors and warnings after updating brp_status.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "8",
-    "content": "Add clean Result<T> type alias for error_stack::Result<T, Error> in error.rs",
+    "content": "Update src/brp_tools/brp_set_debug_mode.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "9",
-    "content": "Build and fix any compile errors and warnings after adding Result type alias",
+    "content": "Build and fix any compile errors and warnings after updating brp_set_debug_mode.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "10",
-    "content": "Update From<Error> for McpError conversion to work with error-stack Reports",
+    "content": "Update src/app_tools/support/launch_common.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "11",
-    "content": "Build and fix any compile errors and warnings after updating McpError conversion",
+    "content": "Build and fix any compile errors and warnings after updating launch_common.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "12",
-    "content": "Update src/response.rs imports to use crate::error::{Error, Result}",
+    "content": "Update src/app_tools/brp_launch_bevy_app.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "13",
-    "content": "Build and fix any compile errors and warnings after updating response.rs imports",
+    "content": "Build and fix any compile errors and warnings after updating brp_launch_bevy_app.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "14",
-    "content": "Replace ResponseBuilder::data() method to return Result<Self> instead of silent unwrap_or(Value::Null)",
+    "content": "Update src/app_tools/brp_extras_shutdown.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "15",
-    "content": "Build and fix any compile errors and warnings after updating data() method",
+    "content": "Build and fix any compile errors and warnings after updating brp_extras_shutdown.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "16",
-    "content": "Replace ResponseBuilder::to_json() method to return Result<String> with error-stack context",
+    "content": "Update src/app_tools/support/logging.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "17",
-    "content": "Build and fix any compile errors and warnings after updating to_json() method",
+    "content": "Build and fix any compile errors and warnings after updating logging.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "18",
-    "content": "Add data_with_fallback() method that preserves error context in fallback values",
+    "content": "Update src/app_tools/support/scanning.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "19",
-    "content": "Build and fix any compile errors and warnings after adding data_with_fallback() method",
+    "content": "Build and fix any compile errors and warnings after updating scanning.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "20",
-    "content": "Update all BRP tool handler functions to return Result<Value> using our type alias",
+    "content": "Update src/log_tools/support.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "21",
-    "content": "Build and fix any compile errors and warnings after updating tool handlers",
+    "content": "Build and fix any compile errors and warnings after updating log_tools/support.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "22",
-    "content": "Add change_context(Error::JsonRpc) and attach_printable_lazy() to BRP communication code",
+    "content": "Update src/log_tools/read_log.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "23",
-    "content": "Build and fix any compile errors and warnings after updating BRP communication",
+    "content": "Build and fix any compile errors and warnings after updating read_log.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "24",
-    "content": "Update process management code to use error-stack with Process error context",
+    "content": "Update src/brp_tools/watch/support/manager.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "25",
-    "content": "Build and fix any compile errors and warnings after updating process management",
+    "content": "Build and fix any compile errors and warnings after updating watch manager.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "26",
-    "content": "Replace manual error logging with error-stack context attachment throughout codebase",
+    "content": "Update src/brp_tools/watch/support/task.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "27",
-    "content": "Build and fix any compile errors and warnings after replacing error logging",
+    "content": "Build and fix any compile errors and warnings after updating watch task.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "28",
-    "content": "Update all remaining modules to import and use crate::error::Result<T> type alias",
+    "content": "Update src/tool_generator.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "29",
-    "content": "Build and fix any compile errors and warnings after updating remaining modules",
+    "content": "Build and fix any compile errors and warnings after updating tool_generator.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "30",
-    "content": "Ensure all ? operators work correctly with new Result type throughout codebase",
+    "content": "Update src/registry.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "31",
-    "content": "Build and fix any compile errors and warnings after verifying ? operators",
+    "content": "Build and fix any compile errors and warnings after updating registry.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "32",
-    "content": "Add rich context (method names, entity IDs, component types) to all error attachment points",
+    "content": "Update src/support/service.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "33",
-    "content": "Build and fix any compile errors and warnings after adding rich context",
+    "content": "Build and fix any compile errors and warnings after updating service.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "34",
-    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings",
+    "content": "Update src/main.rs - Convert BrpMcpError usage to error-stack patterns",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "35",
-    "content": "Fix any clippy issues (remove dead code instead of marking with dead_code, remove unused variables instead of prefixing with _)",
+    "content": "Build and fix any compile errors and warnings after updating main.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "36",
-    "content": "Run cargo +nightly fmt",
+    "content": "Update src/brp_tools/request_handler/handler.rs - Standardize imports to use Error, Result",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "37",
-    "content": "Run cargo nextest run",
+    "content": "Build and fix any compile errors and warnings after updating handler.rs imports",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "38",
+    "content": "Standardize imports across all updated files - Replace BrpMcpError imports with Error, Result",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "39",
+    "content": "Build and fix any compile errors and warnings after standardizing imports",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "40",
+    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "41",
+    "content": "Fix any clippy issues (remove dead code, don't mark with #[allow], remove unused variables)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "42",
+    "content": "Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "43",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "44",
     "content": "If there are test issues, STOP and review them with the user",
     "status": "pending",
     "priority": "high",
