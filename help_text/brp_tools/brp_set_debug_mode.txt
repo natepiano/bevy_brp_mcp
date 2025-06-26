@@ -1,4 +1,8 @@
-Toggle debug mode for format discovery output to include detailed debug information about BRP format discovery attempts in error responses.
+Toggle debug mode to control whether format discovery debug information is included in BRP responses.
 
 Parameters:
-- enabled (required): true to enable debug output, false to disable
+- enabled (required): true to include debug_info field in responses, false to exclude it
+
+When enabled, adds a debug_info field containing messages about the format discovery process to all BRP responses (both success and error).
+
+This is mostly useful in development of the bevy_brp_mcp tool itself as it's challenging to capture its stdout when it is being run by a coding agent as an mcp server.
