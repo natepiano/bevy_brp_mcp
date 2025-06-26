@@ -37,9 +37,9 @@ pub fn handle_set_debug_mode(
     DEBUG_ENABLED.store(params.enabled, Ordering::Relaxed);
 
     let message = if params.enabled {
-        "Debug mode enabled - format discovery debug info will be included in responses"
+        "Debug mode enabled - comprehensive BRP diagnostic information will be included in responses"
     } else {
-        "Debug mode disabled - format discovery debug info will be excluded from responses"
+        "Debug mode disabled - comprehensive BRP diagnostic information will be excluded from responses"
     };
 
     let response = ResponseBuilder::success()

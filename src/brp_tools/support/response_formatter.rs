@@ -83,16 +83,28 @@ impl ResponseFormatter {
     pub fn format_success(&self, data: &Value, _metadata: BrpMetadata) -> CallToolResult {
         let mut builder = ResponseBuilder::success();
 
-        // Apply success template if provided
-        if let Some(template) = &self.config.success_template {
-            let message = substitute_template(template, self.context.params.as_ref());
-            builder = builder.message(message);
+        // Collect extracted field values for template substitution
+        let mut template_values = serde_json::Map::new();
+
+        // Add original params to template values
+        if let Some(Value::Object(params)) = &self.context.params {
+            template_values.extend(params.clone());
         }
 
-        // Add configured fields
+        // Add configured fields and collect their values for template substitution
         for (field_name, extractor) in &self.config.success_fields {
             let value = extractor(data, &self.context);
-            builder = builder.add_field(field_name, value);
+            builder = builder.add_field(field_name, &value);
+
+            // Add extracted value to template substitution map
+            template_values.insert(field_name.clone(), value);
+        }
+
+        // Apply success template if provided (after collecting all field values)
+        if let Some(template) = &self.config.success_template {
+            let template_params = Value::Object(template_values);
+            let message = substitute_template(template, Some(&template_params));
+            builder = builder.message(message);
         }
 
         // IMPORTANT: Always preserve debug_info and format_corrections from the input data
@@ -339,7 +351,14 @@ pub mod extractors {
 
     /// Count elements in an array from the response data
     pub fn array_count(data: &Value, _context: &FormatterContext) -> Value {
-        data.as_array().map_or(0, std::vec::Vec::len).into()
+        // Check if data is wrapped in a structure with a "data" field
+        if let Some(inner_data) = data.as_object().and_then(|obj| obj.get("data")) {
+            // If wrapped, count the inner array
+            inner_data.as_array().map_or(0, std::vec::Vec::len).into()
+        } else {
+            // Otherwise, count the direct array
+            data.as_array().map_or(0, std::vec::Vec::len).into()
+        }
     }
 
     /// Create a field extractor that gets components from params

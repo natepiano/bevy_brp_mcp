@@ -132,10 +132,12 @@ pub async fn execute_brp_method_with_format_discovery(
     method: &str,
     params: Option<Value>,
     port: Option<u16>,
+    initial_debug_info: Vec<String>,
 ) -> Result<EnhancedBrpResult, McpError> {
-    let mut debug_info = vec![format!(
+    let mut debug_info = initial_debug_info;
+    debug_info.push(format!(
         "Format Discovery: FUNCTION CALLED! Executing method '{method}' with params: {params:?}"
-    )];
+    ));
 
     // Log the exact parameters being sent
     if let Some(ref p) = params {

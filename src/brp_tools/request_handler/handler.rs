@@ -33,9 +33,65 @@ pub struct RequestParams {
 fn extract_request_params(
     request: &rmcp::model::CallToolRequestParam,
     config: &BrpHandlerConfig,
+    debug_info: &mut Vec<String>,
 ) -> Result<RequestParams, McpError> {
+    // Log raw request arguments before extraction
+    if let Some(ref args) = request.arguments {
+        let sanitized_args = serde_json::to_string(args)
+            .unwrap_or_else(|_| "<serialization error>".to_string())
+            .replace("\"value\":{", "\"value\":\"Hidden\",\"_original\":{")
+            .replace("\"value\":[", "\"value\":\"Hidden\",\"_original\":[");
+
+        debug_info.push(format!("Raw request arguments: {sanitized_args}"));
+    } else {
+        debug_info.push("Raw request arguments: None".to_string());
+    }
+
+    debug_info.push("Starting parameter extraction".to_string());
+
     // Extract parameters using the configured extractor
     let extracted = config.param_extractor.extract(request)?;
+
+    // Log extracted parameters with sanitization
+    if let Some(ref method) = extracted.method {
+        debug_info.push(format!("Extracted method: {method}"));
+    }
+
+    debug_info.push(format!("Extracted port: {}", extracted.port));
+
+    if let Some(ref params) = extracted.params {
+        // Log specific extracted parameters based on common BRP patterns
+        if let Some(entity) = params.get("entity").and_then(serde_json::Value::as_u64) {
+            debug_info.push(format!("Extracted entity: {entity}"));
+        }
+
+        if let Some(component) = params.get("component").and_then(serde_json::Value::as_str) {
+            debug_info.push(format!("Extracted component: {component}"));
+        }
+
+        if let Some(resource) = params.get("resource").and_then(serde_json::Value::as_str) {
+            debug_info.push(format!("Extracted resource: {resource}"));
+        }
+
+        if let Some(path) = params.get("path").and_then(serde_json::Value::as_str) {
+            debug_info.push(format!("Extracted path: {path}"));
+        }
+
+        if params.get("value").is_some() {
+            debug_info.push("Extracted value: [Hidden for security]".to_string());
+        }
+
+        if let Some(components) = params.get("components") {
+            if let Some(obj) = components.as_object() {
+                debug_info.push(format!("Extracted components: {} types", obj.len()));
+                for key in obj.keys() {
+                    debug_info.push(format!("  - Component type: {key}"));
+                }
+            }
+        }
+    } else {
+        debug_info.push("Extracted params: None".to_string());
+    }
 
     Ok(RequestParams { extracted })
 }
@@ -44,13 +100,34 @@ fn extract_request_params(
 fn resolve_brp_method(
     extracted: &ExtractedParams,
     config: &BrpHandlerConfig,
+    debug_info: &mut Vec<String>,
 ) -> Result<String, McpError> {
-    extracted
+    debug_info.push("Starting method resolution".to_string());
+
+    // Log the method resolution sources
+    if let Some(ref method) = extracted.method {
+        debug_info.push(format!("Method from request: {method}"));
+    } else {
+        debug_info.push("Method from request: None".to_string());
+    }
+
+    if let Some(config_method) = config.method {
+        debug_info.push(format!("Method from config: {config_method}"));
+    } else {
+        debug_info.push("Method from config: None".to_string());
+    }
+
+    // Perform the actual resolution
+    let resolved_method = extracted
         .method
         .as_deref()
         .or(config.method)
         .map(String::from)
-        .ok_or_else(|| BrpMcpError::missing("BRP method specification").into())
+        .ok_or_else(|| -> McpError { BrpMcpError::missing("BRP method specification").into() })?;
+
+    debug_info.push(format!("Method resolution: {resolved_method}"));
+
+    Ok(resolved_method)
 }
 
 /// Check if response exceeds token limit and save to file if needed
@@ -261,18 +338,33 @@ pub async fn handle_brp_request(
     _context: RequestContext<RoleServer>,
     config: &BrpHandlerConfig,
 ) -> Result<CallToolResult, McpError> {
+    // Create debug info and log the earliest entry point
+    let mut debug_info = Vec::new();
+
+    // Log raw MCP request at the earliest possible point
+    debug_info.push(format!("MCP ENTRY - Tool: {}", request.name));
+    debug_info.push(format!(
+        "MCP ENTRY - Raw arguments: {}",
+        serde_json::to_string(&request.arguments)
+            .unwrap_or_else(|_| "SERIALIZATION_ERROR".to_string())
+    ));
+
     // Extract all parameters from the request
-    let params = extract_request_params(&request, config)?;
+    let params = extract_request_params(&request, config, &mut debug_info)?;
     let extracted = params.extracted;
 
     // Determine the actual method to call
-    let method_name = resolve_brp_method(&extracted, config)?;
+    let method_name = resolve_brp_method(&extracted, config, &mut debug_info)?;
+
+    // Add debug info about calling BRP
+    debug_info.push("Calling BRP with validated parameters".to_string());
 
     // Call BRP using format discovery
     let enhanced_result = execute_brp_method_with_format_discovery(
         &method_name,
         extracted.params.clone(),
         Some(extracted.port),
+        debug_info,
     )
     .await?;
 
