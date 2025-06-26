@@ -110,6 +110,39 @@ pub fn extract_optional_u32(
         .map_err(|_| BrpMcpError::invalid(param_name, "value too large for u32").into())
 }
 
+/// Extract an optional u16 parameter from the request
+/// Returns None if not provided, Some(u16) if provided and valid
+pub fn extract_optional_u16_from_request(
+    request: &CallToolRequestParam,
+    param_name: &str,
+) -> Result<Option<u16>, McpError> {
+    match request
+        .arguments
+        .as_ref()
+        .and_then(|args| args.get(param_name))
+    {
+        Some(v) => {
+            let value = v.as_u64().ok_or_else(|| {
+                BrpMcpError::invalid(&format!("parameter '{param_name}'"), "must be a number")
+            })?;
+            let port = u16::try_from(value)
+                .map_err(|_| BrpMcpError::invalid(param_name, "value too large for u16"))?;
+
+            // Validate port range (1024-65535 for non-privileged ports)
+            if port < 1024 {
+                return Err(BrpMcpError::invalid(
+                    param_name,
+                    "port must be >= 1024 (non-privileged ports only)",
+                )
+                .into());
+            }
+
+            Ok(Some(port))
+        }
+        None => Ok(None),
+    }
+}
+
 /// Extract a required number parameter from the request
 pub fn extract_required_number(
     request: &CallToolRequestParam,

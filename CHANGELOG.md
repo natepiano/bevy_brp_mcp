@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional `workspace` parameter to `brp_launch_bevy_app` and `brp_launch_bevy_example` for disambiguation when multiple apps/examples have the same name
 - Enhanced debug mode with comprehensive BRP diagnostics and dual debug info support
 - New `brp_extras_set_debug_mode` tool for bevy_brp_extras integration
+- Optional `port` parameter to `brp_launch_bevy_app` and `brp_launch_bevy_example` for custom BRP port support (requires bevy_brp_extras)
 
 ### Changed
 - Improved error messages when duplicate app/example names are found across workspaces

@@ -8,7 +8,9 @@ use serde_json::json;
 
 use super::support::{launch_common, logging, process, scanning};
 use crate::BrpMcpService;
-use crate::constants::{DEFAULT_PROFILE, PARAM_APP_NAME, PARAM_PROFILE, PROFILE_RELEASE};
+use crate::constants::{
+    DEFAULT_PROFILE, PARAM_APP_NAME, PARAM_PORT, PARAM_PROFILE, PROFILE_RELEASE,
+};
 use crate::error::BrpMcpError;
 use crate::support::{params, service};
 
@@ -26,9 +28,10 @@ pub async fn handle(
             let app_name = params::extract_required_string(&req, PARAM_APP_NAME)?;
             let profile = params::extract_optional_string(&req, PARAM_PROFILE, DEFAULT_PROFILE);
             let workspace = params::extract_optional_workspace(&req);
+            let port = params::extract_optional_u16_from_request(&req, PARAM_PORT)?;
 
             // Launch the app
-            launch_bevy_app(app_name, profile, workspace.as_deref(), &search_paths)
+            launch_bevy_app(app_name, profile, workspace.as_deref(), port, &search_paths)
         },
     )
     .await
@@ -38,6 +41,7 @@ pub fn launch_bevy_app(
     app_name: &str,
     profile: &str,
     workspace: Option<&str>,
+    port: Option<u16>,
     search_paths: &[PathBuf],
 ) -> Result<CallToolResult, McpError> {
     // Find the app
@@ -79,7 +83,11 @@ pub fn launch_bevy_app(
     let log_file_for_redirect = logging::open_log_file_for_redirect(&log_file_path)?;
 
     // Launch the binary
-    let cmd = Command::new(&binary_path);
+    let mut cmd = Command::new(&binary_path);
+
+    // Set BRP-related environment variables
+    launch_common::set_brp_env_vars(&mut cmd, port);
+
     let pid = process::launch_detached_process(
         &cmd,
         manifest_dir,

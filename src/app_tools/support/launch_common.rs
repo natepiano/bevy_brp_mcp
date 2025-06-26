@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use rmcp::Error as McpError;
 use rmcp::model::CallToolResult;
@@ -79,4 +80,15 @@ pub fn build_launch_success_response(params: LaunchResponseParams) -> CallToolRe
         ),
         response_data,
     )
+}
+
+/// Sets BRP-related environment variables on a command
+///
+/// Currently sets:
+/// - `BRP_PORT`: When a port is provided, sets this environment variable for `bevy_brp_extras` to
+///   read
+pub fn set_brp_env_vars(cmd: &mut Command, port: Option<u16>) {
+    if let Some(port) = port {
+        cmd.env("BRP_PORT", port.to_string());
+    }
 }

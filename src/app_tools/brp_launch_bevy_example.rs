@@ -8,7 +8,9 @@ use serde_json::json;
 
 use super::support::{launch_common, logging, process, scanning};
 use crate::BrpMcpService;
-use crate::constants::{DEFAULT_PROFILE, PARAM_EXAMPLE_NAME, PARAM_PROFILE, PROFILE_RELEASE};
+use crate::constants::{
+    DEFAULT_PROFILE, PARAM_EXAMPLE_NAME, PARAM_PORT, PARAM_PROFILE, PROFILE_RELEASE,
+};
 use crate::support::{params, service};
 
 pub async fn handle(
@@ -20,18 +22,26 @@ pub async fn handle(
     let example_name = params::extract_required_string(&request, PARAM_EXAMPLE_NAME)?;
     let profile = params::extract_optional_string(&request, PARAM_PROFILE, DEFAULT_PROFILE);
     let workspace = params::extract_optional_workspace(&request);
+    let port = params::extract_optional_u16_from_request(&request, PARAM_PORT)?;
 
     // Fetch current roots
     let search_paths = service::fetch_roots_and_get_paths(service, context).await?;
 
     // Launch the example
-    launch_bevy_example(example_name, profile, workspace.as_deref(), &search_paths)
+    launch_bevy_example(
+        example_name,
+        profile,
+        workspace.as_deref(),
+        port,
+        &search_paths,
+    )
 }
 
 pub fn launch_bevy_example(
     example_name: &str,
     profile: &str,
     workspace: Option<&str>,
+    port: Option<u16>,
     search_paths: &[PathBuf],
 ) -> Result<CallToolResult, McpError> {
     // Find the example
@@ -89,6 +99,9 @@ pub fn launch_bevy_example(
     if profile == PROFILE_RELEASE {
         cmd.arg("--release");
     }
+
+    // Set BRP-related environment variables
+    launch_common::set_brp_env_vars(&mut cmd, port);
 
     // Launch the process
     let pid = process::launch_detached_process(
