@@ -235,10 +235,12 @@ fn validate_single_result_or_error<T>(
             let error_msg =
                 build_workspace_selection_error(item_type, item_name, param_name, &workspaces);
             Err(report_to_mcp_error(
-                &error_stack::Report::new(Error::ParameterExtraction(
-                    "Multiple items found with the same name".to_string(),
-                ))
-                .attach_printable(error_msg),
+                &error_stack::Report::new(Error::WorkspaceDisambiguation {
+                    message: error_msg,
+                    item_type: item_type.to_string(),
+                    item_name: item_name.to_string(),
+                    available_workspaces: workspaces,
+                }),
             ))
         }
     }

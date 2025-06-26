@@ -1128,32 +1128,7 @@ pub fn get_app_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Local {
                 handler: "launch_bevy_app",
             },
-            params:          vec![
-                ParamDef {
-                    name:        "app_name",
-                    description: "Name of the Bevy app to launch",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        "profile",
-                    description: "Build profile to use (debug or release)",
-                    required:    false,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        PARAM_WORKSPACE,
-                    description: "Workspace name to use when multiple apps with the same name exist",
-                    required:    false,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: "BRP port to use (default: 15702)",
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          create_launch_params("app_name", "Name of the Bevy app to launch"),
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef::default(),
         },
@@ -1164,34 +1139,39 @@ pub fn get_app_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Local {
                 handler: "launch_bevy_example",
             },
-            params:          vec![
-                ParamDef {
-                    name:        "example_name",
-                    description: "Name of the Bevy example to launch",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        "profile",
-                    description: "Build profile to use (debug or release)",
-                    required:    false,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        "workspace",
-                    description: "Workspace name to use when multiple examples with the same name exist",
-                    required:    false,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: "BRP port to use (default: 15702)",
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          create_launch_params("example_name", "Name of the Bevy example to launch"),
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef::default(),
+        },
+    ]
+}
+
+/// Create standard launch tool parameters (profile, workspace, port)
+fn create_launch_params(name_param: &'static str, name_desc: &'static str) -> Vec<ParamDef> {
+    vec![
+        ParamDef {
+            name: name_param,
+            description: name_desc,
+            required: true,
+            param_type: ParamType::String,
+        },
+        ParamDef {
+            name: "profile",
+            description: "Build profile to use (debug or release)",
+            required: false,
+            param_type: ParamType::String,
+        },
+        ParamDef {
+            name: PARAM_WORKSPACE,
+            description: "Workspace name to use when multiple apps/examples with the same name exist",
+            required: false,
+            param_type: ParamType::String,
+        },
+        ParamDef {
+            name: JSON_FIELD_PORT,
+            description: "BRP port to use (default: 15702)",
+            required: false,
+            param_type: ParamType::Number,
         },
     ]
 }
