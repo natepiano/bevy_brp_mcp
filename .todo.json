@@ -1,49 +1,77 @@
 [
   {
     "id": "terminal_title",
-    "content": "Set terminal title to indicate code review fixes implementation work",
+    "content": "Set terminal title to indicate launch function deduplication work",
     "status": "completed",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "fix_app_example_naming",
-    "content": "Fix App vs Example naming issue - modify create_log_file() signature to include launch_type parameter, update log header to show 'App:' or 'Example:' accordingly, update brp_launch_bevy_app.rs and brp_launch_bevy_example.rs to pass correct type",
+    "id": "consolidate_platform_code",
+    "content": "Consolidate platform-specific code duplication in src/app_tools/support/process.rs - merge duplicate launch_detached_process() functions into single implementation with operation parameter",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "build_naming_fix",
-    "content": "Build and fix any compile errors and warnings after app/example naming fix",
+    "id": "build_platform_fix",
+    "content": "Build and fix any compile errors and warnings after platform code consolidation",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "replace_unsafe_code",
-    "content": "Replace unsafe code with tokio::process - eliminate unsafe libc::fork(), libc::setsid(), libc::waitpid() calls in src/app_tools/support/process.rs, use tokio::process::Command for cross-platform detached process creation",
+    "id": "create_launch_common",
+    "content": "Create shared launch helpers module src/app_tools/support/launch_common.rs - extract common validation, logging, and response patterns from both launch functions",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "build_process_fix",
-    "content": "Build and fix any compile errors and warnings after replacing unsafe code",
+    "id": "build_common_module",
+    "content": "Build and fix any compile errors and warnings after creating launch_common module",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "refactor_stream_processing",
-    "content": "Refactor complex process_watch_stream() function in src/brp_tools/watch/support/task.rs - break 142-line function into smaller functions: process_chunk(), parse_sse_line(), log_update()",
+    "id": "add_module_export",
+    "content": "Add launch_common module export to src/app_tools/support/mod.rs",
     "status": "pending",
     "priority": "medium",
     "notes": ""
   },
   {
-    "id": "build_stream_refactor",
-    "content": "Build and fix any compile errors and warnings after stream processing refactor",
+    "id": "build_module_export",
+    "content": "Build and fix any compile errors and warnings after adding module export",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "refactor_app_launch",
+    "content": "Refactor brp_launch_bevy_app.rs to use shared helper functions - extract common validation, logging, and response construction while preserving app-specific logic",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "build_app_refactor",
+    "content": "Build and fix any compile errors and warnings after app launch refactor",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "refactor_example_launch",
+    "content": "Refactor brp_launch_bevy_example.rs to use shared helper functions - extract common patterns while preserving example-specific cargo run logic",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "build_example_refactor",
+    "content": "Build and fix any compile errors and warnings after example launch refactor",
     "status": "pending",
     "priority": "medium",
     "notes": ""
