@@ -1,308 +1,126 @@
 [
   {
     "id": "1",
-    "content": "Set terminal title: echo -e \"\\e]2;Implementation: Complete Error-Stack Migration\\007\"",
+    "content": "MetaTodo: Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "2",
-    "content": "Update src/support/params.rs - Replace BrpMcpError with error-stack patterns in parameter extraction functions",
+    "content": "Update help text for brp_launch_bevy_app.txt to document port parameter",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "3",
-    "content": "Build and fix any compile errors and warnings after updating params.rs",
+    "content": "Build and fix any compile errors and warnings after help text update",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "4",
-    "content": "Update src/brp_tools/request_handler/extractors.rs - Convert parameter extractors to use error-stack patterns",
+    "content": "Update help text for brp_launch_bevy_example.txt to document port parameter",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "5",
-    "content": "Build and fix any compile errors and warnings after updating extractors.rs",
+    "content": "Build and fix any compile errors and warnings after help text update",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "6",
-    "content": "Update src/brp_tools/brp_status.rs - Replace BrpMcpError::validation_failed with error-stack patterns",
+    "content": "Update brp_launch_bevy_app.rs to extract port parameter and pass to launch function",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "7",
-    "content": "Build and fix any compile errors and warnings after updating brp_status.rs",
+    "content": "Build and fix any compile errors and warnings after brp_launch_bevy_app.rs update",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "8",
-    "content": "Update src/brp_tools/brp_set_debug_mode.rs - Convert BrpMcpError usage to error-stack patterns",
+    "content": "Update brp_launch_bevy_example.rs to extract port parameter and pass to launch function",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "9",
-    "content": "Build and fix any compile errors and warnings after updating brp_set_debug_mode.rs",
+    "content": "Build and fix any compile errors and warnings after brp_launch_bevy_example.rs update",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "10",
-    "content": "Update src/app_tools/support/launch_common.rs - Convert BrpMcpError usage to error-stack patterns",
+    "content": "Update process.rs to set BRP_PORT environment variable when port is provided",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "11",
-    "content": "Build and fix any compile errors and warnings after updating launch_common.rs",
+    "content": "Build and fix any compile errors and warnings after process.rs update",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "12",
-    "content": "Update src/app_tools/brp_launch_bevy_app.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "13",
-    "content": "Build and fix any compile errors and warnings after updating brp_launch_bevy_app.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "14",
-    "content": "Update src/app_tools/brp_extras_shutdown.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "15",
-    "content": "Build and fix any compile errors and warnings after updating brp_extras_shutdown.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "16",
-    "content": "Update src/app_tools/support/logging.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "17",
-    "content": "Build and fix any compile errors and warnings after updating logging.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "18",
-    "content": "Update src/app_tools/support/scanning.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "19",
-    "content": "Build and fix any compile errors and warnings after updating scanning.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "20",
-    "content": "Update src/log_tools/support.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "21",
-    "content": "Build and fix any compile errors and warnings after updating log_tools/support.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "22",
-    "content": "Update src/log_tools/read_log.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "23",
-    "content": "Build and fix any compile errors and warnings after updating read_log.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "24",
-    "content": "Update src/brp_tools/watch/support/manager.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "25",
-    "content": "Build and fix any compile errors and warnings after updating watch manager.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "26",
-    "content": "Update src/brp_tools/watch/support/task.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "27",
-    "content": "Build and fix any compile errors and warnings after updating watch task.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "28",
-    "content": "Update src/tool_generator.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "29",
-    "content": "Build and fix any compile errors and warnings after updating tool_generator.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "30",
-    "content": "Update src/registry.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "31",
-    "content": "Build and fix any compile errors and warnings after updating registry.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "32",
-    "content": "Update src/support/service.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "33",
-    "content": "Build and fix any compile errors and warnings after updating service.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "34",
-    "content": "Update src/main.rs - Convert BrpMcpError usage to error-stack patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "35",
-    "content": "Build and fix any compile errors and warnings after updating main.rs",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "36",
-    "content": "Update src/brp_tools/request_handler/handler.rs - Standardize imports to use Error, Result",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "37",
-    "content": "Build and fix any compile errors and warnings after updating handler.rs imports",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "38",
-    "content": "Standardize imports across all updated files - Replace BrpMcpError imports with Error, Result",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "39",
-    "content": "Build and fix any compile errors and warnings after standardizing imports",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "40",
     "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "41",
-    "content": "Fix any clippy issues (remove dead code, don't mark with #[allow], remove unused variables)",
+    "id": "13",
+    "content": "Fix any clippy issues following rules (no dead code markers, no underscore prefixes)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "42",
+    "id": "14",
     "content": "Run cargo +nightly fmt",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "43",
+    "id": "15",
     "content": "Run cargo nextest run",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "44",
+    "id": "16",
     "content": "If there are test issues, STOP and review them with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "17",
+    "content": "CodeReview: Task subagent to review changes focusing on duplication, complexity, and plan validation",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "18",
+    "content": "When code review returns, STOP and review suggested changes with the user",
     "status": "pending",
     "priority": "high",
     "notes": ""
