@@ -180,7 +180,7 @@ async fn run_watch_connection(
 
     // Create HTTP client for streaming
     let url = format!("{BRP_HTTP_PROTOCOL}://{BRP_DEFAULT_HOST}:{port}{BRP_JSONRPC_PATH}");
-    let client = reqwest::Client::new();
+    let client = crate::brp_tools::support::http_client::get_client();
 
     // Build JSON-RPC request for watching
     let request_body = BrpJsonRpcBuilder::new(&brp_method)

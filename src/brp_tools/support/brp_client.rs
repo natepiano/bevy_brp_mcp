@@ -72,8 +72,8 @@ pub async fn execute_brp_method(
     }
     let request_body = builder.build().to_string();
 
-    // Send HTTP request
-    let client = reqwest::Client::new();
+    // Send HTTP request using shared client
+    let client = super::http_client::get_client();
     let response = client
         .post(&url)
         .header("Content-Type", "application/json")

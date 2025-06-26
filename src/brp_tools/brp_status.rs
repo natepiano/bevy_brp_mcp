@@ -181,7 +181,7 @@ async fn check_brp_for_app(app_name: &str, port: u16) -> Result<CallToolResult, 
 /// Check if BRP is responding on the given port
 async fn check_brp_on_port(port: u16) -> Result<bool, McpError> {
     // Try a simple BRP request to check connectivity
-    let client = reqwest::Client::new();
+    let client = super::support::http_client::get_client();
     let url = format!("http://localhost:{port}");
 
     // Use bevy/list as a lightweight command using the builder

@@ -153,7 +153,7 @@ pub async fn handle(
 
 /// Try to gracefully shutdown via `bevy_brp_extras`
 async fn try_graceful_shutdown(port: u16) -> Result<bool> {
-    let client = reqwest::Client::new();
+    let client = crate::brp_tools::support::http_client::get_client();
     let url = format!("http://localhost:{port}");
 
     // Create shutdown request
