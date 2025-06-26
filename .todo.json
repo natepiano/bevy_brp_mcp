@@ -1,0 +1,268 @@
+[
+  {
+    "id": "1",
+    "content": "Set terminal title: echo -e \"\\e]2;Implementation: Error Stack Migration for bevy_brp_mcp\\007\"",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "2",
+    "content": "Add error-stack dependency to workspace Cargo.toml with version \"0.5.0\" and \"spantrace\" feature",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "3",
+    "content": "Build and fix any compile errors and warnings after adding error-stack",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "4",
+    "content": "Add thiserror dependency to workspace Cargo.toml if not already present",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "5",
+    "content": "Build and fix any compile errors and warnings after adding thiserror",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "6",
+    "content": "Replace src/error.rs with new error-stack-based Error enum using thiserror::Error",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "7",
+    "content": "Build and fix any compile errors and warnings after updating error.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "8",
+    "content": "Add clean Result<T> type alias for error_stack::Result<T, Error> in error.rs",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "9",
+    "content": "Build and fix any compile errors and warnings after adding Result type alias",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "10",
+    "content": "Update From<Error> for McpError conversion to work with error-stack Reports",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "11",
+    "content": "Build and fix any compile errors and warnings after updating McpError conversion",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "12",
+    "content": "Update src/response.rs imports to use crate::error::{Error, Result}",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "13",
+    "content": "Build and fix any compile errors and warnings after updating response.rs imports",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "14",
+    "content": "Replace ResponseBuilder::data() method to return Result<Self> instead of silent unwrap_or(Value::Null)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "15",
+    "content": "Build and fix any compile errors and warnings after updating data() method",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "16",
+    "content": "Replace ResponseBuilder::to_json() method to return Result<String> with error-stack context",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "17",
+    "content": "Build and fix any compile errors and warnings after updating to_json() method",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "18",
+    "content": "Add data_with_fallback() method that preserves error context in fallback values",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "19",
+    "content": "Build and fix any compile errors and warnings after adding data_with_fallback() method",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "20",
+    "content": "Update all BRP tool handler functions to return Result<Value> using our type alias",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "21",
+    "content": "Build and fix any compile errors and warnings after updating tool handlers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "22",
+    "content": "Add change_context(Error::JsonRpc) and attach_printable_lazy() to BRP communication code",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "23",
+    "content": "Build and fix any compile errors and warnings after updating BRP communication",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "24",
+    "content": "Update process management code to use error-stack with Process error context",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "25",
+    "content": "Build and fix any compile errors and warnings after updating process management",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "26",
+    "content": "Replace manual error logging with error-stack context attachment throughout codebase",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "27",
+    "content": "Build and fix any compile errors and warnings after replacing error logging",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "28",
+    "content": "Update all remaining modules to import and use crate::error::Result<T> type alias",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "29",
+    "content": "Build and fix any compile errors and warnings after updating remaining modules",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "30",
+    "content": "Ensure all ? operators work correctly with new Result type throughout codebase",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "31",
+    "content": "Build and fix any compile errors and warnings after verifying ? operators",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "32",
+    "content": "Add rich context (method names, entity IDs, component types) to all error attachment points",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "33",
+    "content": "Build and fix any compile errors and warnings after adding rich context",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "34",
+    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "35",
+    "content": "Fix any clippy issues (remove dead code instead of marking with dead_code, remove unused variables instead of prefixing with _)",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "36",
+    "content": "Run cargo +nightly fmt",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "37",
+    "content": "Run cargo nextest run",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "38",
+    "content": "If there are test issues, STOP and review them with the user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  }
+]
