@@ -170,67 +170,44 @@ fn handle_large_response(
     }
 }
 
-/// Add format corrections and debug info to response data
-fn add_format_corrections(
-    response_data: &mut Value,
-    format_corrections: &[FormatCorrection],
-    debug_info: &[String],
-) {
-    if format_corrections.is_empty() && debug_info.is_empty() {
+/// Add only format corrections to response data (not debug info)
+fn add_format_corrections_only(response_data: &mut Value, format_corrections: &[FormatCorrection]) {
+    if format_corrections.is_empty() {
         return;
     }
 
-    let mut additions = json!({});
-
-    if !format_corrections.is_empty() {
-        let corrections_value = json!(
-            format_corrections
-                .iter()
-                .map(|correction| {
-                    json!({
-                        "component": correction.component,
-                        "original_format": correction.original_format,
-                        "corrected_format": correction.corrected_format,
-                        "hint": correction.hint
-                    })
+    let corrections_value = json!(
+        format_corrections
+            .iter()
+            .map(|correction| {
+                json!({
+                    "component": correction.component,
+                    "original_format": correction.original_format,
+                    "corrected_format": correction.corrected_format,
+                    "hint": correction.hint
                 })
-                .collect::<Vec<_>>()
-        );
-        additions[JSON_FIELD_FORMAT_CORRECTIONS] = corrections_value;
-    }
-
-    if !debug_info.is_empty() && brp_set_debug_mode::is_debug_enabled() {
-        additions[JSON_FIELD_DEBUG_INFO] = json!(debug_info);
-    }
+            })
+            .collect::<Vec<_>>()
+    );
 
     // If response_data is an object, add fields
     if let Value::Object(map) = response_data {
-        if let Value::Object(add_map) = additions {
-            map.extend(add_map);
-        }
+        map.insert(JSON_FIELD_FORMAT_CORRECTIONS.to_string(), corrections_value);
     } else {
         // If not an object, wrap it
-        let mut wrapped = json!({
+        let wrapped = json!({
             JSON_FIELD_DATA: response_data.clone(),
-            JSON_FIELD_FORMAT_CORRECTIONS: additions.get(JSON_FIELD_FORMAT_CORRECTIONS).cloned().unwrap_or(json!([]))
+            JSON_FIELD_FORMAT_CORRECTIONS: corrections_value
         });
-
-        // Only add debug_info if debug mode is enabled
-        if brp_set_debug_mode::is_debug_enabled() {
-            wrapped[JSON_FIELD_DEBUG_INFO] = additions
-                .get(JSON_FIELD_DEBUG_INFO)
-                .cloned()
-                .unwrap_or(json!([]));
-        }
-
         *response_data = wrapped;
     }
 }
 
 /// Context for processing responses
 struct ResponseContext<'a> {
-    formatter: &'a ResponseFormatter,
-    metadata:  BrpMetadata,
+    metadata:          BrpMetadata,
+    formatter_factory: &'a crate::brp_tools::support::response_formatter::ResponseFormatterFactory,
+    formatter_context: FormatterContext,
 }
 
 /// Process a successful BRP response
@@ -242,20 +219,31 @@ fn process_success_response(
 ) -> Result<CallToolResult, McpError> {
     let mut response_data = data.unwrap_or(Value::Null);
 
-    // Add format corrections and debug info if present
-    add_format_corrections(
-        &mut response_data,
-        &enhanced_result.format_corrections,
-        &enhanced_result.debug_info,
-    );
+    // Extract debug info for BRP MCP debug info
+    let brp_mcp_debug_info =
+        if !enhanced_result.debug_info.is_empty() && brp_set_debug_mode::is_debug_enabled() {
+            Some(json!(enhanced_result.debug_info))
+        } else {
+            None
+        };
+
+    // Add format corrections only (not debug info, as it will be handled separately)
+    add_format_corrections_only(&mut response_data, &enhanced_result.format_corrections);
+
+    // Create new FormatterContext with BRP MCP debug info
+    let new_formatter_context = FormatterContext {
+        params: context.formatter_context.params.clone(),
+        brp_mcp_debug_info,
+    };
+
+    // Create new formatter with updated context
+    let updated_formatter = context.formatter_factory.create(new_formatter_context);
 
     // Check if response is too large and use file fallback if needed
     let final_data = handle_large_response(&response_data, method_name)?
         .map_or(response_data, |fallback_response| fallback_response);
 
-    Ok(context
-        .formatter
-        .format_success(&final_data, context.metadata))
+    Ok(updated_formatter.format_success(&final_data, context.metadata))
 }
 
 /// Process an error BRP response
@@ -379,9 +367,10 @@ pub async fn handle_brp_request(
     }
 
     let formatter_context = FormatterContext {
-        params: Some(context_params),
+        params:             Some(context_params),
+        brp_mcp_debug_info: None, // Will be populated later when processing responses
     };
-    let formatter = config.formatter_factory.create(formatter_context);
+    let formatter = config.formatter_factory.create(formatter_context.clone());
 
     // Use "brp_execute" for dynamic methods for special error formatting
     let metadata_method = if extracted.method.is_some() {
@@ -395,8 +384,9 @@ pub async fn handle_brp_request(
     match &enhanced_result.result {
         BrpResult::Success(data) => {
             let context = ResponseContext {
-                formatter: &formatter,
                 metadata,
+                formatter_factory: &config.formatter_factory,
+                formatter_context,
             };
             process_success_response(data.clone(), &enhanced_result, &method_name, context)
         }

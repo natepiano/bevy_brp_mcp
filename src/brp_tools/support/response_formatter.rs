@@ -3,8 +3,9 @@ use serde_json::{Value, json};
 
 use super::brp_client::BrpError;
 use crate::brp_tools::constants::{
-    BRP_ERROR_CODE_INVALID_REQUEST, JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_ERROR_CODE,
-    JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PORT,
+    BRP_ERROR_CODE_INVALID_REQUEST, JSON_FIELD_BRP_EXTRAS_DEBUG_INFO,
+    JSON_FIELD_BRP_MCP_DEBUG_INFO, JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO,
+    JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PORT,
 };
 use crate::brp_tools::request_handler::FormatterContext;
 use crate::support::response::ResponseBuilder;
@@ -91,9 +92,39 @@ impl ResponseFormatter {
             template_values.extend(params.clone());
         }
 
-        // Add configured fields and collect their values for template substitution
+        // Extract debug info and format corrections from data first
+        let mut clean_data = data.clone();
+
+        if let Value::Object(data_map) = data {
+            // Extract brp_extras_debug_info from data (if exists)
+            if let Some(debug_info) = data_map.get(JSON_FIELD_DEBUG_INFO) {
+                if !debug_info.is_null() && (debug_info.is_array() || debug_info.is_string()) {
+                    builder = builder.add_field(JSON_FIELD_BRP_EXTRAS_DEBUG_INFO, debug_info);
+                }
+            }
+
+            // Always preserve format_corrections from the input data
+            if let Some(format_corrections) = data_map.get("format_corrections") {
+                if !format_corrections.is_null() && format_corrections.is_array() {
+                    builder = builder.add_field("format_corrections", format_corrections);
+                }
+            }
+
+            // Clean debug_info from data to prevent duplication
+            if let Value::Object(clean_map) = &mut clean_data {
+                clean_map.remove(JSON_FIELD_DEBUG_INFO);
+            }
+        }
+
+        // Add brp_mcp_debug_info from FormatterContext
+        if let Some(brp_mcp_debug_info) = &self.context.brp_mcp_debug_info {
+            builder = builder.add_field(JSON_FIELD_BRP_MCP_DEBUG_INFO, brp_mcp_debug_info);
+        }
+
+        // Add configured fields and collect their values for template substitution (using clean
+        // data)
         for (field_name, extractor) in &self.config.success_fields {
-            let value = extractor(data, &self.context);
+            let value = extractor(&clean_data, &self.context);
             builder = builder.add_field(field_name, &value);
 
             // Add extracted value to template substitution map
@@ -105,21 +136,6 @@ impl ResponseFormatter {
             let template_params = Value::Object(template_values);
             let message = substitute_template(template, Some(&template_params));
             builder = builder.message(message);
-        }
-
-        // IMPORTANT: Always preserve debug_info and format_corrections from the input data
-        // These are added by the handler when format discovery makes corrections
-        if let Value::Object(data_map) = data {
-            if let Some(debug_info) = data_map.get("debug_info") {
-                if !debug_info.is_null() && (debug_info.is_array() || debug_info.is_string()) {
-                    builder = builder.add_field("debug_info", debug_info);
-                }
-            }
-            if let Some(format_corrections) = data_map.get("format_corrections") {
-                if !format_corrections.is_null() && format_corrections.is_array() {
-                    builder = builder.add_field("format_corrections", format_corrections);
-                }
-            }
         }
 
         json_response_to_result(&builder.build())
@@ -153,18 +169,45 @@ impl ResponseFormatter {
 
             let mut builder = ResponseBuilder::error().message(&error.message);
 
+            // Extract debug info from error data if present
+            let mut clean_error_data = error.data.clone();
+            if let Some(ref data) = error.data {
+                if let Some(data_obj) = data.as_object() {
+                    // Extract brp_extras_debug_info from error data (if exists)
+                    if let Some(debug_info) = data_obj.get(JSON_FIELD_DEBUG_INFO) {
+                        if !debug_info.is_null()
+                            && (debug_info.is_array() || debug_info.is_string())
+                        {
+                            builder =
+                                builder.add_field(JSON_FIELD_BRP_EXTRAS_DEBUG_INFO, debug_info);
+                        }
+                    }
+
+                    // Clean debug_info from error data to prevent duplication
+                    if let Some(Value::Object(clean_map)) = &mut clean_error_data {
+                        clean_map.remove(JSON_FIELD_DEBUG_INFO);
+                    }
+                }
+            }
+
+            // Add brp_mcp_debug_info from FormatterContext
+            if let Some(brp_mcp_debug_info) = &self.context.brp_mcp_debug_info {
+                builder = builder.add_field(JSON_FIELD_BRP_MCP_DEBUG_INFO, brp_mcp_debug_info);
+            }
+
             // Handle special BRP execution error format
             if metadata.method == "brp_execute" {
                 builder = builder
                     .add_field(JSON_FIELD_CODE, error.code)
-                    .add_field(JSON_FIELD_DATA, error.data.unwrap_or(Value::Null));
+                    .add_field(JSON_FIELD_DATA, clean_error_data.unwrap_or(Value::Null));
             } else {
                 builder = builder
                     .add_field(JSON_FIELD_ERROR_CODE, error.code)
                     .add_field(JSON_FIELD_METADATA, metadata_obj);
 
-                // Include error.data if present (contains debug_info, original_error, etc.)
-                if let Some(data) = error.data {
+                // Include clean error.data if present (contains original_error, etc. but not
+                // debug_info)
+                if let Some(data) = clean_error_data {
                     // Merge the error data into the response
                     if let Some(data_obj) = data.as_object() {
                         for (key, value) in data_obj {
@@ -411,7 +454,8 @@ mod tests {
         };
 
         let context = FormatterContext {
-            params: Some(json!({ "entity": 123 })),
+            params:             Some(json!({ "entity": 123 })),
+            brp_mcp_debug_info: None,
         };
 
         let formatter = ResponseFormatter::new(config, context);
@@ -439,7 +483,8 @@ mod tests {
         };
 
         let context = FormatterContext {
-            params: Some(json!({ "entity": 456 })),
+            params:             Some(json!({ "entity": 456 })),
+            brp_mcp_debug_info: None,
         };
 
         let formatter = ResponseFormatter::new(config, context);
@@ -466,7 +511,10 @@ mod tests {
             use_default_error:     true,
         };
 
-        let context = FormatterContext { params: None };
+        let context = FormatterContext {
+            params:             None,
+            brp_mcp_debug_info: None,
+        };
 
         let formatter = ResponseFormatter::new(config, context);
         let metadata = BrpMetadata::new("bevy/test", DEFAULT_BRP_PORT);
@@ -493,7 +541,8 @@ mod tests {
             .build();
 
         let context = FormatterContext {
-            params: Some(json!({ "entity": 789 })),
+            params:             Some(json!({ "entity": 789 })),
+            brp_mcp_debug_info: None,
         };
 
         let formatter = factory.create(context);
@@ -509,7 +558,10 @@ mod tests {
     fn test_pass_through_builder() {
         let factory = ResponseFormatterFactory::pass_through().build();
 
-        let context = FormatterContext { params: None };
+        let context = FormatterContext {
+            params:             None,
+            brp_mcp_debug_info: None,
+        };
 
         let formatter = factory.create(context);
         let metadata = BrpMetadata::new("bevy/query", DEFAULT_BRP_PORT);
@@ -524,10 +576,11 @@ mod tests {
     #[test]
     fn test_extractors() {
         let context = FormatterContext {
-            params: Some(json!({
+            params:             Some(json!({
                 "entity": 100,
                 "resource": "TestResource"
             })),
+            brp_mcp_debug_info: None,
         };
 
         let data = json!({"result": "success"});
@@ -551,9 +604,10 @@ mod tests {
 
         // Test components_from_params extractor
         let components_context = FormatterContext {
-            params: Some(json!({
+            params:             Some(json!({
                 "components": ["Transform", "Sprite"]
             })),
+            brp_mcp_debug_info: None,
         };
         assert_eq!(
             extractors::components_from_params(&data, &components_context),

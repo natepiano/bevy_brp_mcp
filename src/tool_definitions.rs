@@ -790,7 +790,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 template:        "Format discovery completed",
                 response_fields: vec![ResponseField {
                     name:      PARAM_FORMATS,
-                    extractor: ExtractorType::PassThroughData,
+                    extractor: ExtractorType::PassThroughResult,
                 }],
             },
         },
