@@ -1,0 +1,114 @@
+[
+  {
+    "id": "terminal_title",
+    "content": "Set terminal title to indicate resource management implementation work",
+    "status": "completed",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "sse_memory_limits",
+    "content": "Implement SSE memory limits in src/watch/task.rs - add MAX_CHUNK_SIZE (1MB) and MAX_BUFFER_SIZE (10MB) constants, bounded stream processing with size checks, proper line buffering for incomplete lines",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "build_sse",
+    "content": "Build and fix any compile errors and warnings after SSE memory limits implementation",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "file_handle_cleanup",
+    "content": "Implement file handle cleanup in src/watch/logger.rs - add Drop trait to BufferedWatchLogger, add shutdown signal using oneshot::Sender<()>, ensure graceful shutdown in write task",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "build_logger",
+    "content": "Build and fix any compile errors and warnings after file handle cleanup implementation",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "unix_zombie_prevention",
+    "content": "Implement Unix zombie prevention in src/process/process.rs - add platform-specific launching with #[cfg(unix)], double-fork pattern for daemonization, temporary PID files for communication, keep Windows implementation unchanged",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "build_process",
+    "content": "Build and fix any compile errors and warnings after Unix zombie prevention implementation",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "enhanced_process_detection",
+    "content": "Implement enhanced process detection in src/status/brp_status.rs - add normalize_process_name() function, handle case sensitivity and path variations, check process name and command line arguments",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "build_status",
+    "content": "Build and fix any compile errors and warnings after enhanced process detection implementation",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "clippy_check",
+    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "fix_clippy",
+    "content": "Fix any clippy issues - remove dead code (don't mark as dead), remove unused variables/arguments (don't prefix with _)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "format_code",
+    "content": "Run cargo +nightly fmt to format code",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "run_tests",
+    "content": "Run cargo nextest run to execute tests",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "review_test_failures",
+    "content": "If there are test issues, STOP and review them with the user",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "code_review_setup",
+    "content": "Task a new subagent to do code review of changes - focus on identifying duplication and complexity, read and analyze only (no modifications)",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "review_suggestions",
+    "content": "When subagent returns, STOP and review suggested changes with the user",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  }
+]
