@@ -9,8 +9,10 @@ mod detection;
 mod engine;
 mod field_mapper;
 mod path_parser;
-mod transformations;
+pub mod phases;
+mod transformers;
 pub mod types;
+mod utilities;
 
 #[cfg(test)]
 mod tests;

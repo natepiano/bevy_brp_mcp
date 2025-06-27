@@ -1,128 +1,170 @@
 [
   {
     "id": "terminal-title",
-    "content": "Run `echo -e \"\\e]2;Implementation: Complete Legacy Code Removal\\007\"` to set terminal title",
+    "content": "Run `echo -e \"\\e]2;Implementation: Code Quality Improvements - Eliminate Duplication\\007\"` to set terminal title",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
     "id": "meta-todo",
     "content": "META: Do not deviate from the plan - if you think you need to deviate, STOP and ask the user for guidance",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "move-utility-functions",
-    "content": "Move convert_to_array_format, type_expects_array, type_format_error from transformations.rs to math_type.rs as private functions",
+    "id": "create-common-module",
+    "content": "Create shared utilities module (common.rs) with extract_type_name_from_error and extract_single_field_value functions",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "move-utility-build",
-    "content": "Build and fix any compile errors and warnings after moving utility functions",
+    "id": "build-after-common",
+    "content": "Build and fix any compile errors and warnings after creating common.rs",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "remove-legacy-fallback",
-    "content": "Remove try_component_format_alternatives_legacy call from tier_execution.rs line 386",
+    "id": "create-constants-module",
+    "content": "Create constants module (constants.rs) with TRANSFORM_SEQUENCE_F32_COUNT constant",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "remove-legacy-build",
-    "content": "Build and fix any compile errors and warnings after removing legacy fallback",
+    "id": "build-after-constants",
+    "content": "Build and fix any compile errors and warnings after creating constants.rs",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "rewrite-tests",
-    "content": "Rewrite failing tests to test transformers directly instead of legacy functions",
+    "id": "update-mod-exports",
+    "content": "Update transformers/mod.rs to export common and constants modules",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "rewrite-tests-build",
-    "content": "Build and fix any compile errors and warnings after rewriting tests",
+    "id": "build-after-mod",
+    "content": "Build and fix any compile errors and warnings after updating mod.rs",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "delete-transformations",
-    "content": "Delete transformations.rs file and remove its mod declaration from mod.rs",
+    "id": "update-math-type",
+    "content": "Update math_type.rs to use shared utilities and constants",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "delete-transformations-build",
-    "content": "Build and fix any compile errors and warnings after deleting transformations.rs",
+    "id": "build-after-math-type",
+    "content": "Build and fix any compile errors and warnings after updating math_type.rs",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "update-string-type",
+    "content": "Update string_type.rs to use shared utilities",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "build-after-string-type",
+    "content": "Build and fix any compile errors and warnings after updating string_type.rs",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "update-tuple-struct",
+    "content": "Update tuple_struct.rs to use shared utilities",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "build-after-tuple-struct",
+    "content": "Build and fix any compile errors and warnings after updating tuple_struct.rs",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "update-enum-variant",
+    "content": "Update enum_variant.rs to use shared utilities",
+    "status": "pending",
+    "priority": "medium",
+    "notes": ""
+  },
+  {
+    "id": "build-after-enum-variant",
+    "content": "Build and fix any compile errors and warnings after updating enum_variant.rs",
+    "status": "pending",
+    "priority": "medium",
     "notes": ""
   },
   {
     "id": "clippy-check",
     "content": "Run `cargo clippy --workspace --all-targets --all-features -- -D warnings`",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
-    "id": "clippy-fix",
-    "content": "Fix any clippy issues (remove dead code, don't use _ prefixes)",
+    "id": "fix-clippy",
+    "content": "Fix any clippy issues following rules: no dead code attributes, no underscore prefixes",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
     "id": "format-code",
     "content": "Run `cargo +nightly fmt`",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
     "id": "run-tests",
     "content": "Run `cargo nextest run`",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
     "id": "test-review",
     "content": "If there are test issues, STOP and review them with the user",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
     "id": "code-review-stop",
     "content": "STOP work and prepare for code review phase",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
     "id": "code-review-task",
     "content": "Task new subagent to review changes focusing on duplication, complexity, and validating implementation (read-only)",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   },
   {
     "id": "code-review-user",
     "content": "When subagent returns, STOP and review suggested changes with user",
     "status": "pending",
-    "priority": "high",
+    "priority": "medium",
     "notes": ""
   }
 ]

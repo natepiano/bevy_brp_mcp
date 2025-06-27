@@ -322,7 +322,7 @@ fn analyze_single_type_schema(type_name: &str, schema: &Value) -> SerializationC
     SerializationCheck { diagnostic_message }
 }
 
-/// Helper functions to extract context from errors
+/// Helper function to extract context from errors
 pub fn extract_path_from_error_context(error_message: &str) -> Option<String> {
     // Look for patterns like "at path .foo.bar" or "path '.foo.bar'"
     error_message.find("at path ").map_or_else(
@@ -336,6 +336,7 @@ pub fn extract_path_from_error_context(error_message: &str) -> Option<String> {
     )
 }
 
+#[allow(dead_code)]
 fn extract_path_from_position(error_message: &str, start_pos: usize) -> Option<String> {
     let path_start = &error_message[start_pos..];
 
@@ -353,4 +354,23 @@ fn extract_path_from_position(error_message: &str, start_pos: usize) -> Option<S
     } else {
         None
     }
+}
+
+/// Convert tier information to debug strings
+pub fn tier_info_to_debug_strings(tier_info: &[TierInfo]) -> Vec<String> {
+    let mut debug_strings = Vec::new();
+
+    if !tier_info.is_empty() {
+        debug_strings.push("Tiered Format Discovery Results:".to_string());
+
+        for info in tier_info {
+            let status_icon = if info.success { "SUCCESS" } else { "FAILED" };
+            debug_strings.push(format!(
+                "  {} Tier {}: {} - {}",
+                status_icon, info.tier, info.tier_name, info.action
+            ));
+        }
+    }
+
+    debug_strings
 }
