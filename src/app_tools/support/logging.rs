@@ -28,7 +28,7 @@ pub fn create_log_file(
         .as_millis();
     let log_file_path = port.map_or_else(
         || std::env::temp_dir().join(format!("bevy_brp_mcp_{name}_{timestamp}.log")),
-        |port| std::env::temp_dir().join(format!("bevy_brp_mcp_{name}_port{port}_{timestamp}.log"))
+        |port| std::env::temp_dir().join(format!("bevy_brp_mcp_{name}_port{port}_{timestamp}.log")),
     );
 
     // Create log file
