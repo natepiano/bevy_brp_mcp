@@ -1,7 +1,7 @@
 [
   {
     "id": "terminal-title",
-    "content": "Run `echo -e \"\\e]2;Implementation: Legacy Code Cleanup\\007\"` to set terminal title",
+    "content": "Run `echo -e \"\\e]2;Implementation: Complete Legacy Code Removal\\007\"` to set terminal title",
     "status": "pending",
     "priority": "high",
     "notes": ""
@@ -14,71 +14,57 @@
     "notes": ""
   },
   {
-    "id": "analyze-usage",
-    "content": "Analyze current usage of functions in transformations.rs to identify which are still being called",
+    "id": "move-utility-functions",
+    "content": "Move convert_to_array_format, type_expects_array, type_format_error from transformations.rs to math_type.rs as private functions",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "analyze-usage-build",
-    "content": "Build and fix any compile errors and warnings after usage analysis",
+    "id": "move-utility-build",
+    "content": "Build and fix any compile errors and warnings after moving utility functions",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "create-utilities",
-    "content": "Create utilities module for shared parameter location logic",
+    "id": "remove-legacy-fallback",
+    "content": "Remove try_component_format_alternatives_legacy call from tier_execution.rs line 386",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "create-utilities-build",
-    "content": "Build and fix any compile errors and warnings after creating utilities",
+    "id": "remove-legacy-build",
+    "content": "Build and fix any compile errors and warnings after removing legacy fallback",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "extract-param-logic",
-    "content": "Extract duplicated parameter location logic from tier_execution.rs and result_building.rs to utilities",
+    "id": "rewrite-tests",
+    "content": "Rewrite failing tests to test transformers directly instead of legacy functions",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "extract-param-logic-build",
-    "content": "Build and fix any compile errors and warnings after extracting parameter logic",
+    "id": "rewrite-tests-build",
+    "content": "Build and fix any compile errors and warnings after rewriting tests",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "remove-dead-functions",
-    "content": "Remove unused functions from transformations.rs that were replaced by transformer system",
+    "id": "delete-transformations",
+    "content": "Delete transformations.rs file and remove its mod declaration from mod.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "remove-dead-functions-build",
-    "content": "Build and fix any compile errors and warnings after removing dead functions",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "fix-remaining-warnings",
-    "content": "Fix any remaining build warnings including unused imports and variables",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "fix-remaining-warnings-build",
-    "content": "Build and verify no warnings remain",
+    "id": "delete-transformations-build",
+    "content": "Build and fix any compile errors and warnings after deleting transformations.rs",
     "status": "pending",
     "priority": "high",
     "notes": ""
@@ -127,7 +113,7 @@
   },
   {
     "id": "code-review-task",
-    "content": "Task new subagent to review changes focusing on duplication and complexity (read-only)",
+    "content": "Task new subagent to review changes focusing on duplication, complexity, and validating implementation (read-only)",
     "status": "pending",
     "priority": "high",
     "notes": ""
