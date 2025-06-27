@@ -8,202 +8,216 @@
   },
   {
     "id": "2",
-    "content": "Phase 1.1: Add core parameter helper methods to ParamDef (port, entity, resource, components, path, value)",
+    "content": "Phase 1.1: Add boolean parameter helper method",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "3",
-    "content": "Build and fix any compile errors and warnings after adding ParamDef helpers",
+    "content": "Build and fix any compile errors and warnings after adding boolean helper",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "4",
-    "content": "Phase 1.2: Add common parameter combination methods (entity_with_port, resource_with_port, resource_mutation_params)",
+    "content": "Phase 1.2: Add string and string_array parameter helpers",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "5",
-    "content": "Build and fix any compile errors and warnings after adding combination methods",
+    "content": "Build and fix any compile errors and warnings after adding string helpers",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "6",
-    "content": "Phase 2: Implement generic numeric extractor function extract_required_numeric<T> in support/params.rs",
+    "content": "Phase 1.3: Add number and any parameter helpers",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "7",
-    "content": "Build and fix any compile errors and warnings after adding generic extractor",
+    "content": "Build and fix any compile errors and warnings after adding numeric helpers",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "8",
-    "content": "Phase 3: Add formatter convenience methods (entity_operation, resource_operation) to FormatterDef",
+    "content": "Phase 1.4: Add common specific parameter helpers (method, optional_params, strict)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "9",
-    "content": "Build and fix any compile errors and warnings after adding formatter helpers",
+    "content": "Build and fix any compile errors and warnings after adding specific helpers",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "10",
-    "content": "Phase 4.1: Migrate bevy_destroy tool to use new helpers",
+    "content": "Phase 2.1: Migrate special tools to use new helpers",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "11",
-    "content": "Build and fix any compile errors and warnings after migrating bevy_destroy",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "12",
-    "content": "Phase 4.2: Migrate remaining standard tools (15 tools) to use new helpers",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "13",
-    "content": "Build and fix any compile errors and warnings after migrating standard tools",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "14",
-    "content": "Phase 4.3: Migrate special tools (6 tools) where applicable",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "15",
     "content": "Build and fix any compile errors and warnings after migrating special tools",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
+    "id": "12",
+    "content": "Phase 2.2: Migrate BRP extras tools to use new helpers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "13",
+    "content": "Build and fix any compile errors and warnings after migrating BRP extras",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "14",
+    "content": "Phase 2.3: Migrate app tools to use new helpers",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "15",
+    "content": "Build and fix any compile errors and warnings after migrating app tools",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
     "id": "16",
-    "content": "Phase 4.4: Migrate log and app tools (8 tools) where applicable",
+    "content": "Phase 2.4: Migrate log tools to use new helpers",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "17",
-    "content": "Build and fix any compile errors and warnings after migrating log and app tools",
+    "content": "Build and fix any compile errors and warnings after migrating log tools",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "18",
-    "content": "Phase 5: Create SingleFieldExtractor to replace EntityParamExtractor and ResourceParamExtractor",
+    "content": "Phase 3.1: Update u32/u64 extractors to use generic",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "19",
-    "content": "Build and fix any compile errors and warnings after adding SingleFieldExtractor",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "20",
-    "content": "Phase 5.2: Update tool definitions to use SingleFieldExtractor instead of old extractors",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "21",
     "content": "Build and fix any compile errors and warnings after updating extractors",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
+    "id": "20",
+    "content": "Phase 3.2: Add extract_optional_numeric generic function",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "21",
+    "content": "Build and fix any compile errors and warnings after adding optional generic",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
     "id": "22",
-    "content": "Phase 5.3: Remove old duplicate extraction functions (extract_required_u32, extract_required_u64)",
+    "content": "Phase 4.1: Add complex parameter combinations (component_mutation_params, query_params)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "23",
-    "content": "Build and fix any compile errors and warnings after cleanup",
+    "content": "Build and fix any compile errors and warnings after adding combinations",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "24",
-    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings",
+    "content": "Phase 5: Cleanup - audit and ensure consistent usage everywhere",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "25",
-    "content": "Fix any clippy issues (no dead_code, no underscore prefixes)",
+    "content": "Build and fix any compile errors and warnings after cleanup",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "26",
-    "content": "Run cargo +nightly fmt",
+    "content": "Run cargo clippy --workspace --all-targets --all-features -- -D warnings",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "27",
-    "content": "Run cargo nextest run",
+    "content": "Fix any clippy issues (no dead_code, no underscore prefixes)",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "28",
-    "content": "If test issues exist, STOP and review with user",
+    "content": "Run cargo +nightly fmt",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "29",
-    "content": "Task subagent for code review focusing on duplication, complexity, and plan validation",
+    "content": "Run cargo nextest run",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
     "id": "30",
+    "content": "If test issues exist, STOP and review with user",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "31",
+    "content": "Task subagent for final code review",
+    "status": "pending",
+    "priority": "high",
+    "notes": ""
+  },
+  {
+    "id": "32",
     "content": "Review subagent's suggestions with user",
     "status": "pending",
     "priority": "high",
