@@ -7,34 +7,45 @@ use crate::error::{Error, report_to_mcp_error};
 
 // Value-based extraction functions (lower-level)
 
-/// Extract a required u32 from a JSON value
-pub fn extract_required_u32(
+/// Generic function to extract a required numeric value from a JSON value
+pub fn extract_required_numeric<T>(
     arguments: &Value,
     field_name: &str,
     field_description: &str,
-) -> std::result::Result<u32, McpError> {
-    let value = arguments[field_name]
+) -> Result<T, McpError>
+where
+    T: TryFrom<u64>,
+    T::Error: std::fmt::Display,
+{
+    arguments[field_name]
         .as_u64()
         .ok_or_else(|| {
             error_stack::Report::new(Error::ParameterExtraction(format!(
                 "Missing {field_description} parameter"
             )))
             .attach_printable(format!("Field name: {field_name}"))
-            .attach_printable("Expected: u32 number")
+            .attach_printable(format!("Expected: {} number", std::any::type_name::<T>()))
         })
         .map_err(|report| report_to_mcp_error(&report))?
         .try_into()
-        .map_err(|_| {
+        .map_err(|e| {
             report_to_mcp_error(
                 &error_stack::Report::new(Error::ParameterExtraction(format!(
                     "Invalid {field_description} value"
                 )))
                 .attach_printable(format!("Field name: {field_name}"))
-                .attach_printable("Value too large for u32"),
+                .attach_printable(format!("Conversion error: {e}")),
             )
-        })?;
+        })
+}
 
-    Ok(value)
+/// Extract a required u32 from a JSON value
+pub fn extract_required_u32(
+    arguments: &Value,
+    field_name: &str,
+    field_description: &str,
+) -> std::result::Result<u32, McpError> {
+    extract_required_numeric::<u32>(arguments, field_name, field_description)
 }
 
 /// Extract a required u64 from a JSON value
@@ -43,23 +54,24 @@ pub fn extract_required_u64(
     field_name: &str,
     field_description: &str,
 ) -> std::result::Result<u64, McpError> {
-    arguments[field_name].as_u64().ok_or_else(|| {
-        report_to_mcp_error(
-            &error_stack::Report::new(Error::ParameterExtraction(format!(
-                "Missing {field_description} parameter"
-            )))
-            .attach_printable(format!("Field name: {field_name}"))
-            .attach_printable("Expected: u64 number"),
-        )
-    })
+    extract_required_numeric::<u64>(arguments, field_name, field_description)
+}
+
+/// Generic function to extract an optional numeric value from a JSON value
+pub fn extract_optional_numeric<T>(arguments: &Value, field_name: &str, default: T) -> T
+where
+    T: TryFrom<u64>,
+    T::Error: std::fmt::Display,
+{
+    arguments[field_name]
+        .as_u64()
+        .and_then(|v| T::try_from(v).ok())
+        .unwrap_or(default)
 }
 
 /// Extract an optional u16 with a default value
 pub fn extract_optional_u16(arguments: &Value, field_name: &str, default_value: u16) -> u16 {
-    arguments[field_name]
-        .as_u64()
-        .and_then(|v| u16::try_from(v).ok())
-        .unwrap_or(default_value)
+    extract_optional_numeric::<u16>(arguments, field_name, default_value)
 }
 
 /// Extract an optional array of strings from a Value

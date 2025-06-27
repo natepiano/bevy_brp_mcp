@@ -64,6 +64,208 @@ pub struct ParamDef {
     pub param_type:  ParamType,
 }
 
+impl ParamDef {
+    /// Standard port parameter (appears in 21+ tools)
+    pub const fn port() -> Self {
+        Self {
+            name:        JSON_FIELD_PORT,
+            description: DESC_PORT,
+            required:    false,
+            param_type:  ParamType::Number,
+        }
+    }
+
+    /// Entity ID parameter with custom description
+    pub const fn entity(description: &'static str, required: bool) -> Self {
+        Self {
+            name: JSON_FIELD_ENTITY,
+            description,
+            required,
+            param_type: ParamType::Number,
+        }
+    }
+
+    /// Resource name parameter
+    pub const fn resource(description: &'static str) -> Self {
+        Self {
+            name: JSON_FIELD_RESOURCE,
+            description,
+            required: true,
+            param_type: ParamType::String,
+        }
+    }
+
+    /// Components parameter
+    pub const fn components(description: &'static str, required: bool) -> Self {
+        Self {
+            name: JSON_FIELD_COMPONENTS,
+            description,
+            required,
+            param_type: ParamType::Any,
+        }
+    }
+
+    /// Path parameter for mutations
+    pub const fn path(description: &'static str) -> Self {
+        Self {
+            name: JSON_FIELD_PATH,
+            description,
+            required: true,
+            param_type: ParamType::String,
+        }
+    }
+
+    /// Value parameter
+    pub const fn value(description: &'static str, required: bool) -> Self {
+        Self {
+            name: JSON_FIELD_VALUE,
+            description,
+            required,
+            param_type: ParamType::Any,
+        }
+    }
+
+    /// Entity + port (used in destroy, get, insert, remove, `mutate_component`)
+    pub const fn entity_with_port(entity_desc: &'static str) -> [Self; 2] {
+        [Self::entity(entity_desc, true), Self::port()]
+    }
+
+    /// Resource + port (used in `get_resource`, `insert_resource`, `remove_resource`)
+    pub const fn resource_with_port(resource_desc: &'static str) -> [Self; 2] {
+        [Self::resource(resource_desc), Self::port()]
+    }
+
+    /// Resource + path + value + port (used in `mutate_resource`)
+    pub const fn resource_mutation_params() -> [Self; 4] {
+        [
+            Self::resource("The fully-qualified type name of the resource to mutate"),
+            Self::path("The path to the field within the resource (e.g., 'settings.volume')"),
+            Self::value(
+                "The new value for the field. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
+                true,
+            ),
+            Self::port(),
+        ]
+    }
+
+    /// Boolean parameter helper (for enabled, strict, etc.)
+    pub const fn boolean(name: &'static str, description: &'static str, required: bool) -> Self {
+        Self {
+            name,
+            description,
+            required,
+            param_type: ParamType::Boolean,
+        }
+    }
+
+    /// Generic string parameter
+    pub const fn string(name: &'static str, description: &'static str, required: bool) -> Self {
+        Self {
+            name,
+            description,
+            required,
+            param_type: ParamType::String,
+        }
+    }
+
+    /// String array parameter (for keys, filters, etc.)
+    pub const fn string_array(
+        name: &'static str,
+        description: &'static str,
+        required: bool,
+    ) -> Self {
+        Self {
+            name,
+            description,
+            required,
+            param_type: ParamType::StringArray,
+        }
+    }
+
+    /// Generic number parameter (for `duration_ms`, etc.)
+    pub const fn number(name: &'static str, description: &'static str, required: bool) -> Self {
+        Self {
+            name,
+            description,
+            required,
+            param_type: ParamType::Number,
+        }
+    }
+
+    /// Any type parameter (for flexible data)
+    pub const fn any(name: &'static str, description: &'static str, required: bool) -> Self {
+        Self {
+            name,
+            description,
+            required,
+            param_type: ParamType::Any,
+        }
+    }
+
+    /// Method parameter (used in `brp_execute`)
+    pub const fn method() -> Self {
+        Self::string(
+            PARAM_METHOD,
+            "The BRP method to execute (e.g., 'rpc.discover', 'bevy/get', 'bevy/query')",
+            true,
+        )
+    }
+
+    /// Optional params parameter (used in `brp_execute`)
+    pub const fn optional_params() -> Self {
+        Self::any(
+            PARAM_PARAMS,
+            "Optional parameters for the method, as a JSON object or array",
+            false,
+        )
+    }
+
+    /// Strict parameter (used in query)
+    pub const fn strict() -> Self {
+        Self::boolean(
+            PARAM_STRICT,
+            "If true, returns error on unknown component types (default: false)",
+            false,
+        )
+    }
+
+    /// Entity + component + path + value + port (for `mutate_component`)
+    pub const fn component_mutation_params() -> [Self; 5] {
+        [
+            Self::entity("The entity ID containing the component to mutate", true),
+            Self::string(
+                JSON_FIELD_COMPONENT,
+                "The fully-qualified type name of the component to mutate",
+                true,
+            ),
+            Self::path("The path to the field within the component (e.g., 'translation.x')"),
+            Self::value(
+                "The new value for the field. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
+                true,
+            ),
+            Self::port(),
+        ]
+    }
+
+    /// Data + filter + strict + port (for query)
+    pub const fn query_params() -> [Self; 4] {
+        [
+            Self::any(
+                PARAM_DATA,
+                "Object specifying what component data to retrieve. Properties: components (array), option (array), has (array)",
+                true,
+            ),
+            Self::any(
+                PARAM_FILTER,
+                "Object specifying which entities to query. Properties: with (array), without (array)",
+                true,
+            ),
+            Self::strict(),
+            Self::port(),
+        ]
+    }
+}
+
 /// Types of parameters that can be defined
 #[derive(Clone)]
 pub enum ParamType {
@@ -206,20 +408,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Brp {
                 method: BRP_METHOD_DESTROY,
             },
-            params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_ENTITY,
-                    description: "The entity ID to destroy",
-                    required:    true,
-                    param_type:  ParamType::Number,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          ParamDef::entity_with_port("The entity ID to destroy").to_vec(),
             param_extractor: ParamExtractorType::Entity { required: true },
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::EntityOperation(JSON_FIELD_DESTROYED_ENTITY),
@@ -238,24 +427,12 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 method: BRP_METHOD_GET,
             },
             params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_ENTITY,
-                    description: "The entity ID to get component data from",
-                    required:    true,
-                    param_type:  ParamType::Number,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_COMPONENTS,
-                    description: "Array of component types to retrieve. Each component must be a fully-qualified type name",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::entity("The entity ID to get component data from", true),
+                ParamDef::components(
+                    "Array of component types to retrieve. Each component must be a fully-qualified type name",
+                    true,
+                ),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -281,18 +458,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 method: BRP_METHOD_LIST,
             },
             params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_ENTITY,
-                    description: "Optional entity ID to list components for",
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::entity("Optional entity ID to list components for", false),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Entity { required: false },
             formatter:       FormatterDef {
@@ -318,24 +485,9 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 method: BRP_METHOD_REMOVE,
             },
             params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_ENTITY,
-                    description: "The entity ID to remove components from",
-                    required:    true,
-                    param_type:  ParamType::Number,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_COMPONENTS,
-                    description: "Array of component type names to remove",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::entity("The entity ID to remove components from", true),
+                ParamDef::components("Array of component type names to remove", true),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -355,24 +507,12 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 method: BRP_METHOD_INSERT,
             },
             params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_ENTITY,
-                    description: "The entity ID to insert components into",
-                    required:    true,
-                    param_type:  ParamType::Number,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_COMPONENTS,
-                    description: "Object containing component data to insert. Keys are component types, values are component data. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::entity("The entity ID to insert components into", true),
+                ParamDef::components(
+                    "Object containing component data to insert. Keys are component types, values are component data. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
+                    true,
+                ),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -391,20 +531,10 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Brp {
                 method: BRP_METHOD_GET_RESOURCE,
             },
-            params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_RESOURCE,
-                    description: "The fully-qualified type name of the resource to get",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          ParamDef::resource_with_port(
+                "The fully-qualified type name of the resource to get",
+            )
+            .to_vec(),
             param_extractor: ParamExtractorType::Resource,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::ResourceOperation,
@@ -429,24 +559,14 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 method: BRP_METHOD_INSERT_RESOURCE,
             },
             params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_RESOURCE,
-                    description: "The fully-qualified type name of the resource to insert or update",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_VALUE,
-                    description: "The resource value to insert. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::resource(
+                    "The fully-qualified type name of the resource to insert or update",
+                ),
+                ParamDef::value(
+                    "The resource value to insert. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
+                    true,
+                ),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -465,20 +585,10 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Brp {
                 method: BRP_METHOD_REMOVE_RESOURCE,
             },
-            params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_RESOURCE,
-                    description: "The fully-qualified type name of the resource to remove",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          ParamDef::resource_with_port(
+                "The fully-qualified type name of the resource to remove",
+            )
+            .to_vec(),
             param_extractor: ParamExtractorType::Resource,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::ResourceOperation,
@@ -496,38 +606,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Brp {
                 method: BRP_METHOD_MUTATE_COMPONENT,
             },
-            params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_ENTITY,
-                    description: "The entity ID containing the component to mutate",
-                    required:    true,
-                    param_type:  ParamType::Number,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_COMPONENT,
-                    description: "The fully-qualified type name of the component to mutate",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PATH,
-                    description: "The path to the field within the component (e.g., 'translation.x')",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_VALUE,
-                    description: "The new value for the field. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          ParamDef::component_mutation_params().to_vec(),
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::EntityOperation(JSON_FIELD_ENTITY),
@@ -545,32 +624,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Brp {
                 method: BRP_METHOD_MUTATE_RESOURCE,
             },
-            params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_RESOURCE,
-                    description: "The fully-qualified type name of the resource to mutate",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PATH,
-                    description: "The path to the field within the resource (e.g., 'settings.volume')",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_VALUE,
-                    description: "The new value for the field. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          ParamDef::resource_mutation_params().to_vec(),
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::ResourceOperation,
@@ -588,12 +642,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Brp {
                 method: BRP_METHOD_LIST_RESOURCES,
             },
-            params:          vec![ParamDef {
-                name:        JSON_FIELD_PORT,
-                description: DESC_PORT,
-                required:    false,
-                param_type:  ParamType::Number,
-            }],
+            params:          vec![ParamDef::port()],
             param_extractor: ParamExtractorType::EmptyParams,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::Simple,
@@ -617,12 +666,7 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Brp {
                 method: BRP_METHOD_RPC_DISCOVER,
             },
-            params:          vec![ParamDef {
-                name:        JSON_FIELD_PORT,
-                description: DESC_PORT,
-                required:    false,
-                param_type:  ParamType::Number,
-            }],
+            params:          vec![ParamDef::port()],
             param_extractor: ParamExtractorType::EmptyParams,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::Simple,
@@ -641,18 +685,12 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 method: BRP_METHOD_EXTRAS_DISCOVER_FORMAT,
             },
             params:          vec![
-                ParamDef {
-                    name:        PARAM_TYPES,
-                    description: "Array of fully-qualified component type names to discover formats for",
-                    required:    true,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::string_array(
+                    PARAM_TYPES,
+                    "Array of fully-qualified component type names to discover formats for",
+                    true,
+                ),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -672,18 +710,8 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 method: BRP_METHOD_EXTRAS_SCREENSHOT,
             },
             params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_PATH,
-                    description: "File path where the screenshot should be saved",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::path("File path where the screenshot should be saved"),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -709,24 +737,13 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 method: BRP_METHOD_EXTRAS_SEND_KEYS,
             },
             params:          vec![
-                ParamDef {
-                    name:        "keys",
-                    description: "Array of key code names to send",
-                    required:    true,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        "duration_ms",
-                    description: "Duration in milliseconds to hold the keys before releasing (default: 100ms, max: 60000ms/1 minute)",
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::string_array("keys", "Array of key code names to send", true),
+                ParamDef::number(
+                    "duration_ms",
+                    "Duration in milliseconds to hold the keys before releasing (default: 100ms, max: 60000ms/1 minute)",
+                    false,
+                ),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -751,18 +768,12 @@ pub fn get_standard_tools() -> Vec<BrpToolDef> {
                 method: BRP_METHOD_EXTRAS_SET_DEBUG_MODE,
             },
             params:          vec![
-                ParamDef {
-                    name:        "enabled",
-                    description: "Set to true to enable debug output, false to disable",
-                    required:    true,
-                    param_type:  ParamType::Boolean,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::boolean(
+                    "enabled",
+                    "Set to true to enable debug output, false to disable",
+                    true,
+                ),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -794,32 +805,7 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Brp {
                 method: crate::tools::BRP_METHOD_QUERY,
             },
-            params:          vec![
-                ParamDef {
-                    name:        PARAM_DATA,
-                    description: "Object specifying what component data to retrieve. Properties: components (array), option (array), has (array)",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        PARAM_FILTER,
-                    description: "Object specifying which entities to query. Properties: with (array), without (array)",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        PARAM_STRICT,
-                    description: "If true, returns error on unknown component types (default: false)",
-                    required:    false,
-                    param_type:  ParamType::Boolean,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-            ],
+            params:          ParamDef::query_params().to_vec(),
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
                 formatter_type:  FormatterType::Simple,
@@ -852,18 +838,11 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 method: crate::tools::BRP_METHOD_SPAWN,
             },
             params:          vec![
-                ParamDef {
-                    name:        JSON_FIELD_COMPONENTS,
-                    description: "Object containing component data to spawn with. Keys are component types, values are component data. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
-                    required:    false,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::components(
+                    "Object containing component data to spawn with. Keys are component types, values are component data. Note: Math types use array format - Vec2: [x,y], Vec3: [x,y,z], Vec4/Quat: [x,y,z,w], not objects with named fields.",
+                    false,
+                ),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -887,24 +866,9 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
             description:     crate::tools::DESC_BRP_EXECUTE,
             handler:         HandlerType::Brp { method: "" }, // Dynamic method
             params:          vec![
-                ParamDef {
-                    name:        PARAM_METHOD,
-                    description: "The BRP method to execute (e.g., 'rpc.discover', 'bevy/get', 'bevy/query')",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        PARAM_PARAMS,
-                    description: "Optional parameters for the method, as a JSON object or array",
-                    required:    false,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::method(),
+                ParamDef::optional_params(),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::BrpExecute,
             formatter:       FormatterDef {
@@ -924,36 +888,27 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 method: crate::tools::BRP_METHOD_REGISTRY_SCHEMA,
             },
             params:          vec![
-                ParamDef {
-                    name:        PARAM_WITH_CRATES,
-                    description: "Include only types from these crates (e.g., [\"bevy_transform\", \"my_game\"])",
-                    required:    false,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        PARAM_WITHOUT_CRATES,
-                    description: "Exclude types from these crates (e.g., [\"bevy_render\", \"bevy_pbr\"])",
-                    required:    false,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        PARAM_WITH_TYPES,
-                    description: "Include only types with these reflect traits (e.g., [\"Component\", \"Resource\"])",
-                    required:    false,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        PARAM_WITHOUT_TYPES,
-                    description: "Exclude types with these reflect traits (e.g., [\"RenderResource\"])",
-                    required:    false,
-                    param_type:  ParamType::StringArray,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::string_array(
+                    PARAM_WITH_CRATES,
+                    "Include only types from these crates (e.g., [\"bevy_transform\", \"my_game\"])",
+                    false,
+                ),
+                ParamDef::string_array(
+                    PARAM_WITHOUT_CRATES,
+                    "Exclude types from these crates (e.g., [\"bevy_render\", \"bevy_pbr\"])",
+                    false,
+                ),
+                ParamDef::string_array(
+                    PARAM_WITH_TYPES,
+                    "Include only types with these reflect traits (e.g., [\"Component\", \"Resource\"])",
+                    false,
+                ),
+                ParamDef::string_array(
+                    PARAM_WITHOUT_TYPES,
+                    "Exclude types with these reflect traits (e.g., [\"RenderResource\"])",
+                    false,
+                ),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::RegistrySchema,
             formatter:       FormatterDef {
@@ -973,24 +928,13 @@ pub fn get_special_tools() -> Vec<BrpToolDef> {
                 method: crate::tools::BRP_METHOD_REPARENT,
             },
             params:          vec![
-                ParamDef {
-                    name:        PARAM_ENTITIES,
-                    description: "Array of entity IDs to reparent",
-                    required:    true,
-                    param_type:  ParamType::Any,
-                },
-                ParamDef {
-                    name:        PARAM_PARENT,
-                    description: "The new parent entity ID (omit to remove parent)",
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: DESC_PORT,
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::any(PARAM_ENTITIES, "Array of entity IDs to reparent", true),
+                ParamDef::number(
+                    PARAM_PARENT,
+                    "The new parent entity ID (omit to remove parent)",
+                    false,
+                ),
+                ParamDef::port(),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef {
@@ -1021,12 +965,11 @@ pub fn get_log_tools() -> Vec<BrpToolDef> {
             handler:         HandlerType::Local {
                 handler: "list_logs",
             },
-            params:          vec![ParamDef {
-                name:        "app_name",
-                description: "Optional filter to list logs for a specific app only",
-                required:    false,
-                param_type:  ParamType::String,
-            }],
+            params:          vec![ParamDef::string(
+                "app_name",
+                "Optional filter to list logs for a specific app only",
+                false,
+            )],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef::default(),
         },
@@ -1038,24 +981,21 @@ pub fn get_log_tools() -> Vec<BrpToolDef> {
                 handler: "read_log",
             },
             params:          vec![
-                ParamDef {
-                    name:        "filename",
-                    description: "The log filename (e.g., bevy_brp_mcp_myapp_1234567890.log)",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        "keyword",
-                    description: "Optional keyword to filter lines (case-insensitive)",
-                    required:    false,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        "tail_lines",
-                    description: "Optional number of lines to read from the end of file",
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::string(
+                    "filename",
+                    "The log filename (e.g., bevy_brp_mcp_myapp_1234567890.log)",
+                    true,
+                ),
+                ParamDef::string(
+                    "keyword",
+                    "Optional keyword to filter lines (case-insensitive)",
+                    false,
+                ),
+                ParamDef::number(
+                    "tail_lines",
+                    "Optional number of lines to read from the end of file",
+                    false,
+                ),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef::default(),
@@ -1068,18 +1008,16 @@ pub fn get_log_tools() -> Vec<BrpToolDef> {
                 handler: "cleanup_logs",
             },
             params:          vec![
-                ParamDef {
-                    name:        "app_name",
-                    description: "Optional filter to delete logs for a specific app only",
-                    required:    false,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        "older_than_seconds",
-                    description: "Optional filter to delete logs older than N seconds",
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::string(
+                    "app_name",
+                    "Optional filter to delete logs for a specific app only",
+                    false,
+                ),
+                ParamDef::number(
+                    "older_than_seconds",
+                    "Optional filter to delete logs older than N seconds",
+                    false,
+                ),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef::default(),
@@ -1156,18 +1094,12 @@ pub fn get_app_tools() -> Vec<BrpToolDef> {
                 handler: "shutdown",
             },
             params:          vec![
-                ParamDef {
-                    name:        "app_name",
-                    description: "Name of the Bevy app to shutdown",
-                    required:    true,
-                    param_type:  ParamType::String,
-                },
-                ParamDef {
-                    name:        JSON_FIELD_PORT,
-                    description: "BRP port to connect to (default: 15702)",
-                    required:    false,
-                    param_type:  ParamType::Number,
-                },
+                ParamDef::string("app_name", "Name of the Bevy app to shutdown", true),
+                ParamDef::number(
+                    JSON_FIELD_PORT,
+                    "BRP port to connect to (default: 15702)",
+                    false,
+                ),
             ],
             param_extractor: ParamExtractorType::Passthrough,
             formatter:       FormatterDef::default(),
@@ -1178,30 +1110,14 @@ pub fn get_app_tools() -> Vec<BrpToolDef> {
 /// Create standard launch tool parameters (profile, workspace, port)
 fn create_launch_params(name_param: &'static str, name_desc: &'static str) -> Vec<ParamDef> {
     vec![
-        ParamDef {
-            name:        name_param,
-            description: name_desc,
-            required:    true,
-            param_type:  ParamType::String,
-        },
-        ParamDef {
-            name:        "profile",
-            description: "Build profile to use (debug or release)",
-            required:    false,
-            param_type:  ParamType::String,
-        },
-        ParamDef {
-            name:        PARAM_WORKSPACE,
-            description: "Workspace name to use when multiple apps/examples with the same name exist",
-            required:    false,
-            param_type:  ParamType::String,
-        },
-        ParamDef {
-            name:        JSON_FIELD_PORT,
-            description: "BRP port to use (default: 15702)",
-            required:    false,
-            param_type:  ParamType::Number,
-        },
+        ParamDef::string(name_param, name_desc, true),
+        ParamDef::string("profile", "Build profile to use (debug or release)", false),
+        ParamDef::string(
+            PARAM_WORKSPACE,
+            "Workspace name to use when multiple apps/examples with the same name exist",
+            false,
+        ),
+        ParamDef::number(JSON_FIELD_PORT, "BRP port to use (default: 15702)", false),
     ]
 }
 
