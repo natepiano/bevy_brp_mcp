@@ -4,6 +4,7 @@ use serde_json::Value;
 
 use super::super::detection::ErrorPattern;
 use super::FormatTransformer;
+use super::common::extract_type_name_from_error;
 use crate::brp_tools::request_handler::constants::{
     FIELD_LABEL, FIELD_NAME, FIELD_TEXT, FIELD_VALUE,
 };
@@ -116,20 +117,6 @@ impl StringTypeTransformer {
         None
     }
 
-    /// Extract type name from error pattern
-    fn extract_type_name_from_error(error: &BrpError) -> Option<String> {
-        let message = &error.message;
-
-        // Look for common patterns that indicate the type name
-        if let Some(start) = message.find('`') {
-            if let Some(end) = message[start + 1..].find('`') {
-                return Some(message[start + 1..start + 1 + end].to_string());
-            }
-        }
-
-        None
-    }
-
     /// Check if the error mentions string-related expectations
     fn is_string_expectation_error(error: &BrpError) -> bool {
         let message = &error.message;
@@ -168,7 +155,7 @@ impl FormatTransformer for StringTypeTransformer {
     fn transform_with_error(&self, value: &Value, error: &BrpError) -> Option<(Value, String)> {
         // Extract type name from error for better messaging
         let type_name =
-            Self::extract_type_name_from_error(error).unwrap_or_else(|| "unknown".to_string());
+            extract_type_name_from_error(error).unwrap_or_else(|| "unknown".to_string());
 
         // Check if this is a string expectation error
         if Self::is_string_expectation_error(error) {

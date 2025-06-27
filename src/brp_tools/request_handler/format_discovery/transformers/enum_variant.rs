@@ -4,6 +4,7 @@ use serde_json::Value;
 
 use super::super::detection::ErrorPattern;
 use super::FormatTransformer;
+use super::common::{extract_single_field_value, extract_type_name_from_error};
 use crate::brp_tools::support::brp_client::BrpError;
 
 /// Transformer for enum variant patterns
@@ -16,22 +17,13 @@ impl EnumVariantTransformer {
         Self
     }
 
-    /// Extract single value from single-field object
-    fn extract_single_field_value(obj: &serde_json::Map<String, Value>) -> Option<(&str, &Value)> {
-        if obj.len() == 1 {
-            obj.iter().next().map(|(k, v)| (k.as_str(), v))
-        } else {
-            None
-        }
-    }
-
     /// Convert single-field object to value for enum variant access
     fn convert_object_to_variant_access(
         type_name: &str,
         obj: &serde_json::Map<String, Value>,
         context: &str,
     ) -> Option<(Value, String)> {
-        Self::extract_single_field_value(obj).map(|(field_name, value)| {
+        extract_single_field_value(obj).map(|(field_name, value)| {
             let hint = format!(
                 "`{type_name}` {context}: converted field '{field_name}' to variant access"
             );
@@ -61,7 +53,7 @@ impl EnumVariantTransformer {
         obj.get(field_name).map_or_else(
             || {
                 // Fallback: try single field extraction
-                Self::extract_single_field_value(obj).map(|(actual_field, value)| {
+                extract_single_field_value(obj).map(|(actual_field, value)| {
                     let hint = format!(
                         "`{type_name}` MissingField '{field_name}': used field '{actual_field}' instead"
                     );
@@ -128,7 +120,7 @@ impl EnumVariantTransformer {
                 // Field access mismatch, try extracting single field
                 if let Value::Object(obj) = original_value {
                     let context = format!("TypeMismatch with {access} access");
-                    if let Some((field_name, value)) = Self::extract_single_field_value(obj) {
+                    if let Some((field_name, value)) = extract_single_field_value(obj) {
                         let hint = format!("`{type_name}` {context}: using field '{field_name}'");
                         return Some((value.clone(), hint));
                     }
@@ -159,7 +151,7 @@ impl EnumVariantTransformer {
             // Tuple variant vs struct variant
             ("tuple", "struct") => {
                 if let Value::Object(obj) = original_value {
-                    if let Some((variant_name, value)) = Self::extract_single_field_value(obj) {
+                    if let Some((variant_name, value)) = extract_single_field_value(obj) {
                         let hint = format!(
                             "`{type_name}` VariantTypeMismatch: Expected {expected} variant access to access a {actual} variant, \
                                         converted '{variant_name}' to tuple variant format"
@@ -233,7 +225,7 @@ impl EnumVariantTransformer {
         // Generic fallback: try to extract any reasonable value
         match original_value {
             Value::Object(obj) => {
-                if let Some((actual_field, value)) = Self::extract_single_field_value(obj) {
+                if let Some((actual_field, value)) = extract_single_field_value(obj) {
                     let hint = format!(
                         "`{type_name}` MissingField '{field_name}': used available field '{actual_field}'"
                     );
@@ -250,20 +242,6 @@ impl EnumVariantTransformer {
             }
             _ => {}
         }
-        None
-    }
-
-    /// Extract type name from error
-    fn extract_type_name_from_error(error: &BrpError) -> Option<String> {
-        let message = &error.message;
-
-        // Look for common patterns that indicate the type name
-        if let Some(start) = message.find('`') {
-            if let Some(end) = message[start + 1..].find('`') {
-                return Some(message[start + 1..start + 1 + end].to_string());
-            }
-        }
-
         None
     }
 
@@ -319,7 +297,7 @@ impl FormatTransformer for EnumVariantTransformer {
     fn transform_with_error(&self, value: &Value, error: &BrpError) -> Option<(Value, String)> {
         // Extract type name from error for better messaging
         let type_name =
-            Self::extract_type_name_from_error(error).unwrap_or_else(|| "unknown".to_string());
+            extract_type_name_from_error(error).unwrap_or_else(|| "unknown".to_string());
 
         // Check if this is an enum variant related error
         if Self::is_enum_variant_error(error) {

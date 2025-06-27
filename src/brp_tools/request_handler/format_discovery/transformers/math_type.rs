@@ -4,6 +4,8 @@ use serde_json::{Map, Value};
 
 use super::super::detection::ErrorPattern;
 use super::FormatTransformer;
+use super::common::extract_type_name_from_error;
+use super::constants::TRANSFORM_SEQUENCE_F32_COUNT;
 use crate::brp_tools::support::brp_client::BrpError;
 
 /// Transformer for math types (Vec2, Vec3, Vec4, Quat)
@@ -125,22 +127,6 @@ impl MathTypeTransformer {
             Some((Value::Object(corrected), hint))
         }
     }
-
-    /// Extract type name from error pattern
-    fn extract_type_name_from_error(error: &BrpError) -> Option<String> {
-        // This is a simple heuristic - in a real implementation, you might want more sophisticated
-        // parsing
-        let message = &error.message;
-
-        // Look for common patterns that indicate the type name
-        if let Some(start) = message.find('`') {
-            if let Some(end) = message[start + 1..].find('`') {
-                return Some(message[start + 1..start + 1 + end].to_string());
-            }
-        }
-
-        None
-    }
 }
 
 impl FormatTransformer for MathTypeTransformer {
@@ -165,7 +151,7 @@ impl FormatTransformer for MathTypeTransformer {
     fn transform_with_error(&self, value: &Value, error: &BrpError) -> Option<(Value, String)> {
         // Extract type name from error for better messaging
         let type_name =
-            Self::extract_type_name_from_error(error).unwrap_or_else(|| "unknown".to_string());
+            extract_type_name_from_error(error).unwrap_or_else(|| "unknown".to_string());
 
         // Try specific math type conversions based on error content
         let message = &error.message;
@@ -183,8 +169,12 @@ impl FormatTransformer for MathTypeTransformer {
             return Self::apply_math_type_array_fix(&type_name, value, "Quat");
         }
         if message.contains("Transform") {
-            // Try transform sequence fix with a reasonable default
-            return Self::apply_transform_sequence_fix(&type_name, value, 12); // 3 Vec3s + 1 Quat = 12 f32s
+            // Try transform sequence fix with the defined constant
+            return Self::apply_transform_sequence_fix(
+                &type_name,
+                value,
+                TRANSFORM_SEQUENCE_F32_COUNT,
+            );
         }
 
         // Fallback to generic transformation

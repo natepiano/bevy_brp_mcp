@@ -6,6 +6,7 @@ use super::super::detection::{ErrorPattern, extract_path_from_error_context};
 use super::super::field_mapper::map_field_to_tuple_index;
 use super::super::path_parser::{parse_generic_enum_field_access, parse_path_to_field_access};
 use super::FormatTransformer;
+use super::common::{extract_single_field_value, extract_type_name_from_error};
 use crate::brp_tools::support::brp_client::BrpError;
 
 /// Transformer for tuple struct access patterns
@@ -185,22 +186,13 @@ impl TupleStructTransformer {
         None
     }
 
-    /// Extract single value from single-field object
-    fn extract_single_field_value(obj: &serde_json::Map<String, Value>) -> Option<(&str, &Value)> {
-        if obj.len() == 1 {
-            obj.iter().next().map(|(k, v)| (k.as_str(), v))
-        } else {
-            None
-        }
-    }
-
     /// Convert single-field object to value for tuple struct access
     fn convert_object_to_tuple_access(
         type_name: &str,
         obj: &serde_json::Map<String, Value>,
         context: &str,
     ) -> Option<(Value, String)> {
-        Self::extract_single_field_value(obj).map(|(field_name, value)| {
+        extract_single_field_value(obj).map(|(field_name, value)| {
             let hint =
                 format!("`{type_name}` {context}: converted field '{field_name}' to tuple access");
             (value.clone(), hint)
@@ -270,7 +262,7 @@ impl TupleStructTransformer {
         // Generic fallback: try to extract any reasonable value
         match original_value {
             Value::Object(obj) => {
-                if let Some((actual_field, value)) = Self::extract_single_field_value(obj) {
+                if let Some((actual_field, value)) = extract_single_field_value(obj) {
                     let hint = format!(
                         "`{type_name}` MissingField '{field_name}': used available field '{actual_field}'"
                     );
@@ -287,20 +279,6 @@ impl TupleStructTransformer {
             }
             _ => {}
         }
-        None
-    }
-
-    /// Extract type name from error
-    fn extract_type_name_from_error(error: &BrpError) -> Option<String> {
-        let message = &error.message;
-
-        // Look for common patterns that indicate the type name
-        if let Some(start) = message.find('`') {
-            if let Some(end) = message[start + 1..].find('`') {
-                return Some(message[start + 1..start + 1 + end].to_string());
-            }
-        }
-
         None
     }
 
@@ -350,7 +328,7 @@ impl FormatTransformer for TupleStructTransformer {
     fn transform_with_error(&self, value: &Value, error: &BrpError) -> Option<(Value, String)> {
         // Extract type name from error for better messaging
         let type_name =
-            Self::extract_type_name_from_error(error).unwrap_or_else(|| "unknown".to_string());
+            extract_type_name_from_error(error).unwrap_or_else(|| "unknown".to_string());
 
         // Check if this is a tuple struct related error
         if Self::is_tuple_struct_error(error) {

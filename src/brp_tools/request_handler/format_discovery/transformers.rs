@@ -9,6 +9,8 @@ use super::detection::ErrorPattern;
 use crate::brp_tools::support::brp_client::BrpError;
 
 // Import transformer implementations
+pub mod common;
+pub mod constants;
 mod enum_variant;
 mod math_type;
 mod string_type;
