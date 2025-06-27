@@ -27,30 +27,30 @@ pub fn launch_detached_process(
 
     // Create a new command from the provided one
     let mut new_cmd = std::process::Command::new(cmd.get_program());
-    
+
     // Copy args
     for arg in cmd.get_args() {
         new_cmd.arg(arg);
     }
-    
+
     // Set working directory and CARGO_MANIFEST_DIR
     new_cmd
         .current_dir(working_dir)
         .env("CARGO_MANIFEST_DIR", working_dir);
-    
+
     // Copy other environment variables
     for (key, value) in cmd.get_envs() {
         if let Some(value) = value {
             new_cmd.env(key, value);
         }
     }
-    
+
     // Set stdio
     new_cmd
         .stdin(Stdio::null())
         .stdout(Stdio::from(log_file))
         .stderr(Stdio::from(log_file_for_stderr));
-    
+
     // UNIX-specific: Create a new process group to detach from parent
     #[cfg(unix)]
     unsafe {
@@ -60,13 +60,13 @@ pub fn launch_detached_process(
             Ok(())
         });
     }
-    
+
     // Spawn the process
     match new_cmd.spawn() {
         Ok(child) => {
             // Get the PID
             let pid = child.id();
-            
+
             // The process is now detached and will continue running
             // independently even after this program exits
             Ok(pid)

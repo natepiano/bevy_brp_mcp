@@ -14,6 +14,7 @@ pub fn create_log_file(
     profile: &str,
     binary_path: &Path,
     working_dir: &Path,
+    port: Option<u16>,
 ) -> Result<(PathBuf, File), McpError> {
     // Generate unique log file name in temp directory
     let timestamp = std::time::SystemTime::now()
@@ -25,7 +26,10 @@ pub fn create_log_file(
             )
         })?
         .as_millis();
-    let log_file_path = std::env::temp_dir().join(format!("bevy_brp_mcp_{name}_{timestamp}.log"));
+    let log_file_path = port.map_or_else(
+        || std::env::temp_dir().join(format!("bevy_brp_mcp_{name}_{timestamp}.log")),
+        |port| std::env::temp_dir().join(format!("bevy_brp_mcp_{name}_port{port}_{timestamp}.log"))
+    );
 
     // Create log file
     let mut log_file = File::create(&log_file_path).map_err(|e| {

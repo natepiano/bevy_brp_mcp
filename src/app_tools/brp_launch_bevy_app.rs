@@ -79,7 +79,7 @@ pub fn launch_bevy_app(
 
     // Create log file
     let (log_file_path, _) =
-        logging::create_log_file(app_name, "App", profile, &binary_path, manifest_dir)?;
+        logging::create_log_file(app_name, "App", profile, &binary_path, manifest_dir, port)?;
 
     // Open log file for stdout/stderr redirection
     let log_file_for_redirect = logging::open_log_file_for_redirect(&log_file_path)?;

@@ -80,6 +80,7 @@ pub fn launch_bevy_example(
         profile,
         &PathBuf::from(&cargo_command),
         manifest_dir,
+        port,
     )?;
 
     // Add extra info to log file
