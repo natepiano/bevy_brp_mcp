@@ -55,8 +55,8 @@ pub fn launch_detached_process(
     #[cfg(unix)]
     unsafe {
         new_cmd.pre_exec(|| {
-            // Create new process group
-            libc::setsid();
+            // Create new process group without creating a new session
+            libc::setpgid(0, 0);
             Ok(())
         });
     }
