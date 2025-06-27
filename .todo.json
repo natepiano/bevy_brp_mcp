@@ -1,7 +1,7 @@
 [
   {
     "id": "terminal-title",
-    "content": "Run `echo -e \"\\e]2;Implementation: Format Discovery Engine Refactoring\\007\"` to set terminal title",
+    "content": "Run `echo -e \"\\e]2;Implementation: Legacy Code Cleanup\\007\"` to set terminal title",
     "status": "pending",
     "priority": "high",
     "notes": ""
@@ -14,267 +14,71 @@
     "notes": ""
   },
   {
-    "id": "phase1-module-structure",
-    "content": "Phase 1: Create new module structure - format_discovery/phases/ with initial_attempt.rs, error_analysis.rs, tier_execution.rs, result_building.rs",
+    "id": "analyze-usage",
+    "content": "Analyze current usage of functions in transformations.rs to identify which are still being called",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "phase1-module-build",
-    "content": "Build and fix any compile errors and warnings after creating module structure",
+    "id": "analyze-usage-build",
+    "content": "Build and fix any compile errors and warnings after usage analysis",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "phase1-discovery-context",
-    "content": "Phase 1: Create DiscoveryContext struct to hold shared state",
+    "id": "create-utilities",
+    "content": "Create utilities module for shared parameter location logic",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "phase1-context-build",
-    "content": "Build and fix any compile errors and warnings after creating DiscoveryContext",
+    "id": "create-utilities-build",
+    "content": "Build and fix any compile errors and warnings after creating utilities",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "phase1-extract-initial",
-    "content": "Phase 1: Extract initial BRP execution logic to initial_attempt module",
+    "id": "extract-param-logic",
+    "content": "Extract duplicated parameter location logic from tier_execution.rs and result_building.rs to utilities",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "phase1-extract-initial-build",
-    "content": "Build and fix any compile errors and warnings after extracting initial attempt logic",
+    "id": "extract-param-logic-build",
+    "content": "Build and fix any compile errors and warnings after extracting parameter logic",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "phase1-extract-error",
-    "content": "Phase 1: Extract error checking logic to error_analysis module",
+    "id": "remove-dead-functions",
+    "content": "Remove unused functions from transformations.rs that were replaced by transformer system",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "phase1-extract-error-build",
-    "content": "Build and fix any compile errors and warnings after extracting error analysis",
+    "id": "remove-dead-functions-build",
+    "content": "Build and fix any compile errors and warnings after removing dead functions",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "phase1-extract-tier",
-    "content": "Phase 1: Move tier execution logic to tier_execution module",
+    "id": "fix-remaining-warnings",
+    "content": "Fix any remaining build warnings including unused imports and variables",
     "status": "pending",
     "priority": "high",
     "notes": ""
   },
   {
-    "id": "phase1-extract-tier-build",
-    "content": "Build and fix any compile errors and warnings after extracting tier execution",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase1-extract-result",
-    "content": "Phase 1: Extract result building to result_building module",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase1-extract-result-build",
-    "content": "Build and fix any compile errors and warnings after extracting result building",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase1-refactor-main",
-    "content": "Phase 1: Refactor execute_brp_method_with_format_discovery to use phase modules",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase1-refactor-main-build",
-    "content": "Build and fix any compile errors and warnings after refactoring main function",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase1-verify-tests",
-    "content": "Phase 1: Verify all existing tests pass and debug output unchanged",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-transformer-trait",
-    "content": "Phase 2: Create FormatTransformer trait and transformer registry",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-transformer-trait-build",
-    "content": "Build and fix any compile errors and warnings after creating transformer trait",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-math-transformer",
-    "content": "Phase 2: Create MathTypeTransformer for Vec2, Vec3, Vec4, Quat conversions",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-math-transformer-build",
-    "content": "Build and fix any compile errors and warnings after creating MathTypeTransformer",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-string-transformer",
-    "content": "Phase 2: Create StringTypeTransformer for Name and string conversions",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-string-transformer-build",
-    "content": "Build and fix any compile errors and warnings after creating StringTypeTransformer",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-tuple-transformer",
-    "content": "Phase 2: Create TupleStructTransformer for tuple struct patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-tuple-transformer-build",
-    "content": "Build and fix any compile errors and warnings after creating TupleStructTransformer",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-enum-transformer",
-    "content": "Phase 2: Create EnumVariantTransformer for enum variant conversions",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-enum-transformer-build",
-    "content": "Build and fix any compile errors and warnings after creating EnumVariantTransformer",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-migrate-logic",
-    "content": "Phase 2: Migrate existing transformation logic to new transformers",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-migrate-logic-build",
-    "content": "Build and fix any compile errors and warnings after migrating transformation logic",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase2-transformer-tests",
-    "content": "Phase 2: Add comprehensive tests for each transformer",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase3-merge-tiers",
-    "content": "Phase 3: Merge tiers 3 and 4 into SmartTransformation tier",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase3-merge-tiers-build",
-    "content": "Build and fix any compile errors and warnings after merging tiers",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase3-update-enum",
-    "content": "Phase 3: Update tier enum to have only 3 tiers",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase3-update-enum-build",
-    "content": "Build and fix any compile errors and warnings after updating tier enum",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase3-update-docs",
-    "content": "Phase 3: Update documentation and debug messages for new tier structure",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase4-error-patterns",
-    "content": "Phase 4: Create ERROR_PATTERNS constant with regex patterns and match_error_pattern function",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase4-error-patterns-build",
-    "content": "Build and fix any compile errors and warnings after implementing error patterns",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase4-pattern-tests",
-    "content": "Phase 4: Add tests for each error pattern and document behavior",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase5-integration-tests",
-    "content": "Phase 5: Add comprehensive unit and integration tests for full flow",
-    "status": "pending",
-    "priority": "high",
-    "notes": ""
-  },
-  {
-    "id": "phase5-documentation",
-    "content": "Phase 5: Update documentation with new architecture and examples",
+    "id": "fix-remaining-warnings-build",
+    "content": "Build and verify no warnings remain",
     "status": "pending",
     "priority": "high",
     "notes": ""
@@ -323,7 +127,7 @@
   },
   {
     "id": "code-review-task",
-    "content": "Task new subagent to review changes focusing on duplication, complexity, and plan validation (read-only)",
+    "content": "Task new subagent to review changes focusing on duplication and complexity (read-only)",
     "status": "pending",
     "priority": "high",
     "notes": ""
