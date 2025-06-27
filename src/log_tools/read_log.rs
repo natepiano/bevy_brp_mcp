@@ -11,7 +11,9 @@ use super::constants::PARAM_FILE_PATH;
 use super::support;
 use crate::BrpMcpService;
 use crate::error::{Error, report_to_mcp_error};
-use crate::support::{params, response};
+use crate::support::params;
+use crate::support::response::ResponseBuilder;
+use crate::support::serialization::json_response_to_result;
 
 pub fn handle(
     _service: &BrpMcpService,
@@ -48,9 +50,9 @@ pub fn handle(
     // Read the log file
     let (content, metadata) = read_log_file(&log_path, keyword, tail_lines)?;
 
-    Ok(response::success_json_response(
-        format!("Successfully read log file: {filename}"),
-        json!({
+    let response = ResponseBuilder::success()
+        .message(format!("Successfully read log file: {filename}"))
+        .data(json!({
             "filename": filename,
             PARAM_FILE_PATH: log_path.display().to_string(),
             "size_bytes": metadata.len(),
@@ -59,8 +61,17 @@ pub fn handle(
             "content": content,
             "filtered_by_keyword": !keyword.is_empty(),
             "tail_mode": tail_lines > 0,
-        }),
-    ))
+        }))
+        .map_or_else(
+            |_| {
+                ResponseBuilder::error()
+                    .message("Failed to serialize response data")
+                    .build()
+            },
+            ResponseBuilder::build,
+        );
+
+    Ok(json_response_to_result(&response))
 }
 
 fn read_log_file(

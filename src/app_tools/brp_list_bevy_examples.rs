@@ -6,7 +6,9 @@ use serde_json::json;
 use super::support::cargo_detector::CargoDetector;
 use super::support::scanning;
 use crate::BrpMcpService;
-use crate::support::{response, service};
+use crate::support::response::ResponseBuilder;
+use crate::support::serialization::json_response_to_result;
+use crate::support::service;
 
 pub async fn handle(
     service: &BrpMcpService,
@@ -15,12 +17,21 @@ pub async fn handle(
     service::handle_with_paths(service, context, |search_paths| async move {
         let examples = collect_all_examples(&search_paths);
 
-        Ok(response::success_json_response(
-            format!("Found {} Bevy examples", examples.len()),
-            json!({
+        let response = ResponseBuilder::success()
+            .message(format!("Found {} Bevy examples", examples.len()))
+            .data(json!({
                 "examples": examples
-            }),
-        ))
+            }))
+            .map_or_else(
+                |_| {
+                    ResponseBuilder::error()
+                        .message("Failed to serialize response data")
+                        .build()
+                },
+                ResponseBuilder::build,
+            );
+
+        Ok(json_response_to_result(&response))
     })
     .await
 }

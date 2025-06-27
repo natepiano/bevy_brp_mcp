@@ -6,10 +6,38 @@ use sysinfo::{Signal, System};
 
 use crate::BrpMcpService;
 use crate::brp_tools::brp_set_debug_mode::is_debug_enabled;
-use crate::brp_tools::constants::{DEFAULT_BRP_PORT, JSON_FIELD_BRP_MCP_DEBUG_INFO};
+use crate::brp_tools::constants::DEFAULT_BRP_PORT;
 use crate::brp_tools::support::brp_client::{BrpResult, execute_brp_method};
 use crate::error::{Error, Result, report_to_mcp_error};
-use crate::support::{params, response};
+use crate::support::params;
+use crate::support::response::ResponseBuilder;
+use crate::support::serialization::json_response_to_result;
+
+/// Helper function to build shutdown response with debug info
+fn build_shutdown_response(
+    message: &str,
+    response_data: serde_json::Value,
+    debug_info: &[String],
+) -> CallToolResult {
+    let response = ResponseBuilder::success()
+        .message(message)
+        .data(response_data)
+        .map_or_else(
+            |_| {
+                ResponseBuilder::error()
+                    .message("Failed to serialize response data")
+                    .auto_inject_debug_info(Some(debug_info), None::<&serde_json::Value>)
+                    .build()
+            },
+            |builder| {
+                builder
+                    .auto_inject_debug_info(Some(debug_info), None::<&serde_json::Value>)
+                    .build()
+            },
+        );
+
+    json_response_to_result(&response)
+}
 use crate::tools::BRP_METHOD_EXTRAS_SHUTDOWN;
 
 /// Result of a shutdown operation
@@ -132,14 +160,6 @@ fn handle_kill_process_fallback(
     }
 }
 
-/// Helper function to add debug info to response data if debug mode is enabled
-fn add_debug_info_if_enabled(response_data: &mut serde_json::Value, debug_info: &[String]) {
-    if is_debug_enabled() {
-        // Always add debug info when debug mode is on, even if empty
-        response_data[JSON_FIELD_BRP_MCP_DEBUG_INFO] = json!(debug_info);
-    }
-}
-
 pub async fn handle(
     _service: &BrpMcpService,
     request: rmcp::model::CallToolRequestParam,
@@ -168,7 +188,7 @@ pub async fn handle(
             let message = format!(
                 "Successfully initiated graceful shutdown for '{app_name}' via bevy_brp_extras on port {port}"
             );
-            let mut response_data = json!({
+            let response_data = json!({
                 "status": "success",
                 "method": "clean_shutdown",
                 "app_name": app_name,
@@ -176,15 +196,17 @@ pub async fn handle(
                 "message": message
             });
 
-            add_debug_info_if_enabled(&mut response_data, &debug_info);
-
-            Ok(response::success_json_response(message, response_data))
+            Ok(build_shutdown_response(
+                &message,
+                response_data,
+                &debug_info,
+            ))
         }
         ShutdownResult::ProcessKilled { pid } => {
             let message = format!(
                 "Terminated process '{app_name}' (PID: {pid}) using kill. Consider adding bevy_brp_extras for clean shutdown."
             );
-            let mut response_data = json!({
+            let response_data = json!({
                 "status": "success",
                 "method": "process_kill",
                 "app_name": app_name,
@@ -193,15 +215,17 @@ pub async fn handle(
                 "message": message
             });
 
-            add_debug_info_if_enabled(&mut response_data, &debug_info);
-
-            Ok(response::success_json_response(message, response_data))
+            Ok(build_shutdown_response(
+                &message,
+                response_data,
+                &debug_info,
+            ))
         }
         ShutdownResult::AlreadyShutdown => {
             let message = format!(
                 "Process '{app_name}' is not running - may have already shutdown or crashed. No action needed."
             );
-            let mut response_data = json!({
+            let response_data = json!({
                 "status": "error",
                 "method": "already_shutdown",
                 "app_name": app_name,
@@ -209,13 +233,15 @@ pub async fn handle(
                 "message": message
             });
 
-            add_debug_info_if_enabled(&mut response_data, &debug_info);
-
-            Ok(response::success_json_response(message, response_data))
+            Ok(build_shutdown_response(
+                &message,
+                response_data,
+                &debug_info,
+            ))
         }
         ShutdownResult::NotRunning => {
             let message = format!("Process '{app_name}' is not currently running");
-            let mut response_data = json!({
+            let response_data = json!({
                 "status": "error",
                 "method": "none",
                 "app_name": app_name,
@@ -223,12 +249,14 @@ pub async fn handle(
                 "message": message
             });
 
-            add_debug_info_if_enabled(&mut response_data, &debug_info);
-
-            Ok(response::success_json_response(message, response_data))
+            Ok(build_shutdown_response(
+                &message,
+                response_data,
+                &debug_info,
+            ))
         }
         ShutdownResult::Error { message } => {
-            let mut response_data = json!({
+            let response_data = json!({
                 "status": "error",
                 "method": "process_kill_failed",
                 "app_name": app_name,
@@ -236,9 +264,11 @@ pub async fn handle(
                 "message": message
             });
 
-            add_debug_info_if_enabled(&mut response_data, &debug_info);
-
-            Ok(response::success_json_response(message, response_data))
+            Ok(build_shutdown_response(
+                &message,
+                response_data,
+                &debug_info,
+            ))
         }
     }
 }

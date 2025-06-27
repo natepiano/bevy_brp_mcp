@@ -3,8 +3,7 @@ use serde_json::{Value, json};
 
 use super::brp_client::BrpError;
 use crate::brp_tools::constants::{
-    BRP_ERROR_CODE_INVALID_REQUEST, JSON_FIELD_BRP_EXTRAS_DEBUG_INFO,
-    JSON_FIELD_BRP_MCP_DEBUG_INFO, JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO,
+    BRP_ERROR_CODE_INVALID_REQUEST, JSON_FIELD_CODE, JSON_FIELD_DATA, JSON_FIELD_DEBUG_INFO,
     JSON_FIELD_ERROR_CODE, JSON_FIELD_METADATA, JSON_FIELD_METHOD, JSON_FIELD_PORT,
 };
 use crate::brp_tools::request_handler::FormatterContext;
@@ -125,12 +124,13 @@ impl ResponseFormatter {
 
         // Extract debug info and format corrections from data first
         let mut clean_data = data.clone();
+        let mut brp_extras_debug_info = None;
 
         if let Value::Object(data_map) = data {
             // Extract brp_extras_debug_info from data (if exists)
             if let Some(debug_info) = data_map.get(JSON_FIELD_DEBUG_INFO) {
                 if !debug_info.is_null() && (debug_info.is_array() || debug_info.is_string()) {
-                    builder = builder.add_field(JSON_FIELD_BRP_EXTRAS_DEBUG_INFO, debug_info)?;
+                    brp_extras_debug_info = Some(debug_info.clone());
                 }
             }
 
@@ -145,11 +145,6 @@ impl ResponseFormatter {
             if let Value::Object(clean_map) = &mut clean_data {
                 clean_map.remove(JSON_FIELD_DEBUG_INFO);
             }
-        }
-
-        // Add brp_mcp_debug_info from FormatterContext
-        if let Some(brp_mcp_debug_info) = &self.context.brp_mcp_debug_info {
-            builder = builder.add_field(JSON_FIELD_BRP_MCP_DEBUG_INFO, brp_mcp_debug_info)?;
         }
 
         // Add configured fields and collect their values for template substitution (using clean
@@ -168,6 +163,12 @@ impl ResponseFormatter {
             let message = substitute_template(template, Some(&template_params));
             builder = builder.message(message);
         }
+
+        // Auto-inject debug info at response level if debug mode is enabled
+        builder = builder.auto_inject_debug_info(
+            self.context.brp_mcp_debug_info.as_ref(),
+            brp_extras_debug_info.as_ref(),
+        );
 
         Ok(builder.build())
     }
@@ -221,13 +222,14 @@ impl ResponseFormatter {
 
         // Extract debug info from error data if present
         let mut clean_error_data = error.data.clone();
+        let mut brp_extras_debug_info = None;
+
         if let Some(ref data) = error.data {
             if let Some(data_obj) = data.as_object() {
                 // Extract brp_extras_debug_info from error data (if exists)
                 if let Some(debug_info) = data_obj.get(JSON_FIELD_DEBUG_INFO) {
                     if !debug_info.is_null() && (debug_info.is_array() || debug_info.is_string()) {
-                        builder =
-                            builder.add_field(JSON_FIELD_BRP_EXTRAS_DEBUG_INFO, debug_info)?;
+                        brp_extras_debug_info = Some(debug_info.clone());
                     }
                 }
 
@@ -236,11 +238,6 @@ impl ResponseFormatter {
                     clean_map.remove(JSON_FIELD_DEBUG_INFO);
                 }
             }
-        }
-
-        // Add brp_mcp_debug_info from FormatterContext
-        if let Some(brp_mcp_debug_info) = &self.context.brp_mcp_debug_info {
-            builder = builder.add_field(JSON_FIELD_BRP_MCP_DEBUG_INFO, brp_mcp_debug_info)?;
         }
 
         // Handle special BRP execution error format
@@ -267,6 +264,12 @@ impl ResponseFormatter {
                 }
             }
         }
+
+        // Auto-inject debug info at response level if debug mode is enabled
+        builder = builder.auto_inject_debug_info(
+            self.context.brp_mcp_debug_info.as_ref(),
+            brp_extras_debug_info.as_ref(),
+        );
 
         Ok(builder.build())
     }

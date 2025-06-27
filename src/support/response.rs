@@ -4,15 +4,20 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::app_tools::support::scanning::extract_workspace_name;
+use crate::brp_tools::brp_set_debug_mode::is_debug_enabled;
 use crate::error::{Error, Result};
 
 /// Standard JSON response structure for all tools
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonResponse {
-    pub status:  ResponseStatus,
-    pub message: String,
+    pub status:                ResponseStatus,
+    pub message:               String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data:    Option<Value>,
+    pub data:                  Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brp_mcp_debug_info:    Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brp_extras_debug_info: Option<Value>,
 }
 
 /// Response status types
@@ -43,25 +48,31 @@ impl JsonResponse {
 
 /// Builder for constructing JSON responses
 pub struct ResponseBuilder {
-    status:  ResponseStatus,
-    message: String,
-    data:    Option<Value>,
+    status:                ResponseStatus,
+    message:               String,
+    data:                  Option<Value>,
+    brp_mcp_debug_info:    Option<Value>,
+    brp_extras_debug_info: Option<Value>,
 }
 
 impl ResponseBuilder {
     pub const fn success() -> Self {
         Self {
-            status:  ResponseStatus::Success,
-            message: String::new(),
-            data:    None,
+            status:                ResponseStatus::Success,
+            message:               String::new(),
+            data:                  None,
+            brp_mcp_debug_info:    None,
+            brp_extras_debug_info: None,
         }
     }
 
     pub const fn error() -> Self {
         Self {
-            status:  ResponseStatus::Error,
-            message: String::new(),
-            data:    None,
+            status:                ResponseStatus::Error,
+            message:               String::new(),
+            data:                  None,
+            brp_mcp_debug_info:    None,
+            brp_extras_debug_info: None,
         }
     }
 
@@ -97,66 +108,43 @@ impl ResponseBuilder {
         Ok(self)
     }
 
-    /// Add data with fallback to error indicator on serialization failure
-    /// This method preserves error context in the fallback value and never fails
-    pub fn data_with_fallback(mut self, data: impl Serialize) -> Self {
-        match serde_json::to_value(&data) {
-            Ok(value) => self.data = Some(value),
-            Err(e) => {
-                use std::any::type_name_of_val;
+    /// Auto-inject debug info if debug mode is enabled
+    /// This should be called before `build()` to ensure debug info is included when appropriate
+    pub fn auto_inject_debug_info(
+        mut self,
+        brp_mcp_debug: Option<impl Serialize>,
+        brp_extras_debug: Option<impl Serialize>,
+    ) -> Self {
+        if !is_debug_enabled() {
+            return self;
+        }
 
-                // Create an error-stack Report for better error context
-                let error_report = error_stack::Report::new(e)
-                    .change_context(Error::General(
-                        "Serialization failed in data_with_fallback".to_string(),
-                    ))
-                    .attach_printable(format!("Data type: {}", type_name_of_val(&data)));
-
-                // Preserve rich error information in response
-                self.data = Some(serde_json::json!({
-                    "error": "serialization_failed",
-                    "message": error_report.to_string(),
-                    "data_type": type_name_of_val(&data),
-                    "context": "data_with_fallback method encountered serialization error"
-                }));
+        // Only inject BRP MCP debug info if debug mode is enabled and debug info is provided
+        if let Some(debug_info) = brp_mcp_debug {
+            if let Ok(serialized) = serde_json::to_value(&debug_info) {
+                self.brp_mcp_debug_info = Some(serialized);
             }
         }
+
+        // Only inject BRP extras debug info if debug mode is enabled and debug info is provided
+        if let Some(debug_info) = brp_extras_debug {
+            if let Ok(serialized) = serde_json::to_value(&debug_info) {
+                self.brp_extras_debug_info = Some(serialized);
+            }
+        }
+
         self
     }
 
     pub fn build(self) -> JsonResponse {
         JsonResponse {
-            status:  self.status,
-            message: self.message,
-            data:    self.data,
+            status:                self.status,
+            message:               self.message,
+            data:                  self.data,
+            brp_mcp_debug_info:    self.brp_mcp_debug_info,
+            brp_extras_debug_info: self.brp_extras_debug_info,
         }
     }
-}
-
-/// Helper function to create a successful `CallToolResult` with JSON response
-pub fn success_json_response(
-    message: impl Into<String>,
-    data: impl Serialize,
-) -> rmcp::model::CallToolResult {
-    let response = ResponseBuilder::success()
-        .message(message)
-        .data(data)
-        .map_or_else(
-            |_| {
-                ResponseBuilder::error()
-                    .message("Failed to serialize response data")
-                    .data_with_fallback(serde_json::json!({
-                        "error": "serialization_failed",
-                        "context": "success_json_response"
-                    }))
-                    .build()
-            },
-            ResponseBuilder::build,
-        );
-
-    rmcp::model::CallToolResult::success(vec![rmcp::model::Content::text(
-        response.to_json_fallback(),
-    )])
 }
 
 /// Add workspace information to response data if available

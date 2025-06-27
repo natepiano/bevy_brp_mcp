@@ -8,7 +8,9 @@ use serde_json::json;
 
 use super::support::{self, LogFileEntry};
 use crate::BrpMcpService;
-use crate::support::{params, response};
+use crate::support::params;
+use crate::support::response::ResponseBuilder;
+use crate::support::serialization::json_response_to_result;
 
 pub fn handle(
     _service: &BrpMcpService,
@@ -21,15 +23,22 @@ pub fn handle(
 
     let (deleted_count, deleted_files) = cleanup_log_files(app_name_filter, older_than_seconds)?;
 
-    Ok(response::success_json_response(
-        format!("Deleted {deleted_count} log files"),
-        json!({
+    let response = ResponseBuilder::success()
+        .message(format!("Deleted {deleted_count} log files"))
+        .data(json!({
             "deleted_count": deleted_count,
             "deleted_files": deleted_files,
             "app_name_filter": if app_name_filter.is_empty() { json!(null) } else { json!(app_name_filter) },
             "older_than_seconds": if older_than_seconds == 0 { json!(null) } else { json!(older_than_seconds) },
-        }),
-    ))
+        }))
+        .map_or_else(
+            |_| ResponseBuilder::error()
+                .message("Failed to serialize response data")
+                .build(),
+            ResponseBuilder::build,
+        );
+
+    Ok(json_response_to_result(&response))
 }
 
 fn cleanup_log_files(

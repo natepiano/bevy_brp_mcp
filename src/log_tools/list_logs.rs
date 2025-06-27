@@ -6,7 +6,9 @@ use serde_json::json;
 use super::support::LogFileEntry;
 use crate::BrpMcpService;
 use crate::log_tools::support;
-use crate::support::{params, response};
+use crate::support::params;
+use crate::support::response::ResponseBuilder;
+use crate::support::serialization::json_response_to_result;
 
 pub fn handle(
     _service: &BrpMcpService,
@@ -18,13 +20,22 @@ pub fn handle(
 
     let logs = list_log_files(app_name_filter)?;
 
-    Ok(response::success_json_response(
-        format!("Found {} log files", logs.len()),
-        json!({
+    let response = ResponseBuilder::success()
+        .message(format!("Found {} log files", logs.len()))
+        .data(json!({
             "logs": logs,
             "temp_directory": support::get_log_directory().display().to_string(),
-        }),
-    ))
+        }))
+        .map_or_else(
+            |_| {
+                ResponseBuilder::error()
+                    .message("Failed to serialize response data")
+                    .build()
+            },
+            ResponseBuilder::build,
+        );
+
+    Ok(json_response_to_result(&response))
 }
 
 fn list_log_files(app_name_filter: &str) -> Result<Vec<serde_json::Value>, McpError> {

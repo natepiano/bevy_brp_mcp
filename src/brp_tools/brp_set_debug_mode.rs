@@ -91,7 +91,9 @@ fn build_response(
             .add_field("bevy_brp_extras_message", msg)?;
     }
 
-    let response = response_builder.build();
+    let response = response_builder
+        .auto_inject_debug_info(None::<&serde_json::Value>, None::<&serde_json::Value>)
+        .build();
     Ok(response)
 }
 

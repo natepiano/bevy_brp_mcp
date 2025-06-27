@@ -9,7 +9,9 @@ use super::support::brp_client::{BrpResult, execute_brp_method};
 use crate::BrpMcpService;
 use crate::constants::{PARAM_APP_NAME, PARAM_PORT};
 use crate::error::{Error, report_to_mcp_error};
-use crate::support::{params, response, schema};
+use crate::support::response::ResponseBuilder;
+use crate::support::serialization::json_response_to_result;
+use crate::support::{params, schema};
 use crate::tools::{BRP_METHOD_LIST, DESC_BRP_STATUS, TOOL_BRP_STATUS};
 
 pub fn register_tool() -> Tool {
@@ -162,17 +164,26 @@ async fn check_brp_for_app(app_name: &str, port: u16) -> Result<CallToolResult, 
         ),
     };
 
-    Ok(response::success_json_response(
-        message,
-        json!({
+    let response = ResponseBuilder::success()
+        .message(message)
+        .data(json!({
             JSON_FIELD_STATUS: status,
             "app_name": app_name,
             JSON_FIELD_PORT: port,
             "app_running": app_running,
             "brp_responsive": brp_responsive,
             "app_pid": app_pid
-        }),
-    ))
+        }))
+        .map_or_else(
+            |_| {
+                ResponseBuilder::error()
+                    .message("Failed to serialize response data")
+                    .build()
+            },
+            ResponseBuilder::build,
+        );
+
+    Ok(json_response_to_result(&response))
 }
 
 /// Check if BRP is responding on the given port

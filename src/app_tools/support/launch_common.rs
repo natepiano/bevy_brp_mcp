@@ -7,6 +7,8 @@ use serde_json::{Value, json};
 
 use crate::error::{Error, report_to_mcp_error};
 use crate::support::response;
+use crate::support::response::ResponseBuilder;
+use crate::support::serialization::json_response_to_result;
 
 /// Parameters for building a launch success response
 pub struct LaunchResponseParams<'a> {
@@ -77,13 +79,22 @@ pub fn build_launch_success_response(params: LaunchResponseParams) -> CallToolRe
     // Add workspace info
     response::add_workspace_info_to_response(&mut response_data, params.workspace_root);
 
-    response::success_json_response(
-        format!(
+    let response = ResponseBuilder::success()
+        .message(format!(
             "Successfully launched '{}' (PID: {})",
             params.name, params.pid
-        ),
-        response_data,
-    )
+        ))
+        .data(response_data)
+        .map_or_else(
+            |_| {
+                ResponseBuilder::error()
+                    .message("Failed to serialize response data")
+                    .build()
+            },
+            ResponseBuilder::build,
+        );
+
+    json_response_to_result(&response)
 }
 
 /// Sets BRP-related environment variables on a command
